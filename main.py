@@ -11,5 +11,8 @@ import communication
 # module
 import numpy
 import cv2
+import pycuda.autoinit
+import pycuda.driver as drv
 
+from pycuda.compiler import SourceModule
 # cpu 병렬 처리
