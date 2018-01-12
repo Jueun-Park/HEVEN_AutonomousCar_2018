@@ -3,7 +3,7 @@ import pycuda.driver as cuda
 import numpy
 
 from pycuda.compiler import SourceModule
-import numpy
+
 a = numpy.random.randn(4,4)
 a = a.astype(numpy.float32)
 a_gpu = cuda.mem_alloc(a.nbytes)
