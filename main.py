@@ -12,7 +12,13 @@ import communication
 import numpy
 import cv2
 import pycuda.autoinit
-import pycuda.driver as drv
+import pycuda.driver as cuda
 
 from pycuda.compiler import SourceModule
 # cpu 병렬 처리
+
+def getFunction(name, contents): # name은 함수의 이름, contents는 함수의 본체여야 합니다.
+    mod = SourceModule(contents) # mod에 contents를 불러옵니다.
+    return mod.get_function(name) # mod에서 이름이 name인 함수를 반환합니다.
+
+def main():
