@@ -3,7 +3,8 @@
 #        2. numpy array (from lane_cam)
 # output: 경로가 표시된 numpy array (to car_control)
 
-import numpy
+import numpy as np
+import matplotlib.pyplot as plt
 
 class parabola:
 
