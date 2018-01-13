@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class parabola:
+    
     def __init__(self, a0, a1, a2):
         self.a0 = a0
         self.a1 = a1
