@@ -1,6 +1,6 @@
 # 카메라 통신 및 표지판 인식
 # input: sign_cam
-# output: 표지판 종류 (to car_control)
+# output: 유턴_표지판_위치_리스트 종류 (to car_control)
 
 import cv2
 import numpy as np
@@ -52,10 +52,10 @@ class SignDetection:
             gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
             print("Stop is ", self.stop)
 
-            # 흑백 이미지에서 표지판 추출
+            # 흑백 이미지에서 유턴_표지판_위치_리스트 추출
             sign = self.cascade.detectMultiScale(gray, 1.1, 20)
 
-            for (x, y, w, h) in sign:  # 표지판 위치 화면에 사각형으로 표시
+            for (x, y, w, h) in sign:  # 유턴_표지판_위치_리스트 위치 화면에 사각형으로 표시
                 cv2.rectangle(self.frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
             if len(sign) >= 1:  # 하나라도 감지된 상태이면
