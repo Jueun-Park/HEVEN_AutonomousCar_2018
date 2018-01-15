@@ -6,7 +6,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class parabola:
+
+class Parabola:
+
     def __init__(self, a0, a1, a2):
         self.a0 = a0
         self.a1 = a1
@@ -22,5 +24,22 @@ class parabola:
         return curvature
 
     def get_value(self, x):
-        value = self.a0 + self.a1 * x + self.a2 * x**2
+        value = self.a0 + self.a1 * x + self.a2 * x ** 2
         return value
+
+
+class Lane:
+
+    def __init__(self, left_coeffs, right_coeffs):
+        self.left_coeffs = left_coeffs
+        self.right_coeffs = right_coeffs
+        self.trajectory = Parabola((left_coeffs[0] + right_coeffs[0]) / 2,
+                                   (left_coeffs[1] + right_coeffs[1]) / 2, (left_coeffs[2] + right_coeffs[2]) / 2)
+
+    def set_trajectory(self, ratio_1, ratio_2):
+        self.trajectory = Parabola(
+            (self.left_coeffs[0] * ratio_1 + self.right_coeffs[0] * ratio_2) / (ratio_1 + ratio_2),
+            (self.left_coeffs[1] * ratio_1 + self.right_coeffs[1] * ratio_2) / (ratio_1 + ratio_2),
+            (self.left_coeffs[2] * ratio_1 + self.right_coeffs[2] * ratio_2) / (ratio_1 + ratio_2))
+
+    def get_trajectory(self): return self.trajectory
