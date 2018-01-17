@@ -40,21 +40,21 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
     elif check == 0:
         speed_Obs = 30
         front_dis = 0.30  ## 0.30m라고 가정
-        car_dis = front_dis + car_front
-        all_dis_1 = round(pow(car_dis, 2), 2) + round((cross_track_error / 100, 2), 2)
-        all_dis_2 = round(math.sqrt(all_dis_1), 2)
         car_front = 0.28
+        car_dis = front_dis + car_front
+        all_dis_1 = round(pow(car_dis, 2), 2) + round((cross_track_error_2 / 100, 2), 2)
+        all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 0.83
         tan_value = linear / (front_dis + car_front)
         theta_1 = math.degrees(math.atan(tan_value))
         speed_Default = main_speed
         k = 1
         if -15 < theta_1 < 15:
-            if abs(cross_track_error) / 100 < 0.16:
+            if abs(cross_track_error_1) / 100 < 0.16:
                 k = 0.5
-        theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+        theta_2 = math.degrees(math.atan((k * cross_track_error_1) / velocity))
         steer_now = theta_1 + theta_2
-        adjust - 0.3
+        adjust = 0.3
         steer_final = (adjust * steer_past) + ((1 - adjust) * steer_now)
         steer = steer_final * 71
         steer_past = steer_final
@@ -96,17 +96,17 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
 
     else:
         front_dis = 1  ## 1m라고 가정
-        car_dis = front_dis + car_front
-        all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error / 100, 2), 2)
-        all_dis_2 = round(math.sqrt(all_dis_1), 2)
         car_front = 0.28
+        car_dis = front_dis + car_front
+        all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
+        all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 1.5
         tan_value = (linear * (-1)) / (front_dis + car_front)
         theta_1 = math.degrees(math.atan(tan_value))
         speed_Default = main_speed
         k = 1
         if -15 < theta_1 < 15:
-            if abs(cross_track_error) / 100 < 0.27:
+            if abs(cross_track_error_1) / 100 < 0.27:
                 k = 0.5
         theta_2 = math.degrees(math.atan((k * cross_track_error_1) / velocity))
         steer_now = theta_1 + theta_2
