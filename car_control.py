@@ -110,7 +110,7 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
                 k = 0.5
         theta_2 = math.degrees(math.atan((k * cross_track_error_1) / velocity))
         steer_now = theta_1 + theta_2
-        adjust - 0.3
+        adjust = 0.3
         steer_final = (adjust * steer_past) + ((1 - adjust) * steer_now)
         steer = steer_final * 71
         steer_past = steer_final
