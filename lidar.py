@@ -32,6 +32,8 @@ class Lidar:
         while True:
             data = str(self.sock_lidar.recv(self.BUFF))
             if data.__contains__('sEA'): continue
+            # 라이다에게 데이터 요청 신호를 보냈을 때, 요청을 잘 받았다는 응답을 한 줄 돌려받은 후에 데이터를 받기 시작한다.
+            # 위 줄은 그 응답 코드을 무시하고 바로 데이터를 받기 위해서 존재한다.
 
             data_list = data.split(' ')[26:387]
             print(data_list)
@@ -66,8 +68,11 @@ class Lidar:
             pass
 
     def plot_data(self):
-        anim = animation.FuncAnimation(self.fig, self.animate, fargs = (self.sock_lidar,), interval=1)
-        plt.show()
+        try:
+            anim = animation.FuncAnimation(self.fig, self.animate, fargs = (self.sock_lidar,), interval = 1)
+            plt.show()
+
+        except: pass
 
 current_lidar = Lidar()
 current_lidar.connect()
