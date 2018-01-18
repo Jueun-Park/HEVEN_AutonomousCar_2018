@@ -67,7 +67,6 @@ class Lidar:
         anim = animation.FuncAnimation(self.fig, self.animate, fargs = (self.sock_lidar,), interval=1)
         plt.show()
 
-
 current_lidar = Lidar()
 current_lidar.connect()
 current_lidar.plot_data()
