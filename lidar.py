@@ -15,7 +15,7 @@ class Lidar:
         self.BUFF = 57600
         self.MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
-        self.fig = plt.figure(figsize = (8, 8))
+        self.fig = plt.figure(figsize = (6, 6))
         self.ax1 = self.fig.add_subplot(1, 1, 1)
 
     def set_ip(self, ip): self.HOST = ip
@@ -31,7 +31,9 @@ class Lidar:
 
         while True:
             data = str(self.sock_lidar.recv(self.BUFF))
-            data_list = data.split(' ')[26:567]
+            if data.__contains__('sEA'): continue
+
+            data_list = data.split(' ')[26:387]
             print(data_list)
 
     def animate(self, i, sock_lidar):
@@ -41,22 +43,22 @@ class Lidar:
             data = str(sock_lidar.recv(self.BUFF))
 
             if data.__contains__('sSN'):
-                data_array = data.split(' ')[26:567]
+                data_array = data.split(' ')[26:387]
 
                 xs = []
                 ys = []
 
-                angle = -45
+                angle = 0
                 count = 0
 
-                while angle <= 225:
+                while angle <= 180:
                     xs.append(int(data_array[count], 16) * math.cos(math.radians(angle)) / 10)
                     ys.append(int(data_array[count], 16) * math.sin(math.radians(angle)) / 10)
                     angle += 0.5
                     count += 1
 
                 self.ax1.clear()
-                self.ax1.plot(xs, ys, 'ro', markersize=1)
+                self.ax1.plot(xs, ys, 'ro', markersize = 2)
                 self.ax1.set_xlim([-400, 400])
                 self.ax1.set_ylim([-400, 400])
 
