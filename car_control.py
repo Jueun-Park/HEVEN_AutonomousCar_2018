@@ -4,15 +4,16 @@
 #        3. 통신 패킷 정보, 형식 미정 (from communication)
 # output: 통신 패킷 만드는 데 필요한 정보 (to communication)
 
-import numpy
 import cv2
 import time
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-global destination, lanewidth_Half, lane_Error, destination_I, list_Lane
-global gear, speed_Obs, steer_past
+global gear, t1, t2, speed_Obs, steer_past, ENC1
+t1 = 0
+t2 = 0
+ENC1 = 0
 gear = 0
 steer = 0
 steer_past = 0
@@ -21,8 +22,7 @@ main_speed = 54
 
 
 ################Function#######################
-def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_error_1, cross_track_error_2,
-             steer_measured_Comb):  # , speed_Default, speed_Obs):
+def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_error_2):  # , speed_Default, speed_Obs):
 
     global steer, gear, speed_Obs, speed_Default
     global steer_past
@@ -42,7 +42,7 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
         front_dis = 0.10  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
         car_dis = front_dis + car_front
-        all_dis_1 = round(pow(car_dis, 2), 2) + round((cross_track_error_2 / 100, 2), 2)
+        all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
         all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 0.83
         tan_value = linear / (front_dis + car_front)
@@ -71,6 +71,8 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
     ################  JU - CHA ##################################
 
     elif check == 7:
+
+
         steer = 0
         gear = 0
         check = 10
