@@ -25,7 +25,7 @@ def VideoEdge():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         cv2.imshow('VIDEO', gray)
         
-        edge = cv2.Canny(frame, 100, 150)
+        edge = cv2.Canny(frame, 50, 100)
         cv2.imshow('Canny Edge', edge)
 
         k = cv2.waitKey(1) & 0xFF

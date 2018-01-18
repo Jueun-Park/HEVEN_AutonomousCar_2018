@@ -32,7 +32,7 @@ def VideoMorphEdge():
         cv2.imshow('Blur', blur)
 
         edge = cv2.Canny(blur, 100, 150)
-        cv2.imshow('Canny Edge', edge)
+        cv2.imshow('Blur Canny Edge', edge)
 
 
 
