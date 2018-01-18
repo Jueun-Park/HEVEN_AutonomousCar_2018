@@ -10,9 +10,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-global gear, t1, t2, speed_Obs, steer_past, ENC1
-t1 = 0
-t2 = 0
+global gear, a, speed_Obs, steer_past, ENC1
+a = [0, 0]
 ENC1 = 0
 gear = 0
 steer = 0
@@ -22,7 +21,8 @@ main_speed = 54
 
 
 ################Function#######################
-def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_error_2):  # , speed_Default, speed_Obs):
+def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_error_2, stop_line,
+             obs_dis):  # , speed_Default, speed_Obs):
 
     global steer, gear, speed_Obs, speed_Default
     global steer_past
@@ -80,18 +80,34 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
 
     ################ CROSS - WALK  ###############################
 
-    elif check == 7:
+    elif check == 1:  ## 정확한 값을 몰라 임의의 값 설정, 후에 필히 조정 바람
         steer = 0
         gear = 0
-        check = 10
+        if stop_line < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+            if a[0] == 0:
+                a[0] = time.time()
+            a[1] = time.time()
+
+            if (a[1]-a[0]) > 3: ## 3초간 정지
+                a[0] == 0
+                a[1] == 0
+                speed_Obs = main_speed
+                ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
+            else:
+                speed_Obs = 0
         return ch, steer, speed_Obs, Mission  # , gear
 
     ################ Moving - Obs  ###############################
 
     elif check == 7:
-        steer = 0
         gear = 0
-        check = 10
+        steer = 0
+        speed_Obs = obst_speed
+        if obs_dis < 1: ## 일정거리 앞에 장애물 감지시 정지, 임의의 값, 필히 조정 바람
+            speed_Obs = 0
+        elif obs_dis > 2: ## 장매물이 완전히 벗어났을 때 움지기임, 임의의 값, 필히 조정 바람
+            speed_Obs = main_speed
+            ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
         return ch, steer, speed_Obs, Mission  # , gear
 
     ################ default ######################################
