@@ -39,7 +39,7 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
     ################### S-CURVE #################################
     elif check == 0:
         speed_Obs = 30
-        front_dis = 0.30  ## 0.30m라고 가정
+        front_dis = 0.10  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
         car_dis = front_dis + car_front
         all_dis_1 = round(pow(car_dis, 2), 2) + round((cross_track_error_2 / 100, 2), 2)
@@ -95,7 +95,7 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
     ################ default ######################################
 
     else:
-        front_dis = 1  ## 1m라고 가정
+        front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
         car_dis = front_dis + car_front
         all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
@@ -121,4 +121,4 @@ def steering(Mission, ch, Obstacle, dotted_Line, curvature, linear, cross_track_
         ##        print(cross_track_error)
         ##        print(steer_final)
         print(steer)
-        return ch, steer, speed_Default, Mission  # , gear
+        return ch, steer, speed_Default, Mission#, gear
