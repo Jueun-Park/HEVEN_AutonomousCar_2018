@@ -88,7 +88,7 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
                 a[0] = time.time()
             a[1] = time.time()
 
-            if (a[1]-a[0]) > 3: ## 3초간 정지
+            if (a[1]-a[0]) > 3.0: ## 3초간 정지, 실험값 보정 필요
                 a[0] == 0
                 a[1] == 0
                 speed_Obs = main_speed
