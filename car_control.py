@@ -30,11 +30,11 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
 
     ################### U-TURN ##################################
     if check == 5:
-        steer = 0
-        ch = 2
         speed_Obs = 40
+        gear = 0
+        ch = 2
         Mission = 9
-        return ch, steer, speed_Obs, Mission  # , gear
+        return ch, steer, speed_Obs, Mission, gear
 
     ################### S-CURVE #################################
     elif check == 0:
@@ -65,7 +65,7 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         ##        print(cross_track_error)
         ##        print(steer_final)
         ##        print(steer)
-        return ch, steer, speed_Obs, Mission  # , gear
+        return ch, steer, speed_Obs, Mission, gear
 
 
     ################  JU - CHA ##################################
@@ -76,7 +76,7 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         steer = 0
         gear = 0
         check = 10
-        return ch, steer, speed_Obs, Mission  # , gear
+        return ch, steer, speed_Obs, Mission, gear
 
     ################ CROSS - WALK  ###############################
 
@@ -95,7 +95,7 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
                 ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
             else:
                 speed_Obs = 0
-        return ch, steer, speed_Obs, Mission  # , gear
+        return ch, steer, speed_Obs, Mission, gear
 
     ################ Moving - Obs  ###############################
 
@@ -108,11 +108,12 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         elif obs_dis > 2: ## 장매물이 완전히 벗어났을 때 움지기임, 임의의 값, 필히 조정 바람
             speed_Obs = main_speed
             ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
-        return ch, steer, speed_Obs, Mission  # , gear
+        return ch, steer, speed_Obs, Mission, gear
 
     ################ default ######################################
 
     else:
+        gear = 0
         front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
         car_dis = front_dis + car_front
@@ -139,4 +140,4 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         ##        print(cross_track_error)
         ##        print(steer_final)
         print(steer)
-        return ch, steer, speed_Default, Mission#, gear
+        return ch, steer, speed_Default, Mission, gear
