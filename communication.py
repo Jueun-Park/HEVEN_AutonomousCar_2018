@@ -7,12 +7,17 @@
 
 import serial
 import time
+import math
 
 port_PF = '/dev/ttyUSB0' # 플랫폼 포트
 
+dpr = 54.02 * math.pi   # Distance per Rotation [cm]
+ppr = 100.              # Pulse per Rotation
+dpp = dpr/ppr           # Distance per Pulse
+
 def read_PF():  # 플랫폼으로부터 컨트롤러(데스크탑)으로 데이터를 받음
     global aData, rData, STEER, SPEED, ENC1, SPEED_E
-    ser_PF = serial.Serial(port_PF, 115200)  # 시리얼로 받는다
+    ser_PF = serial.Serial(port=port_PF, baudrate=115200)  # open serial port
     rData = bytearray(ser_PF.readline())  # sting 으로 읽어옴
     # 패킷 설명 (책자) 참조
     try:
@@ -51,7 +56,7 @@ def read_PF():  # 플랫폼으로부터 컨트롤러(데스크탑)으로 데이�
 
 def write_PF():  # 컨트롤러에서 처리한 데이터를 플랫폼으로 전송
     global wData, wSTEER, wSPEED, aData, wBRAKE
-    ser_PF = serial.Serial(port_PF, 115200)
+    ser_PF = serial.Serial(port=port_PF, baudrate=115200)
     try:
         if wSTEER > 1970:
             wSTEER = 1970
