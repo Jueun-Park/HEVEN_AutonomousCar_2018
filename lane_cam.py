@@ -3,3 +3,5 @@
 # output: numpy array? (to path_planner)
 
 import cv2
+import numpy as np
+

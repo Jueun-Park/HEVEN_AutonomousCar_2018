@@ -7,7 +7,7 @@ import cv2
 def ReadVideo():
     try:
         print('카메라를 구동합니다.')
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
     except:
         print('카메라 구동 실패')
         return
