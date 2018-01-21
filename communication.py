@@ -9,16 +9,52 @@ import serial
 import time
 import math
 
-port_PF = '/dev/ttyUSB0' # 플랫폼 포트
 
-dpr = 54.02 * math.pi   # Distance per Rotation [cm]
-ppr = 100.              # Pulse per Rotation
-dpp = dpr/ppr           # Distance per Pulse
+class 귀여운_플랫폼_시리얼_통신_세트:
+    def __init__(self, platform_port):
+        self.port = platform_port
+        # 포트 오픈
+        self.ser = serial.Serial(platform_port, 115200)
+        # 연결 성공/실패 여부 확인?
+
+    def _read(self):
+        bytes_to_read = self.ser.inWaiting()
+        self.ser.read(bytes_to_read)
+        # data parsing, 패킷 설명은 책자 참조
+        pass
+
+    def _write(self):
+        pass
+
+    def get_data(self):
+        # _read 로 읽은 플랫폼 데이터 중 사용자 입장에서 필요한 데이터만 리턴
+        pass
+
+    def give_data(self):
+        # 사용자 입장에서 쓰고자 하는 데이터만 받아서 _write 로 전달
+        pass
+
+if __name__ == '__main__':
+    port = 'COM3'
+    ser_for_platform = 귀여운_플랫폼_시리얼_통신_세트(port)
+    ser_for_platform.get_data()
+    ser_for_platform.give_data()
+
+
+# 아래부터는 2017 코드
+
+port_PF = '/dev/ttyUSB0'  # 플랫폼 포트
+# e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
+
+dpr = 54.02 * math.pi  # Distance per Rotation [cm]
+ppr = 100.  # Pulse per Rotation
+dpp = dpr / ppr  # Distance per Pulse
+
 
 def read_PF():  # 플랫폼으로부터 컨트롤러(데스크탑)으로 데이터를 받음
     global aData, rData, STEER, SPEED, ENC1, SPEED_E
     ser_PF = serial.Serial(port=port_PF, baudrate=115200)  # open serial port
-    rData = bytearray(ser_PF.readline())  # sting 으로 읽어옴
+    rData = bytearray(ser_PF.readline())  # byte 로 읽어옴
     # 패킷 설명 (책자) 참조
     try:
         ETX1 = rData[17]
