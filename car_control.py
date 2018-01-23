@@ -19,8 +19,8 @@ steer_past = 0
 obst_speed = 54
 main_speed = 54
 
-
-################Function#######################
+#
+################Function######################
 def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_error_2, stop_line,
              obs_dis):  # , speed_Default, speed_Obs):
 
@@ -45,7 +45,7 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
         all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 0.83
-        tan_value = linear / (front_dis + car_front)
+        tan_value = linear / car_dis
         theta_1 = math.degrees(math.atan(tan_value))
         speed_Default = main_speed
         k = 1
@@ -120,7 +120,7 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
         all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 1.5
-        tan_value = (linear * (-1)) / (front_dis + car_front)
+        tan_value = (linear * (-1)) / car_dis
         theta_1 = math.degrees(math.atan(tan_value))
         speed_Default = main_speed
         k = 1
