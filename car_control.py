@@ -10,34 +10,23 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-global gear, a, speed_Obs, steer_past, ENC1
+global gear, a, steer_past, ENC1
 a = [0, 0]
 ENC1 = 0
 gear = 0
 steer = 0
 steer_past = 0
-obst_speed = 54
 main_speed = 54
 
 #
 ################Function######################
-def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_error_2, stop_line,
-             obs_dis):  # , speed_Default, speed_Obs):
-
+def steering (linear, cross_track_error, stop_line, obs_pos)
     global steer, gear, speed_Obs, speed_Default
     global steer_past
-    check = Mission * ch
-
-    ################### U-TURN ##################################
-    if check == 5:
-        speed_Obs = 40
-        gear = 0
-        ch = 2
-        Mission = 9
-        return ch, steer, speed_Obs, Mission, gear
+    ## obs_pos : (r,theta)값으로 받아오기
 
     ################### S-CURVE #################################
-    elif check == 0:
+    if check == 0:
         speed_Obs = 30
         front_dis = 0.10  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
@@ -48,9 +37,9 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         speed_Default = main_speed
         k = 1
         if -15 < theta_1 < 15:
-            if abs(cross_track_error_1) / 100 < 0.16:
+            if abs(cross_track_error) / 100 < 0.16:
                 k = 0.5
-        theta_2 = math.degrees(math.atan((k * cross_track_error_1) / velocity))
+        theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
         steer_now = theta_1 + theta_2
         adjust = 0.3
         steer_final = (adjust * steer_past) + ((1 - adjust) * steer_now)
@@ -63,55 +52,26 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         ##        print(cross_track_error)
         ##        print(steer_final)
         ##        print(steer)
-        return ch, steer, speed_Obs, Mission, gear
-
-
-    ################  JU - CHA ##################################
-
-    elif check == 7:
-
-
-        steer = 0
-        gear = 0
-        check = 10
-        return ch, steer, speed_Obs, Mission, gear
-
-    ################ CROSS - WALK  ###############################
-
-    elif check == 1:  ## 정확한 값을 몰라 임의의 값 설정, 후에 필히 조정 바람
-        steer = 0
-        gear = 0
-        if stop_line < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
-            if a[0] == 0:
-                a[0] = time.time()
-            a[1] = time.time()
-
-            if (a[1]-a[0]) > 3.0: ## 3초간 정지, 실험값 보정 필요
-                a[0] == 0
-                a[1] == 0
-                speed_Obs = main_speed
-                ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
-            else:
-                speed_Obs = 0
-        return ch, steer, speed_Obs, Mission, gear
-
-    ################ Moving - Obs  ###############################
-
-    elif check == 7:
-        ## 도로폭 약 300cm
-        gear = 0
-        steer = 0
-        speed_Obs = obst_speed
-        if obs_dis/100 < 1: ## 일정거리 앞에 장애물 감지시 정지, 임의의 값, 필히 조정 바람
-            speed_Obs = 0
-        elif obs_dis/100 > 2: ## 장매물이 완전히 벗어났을 때 움지기임, 임의의 값, 필히 조정 바람
-            speed_Obs = main_speed
-            ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
-        return ch, steer, speed_Obs, Mission, gear
+        return steer, speed_Obs, gear
 
     ################ default ######################################
 
     else:
+        obs_x = (obs_pos[0]*math.cos(obs_pos[1]))
+        obs_y = (obs_pos[0]*math.sin(obs_pos[1]))
+        ##########################################################
+        if obs_y < 2:
+            if obs_x < 1.5:
+                speed_Default = 0
+        ##########################################################
+        if stop_line/100 < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+            if a[0] == 0:
+                a[0] = time.time()
+            a[1] = time.time()
+
+            if (a[1]-a[0]) < 3.0: ## 3초간 정지, 실험값 보정 필요
+                speed_Default = 0
+        ##########################################################
         gear = 0
         front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
@@ -122,9 +82,9 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         speed_Default = main_speed
         k = 1
         if -15 < theta_1 < 15:
-            if abs(cross_track_error_1) / 100 < 0.27:
+            if abs(cross_track_error) / 100 < 0.27:
                 k = 0.5
-        theta_2 = math.degrees(math.atan((k * cross_track_error_1) / velocity))
+        theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
         steer_now = theta_1 + theta_2
         adjust = 0.3
         steer_final = (adjust * steer_past) + ((1 - adjust) * steer_now)
@@ -136,5 +96,5 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
             steer = -1970
         ##        print(cross_track_error)
         ##        print(steer_final)
-        print(steer)
-        return ch, steer, speed_Default, Mission, gear
+        ##        print(steer)
+        return steer, speed_Default, gear
