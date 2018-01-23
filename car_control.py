@@ -42,8 +42,6 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         front_dis = 0.10  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
         car_dis = front_dis + car_front
-        all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
-        all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 0.83
         tan_value = linear / car_dis
         theta_1 = math.degrees(math.atan(tan_value))
@@ -100,12 +98,13 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
     ################ Moving - Obs  ###############################
 
     elif check == 7:
+        ## 도로폭 약 300cm
         gear = 0
         steer = 0
         speed_Obs = obst_speed
-        if obs_dis < 1: ## 일정거리 앞에 장애물 감지시 정지, 임의의 값, 필히 조정 바람
+        if obs_dis/100 < 1: ## 일정거리 앞에 장애물 감지시 정지, 임의의 값, 필히 조정 바람
             speed_Obs = 0
-        elif obs_dis > 2: ## 장매물이 완전히 벗어났을 때 움지기임, 임의의 값, 필히 조정 바람
+        elif obs_dis/100 > 2: ## 장매물이 완전히 벗어났을 때 움지기임, 임의의 값, 필히 조정 바람
             speed_Obs = main_speed
             ch = 2  ## 미션에서 벗어나도록 명령, 임의값 설정, 필히 조정 바람
         return ch, steer, speed_Obs, Mission, gear
@@ -117,8 +116,6 @@ def steering(Mission, ch, curvature, linear, cross_track_error_1, cross_track_er
         front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
         car_front = 0.28
         car_dis = front_dis + car_front
-        all_dis_1 = round(pow(car_dis, 2), 2) + round(pow(cross_track_error_2 / 100, 2), 2)
-        all_dis_2 = round(math.sqrt(all_dis_1), 2)
         velocity = 1.5
         tan_value = (linear * (-1)) / car_dis
         theta_1 = math.degrees(math.atan(tan_value))
