@@ -3,7 +3,7 @@ import numpy as np
 
 def hough():
     
-    img = cv2.imread('C:/Users/jglee/Desktop/IMAGES/Blank_Go_board.png')
+    img = cv2.imread('C:/Users/jglee/Desktop/IMAGES/test3.jpg')
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray,50,150,apertureSize = 3)
 

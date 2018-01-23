@@ -12,10 +12,12 @@ def Morph():
     kernel = np.ones((2,2), np.uint8)
 
     opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
-    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+    closing = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
 
     cv2.imshow('opening', opening)
     cv2.imshow('closing', closing)
+
+
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()

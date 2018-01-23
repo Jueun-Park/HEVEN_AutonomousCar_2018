@@ -30,7 +30,7 @@ def onChange(pos):
 #Run Main
 if __name__ == "__main__" :
 
-    img = cv2.imread("C:/Users/jglee/Desktop/IMAGES/Blank_Go_board.png", -1)
+    img = cv2.imread("C:/Users/jglee/Desktop/IMAGES/test3.jpg", -1)
     dst = np.copy(img)
 
     cv2.namedWindow("Result", cv2.WINDOW_NORMAL)

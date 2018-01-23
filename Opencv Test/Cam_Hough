@@ -5,7 +5,7 @@ import cv2
 def Cam_Hough():
     try:
         print('카메라를 구동합니다.')
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/project_video.mp4')
     except:
         print('카메라 구동 실패')
         return
@@ -16,14 +16,16 @@ def Cam_Hough():
     while True:
         ret, frame = cap.read()
 
+        Cut_frame = frame[450:720, 0:1200]
+
         if not ret:
             print('비디오 읽기 오류')
             break
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(Cut_frame, cv2.COLOR_BGR2GRAY)
         cv2.imshow('VIDEO', gray)
 
-        edge = cv2.Canny(frame, 50, 100)
+        edge = cv2.Canny(Cut_frame, 100, 150)
         cv2.imshow('Canny Edge', edge)
 
         try:
@@ -39,12 +41,12 @@ def Cam_Hough():
                 x2 = int(x0 - 1000 * (-b))
                 y2 = int(y0 - 1000 * (a))
 
-                cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
+                cv2.line(Cut_frame, (x1, y1), (x2, y2), (0, 0, 0), 2)
 
-            cv2.imshow('houghlines3.jpg', frame)
+            cv2.imshow('houghlines3.jpg', Cut_frame)
 
         except:
-            cv2.imshow('houghlines3.jpg', frame)
+            cv2.imshow('houghlines3.jpg', Cut_frame)
 
         k = cv2.waitKey(1) & 0xFF
         if k == 27:

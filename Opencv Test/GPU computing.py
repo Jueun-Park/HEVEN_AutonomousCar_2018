@@ -34,19 +34,14 @@ def VideoMorphEdge():
         opening = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel)
         closing = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
 
-        cv2.imshow('opening', opening)
-        cv2.imshow('closing', closing)
-
-        edge1 = cv2.Canny(frame, 100, 150)
-        cv2.imshow('Canny Edge1', edge1)
 
         edge2 = cv2.Canny(opening, 100, 150)
         cv2.imshow('Canny Edge2', edge2)
 
-        edge3 = cv2.Canny(closing, 100, 150)
-        cv2.imshow('Canny Edge3', edge3)
 
-        break
+        k = cv2.waitKey(1) & 0xFF
+        if k == 27:  # hit escape to quit
+            break
 
     cap.release()
     cv2.destroyAllWindows()
