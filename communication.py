@@ -10,20 +10,63 @@ import time
 import math
 
 
-class 귀여운_플랫폼_시리얼_통신_세트:
+class PlatformSerial:
     def __init__(self, platform_port):
         self.port = platform_port
         # 포트 오픈
         self.ser = serial.Serial(platform_port, 115200)
         # 연결 성공/실패 여부 확인?
 
-    def _read(self):
-        bytes_to_read = self.ser.inWaiting()
-        self.ser.read(bytes_to_read)
-        # data parsing, 패킷 설명은 책자 참조
-        pass
+        # 데이터 셋
+        self.writing_data = ""
 
-    def _write(self):
+    def _read(self):  # read data from platform
+        distance_per_rotation = 54.02 * math.pi  # Distance per Rotation [cm]
+        pulse_per_rotation = 100.  # Pulse per Rotation
+        distance_per_pulse = distance_per_rotation / pulse_per_rotation  # Distance per Pulse
+        bytes_to_read = self.ser.in_waiting()
+        self.ser.read(bytes_to_read)
+        reading_data = bytearray(self.ser.readline())  # byte 로 읽어옴
+        try:
+            # data parsing, 패킷 설명은 책자 참조
+            ETX1 = reading_data[17]
+
+            AorM = reading_data[3]
+            ESTOP = reading_data[4]
+            GEAR = reading_data[5]
+            SPEED = reading_data[6] + reading_data[7] * 256
+            STEER = reading_data[8] + reading_data[9] * 256
+            # STEER 범위 조정
+            if STEER >= 32768:  # 65536 / 2 = 32768
+                STEER = 65536 - STEER
+            else:
+                STEER = -STEER
+
+            BRAKE = reading_data[10]
+            time_encoder = time.time()
+
+            # ENC0, ENC1, ENC2, ENC3
+            ENC = reading_data[11] + reading_data[12] * 256 + reading_data[13] * 65536 + reading_data[14] * 16777216
+            if ENC >= 2147483648:
+                ENC = ENC - 4294967296
+
+            ALIVE = reading_data[15]
+
+            try:
+                speed_from_encoder = (ENC - self.ENC1[0]) * distance_per_pulse / (time_encoder - self.ENC1[1]) * 0.036
+                print('STEER = ', STEER, ' SPEED_ENC = ', speed_from_encoder)
+            except Exception as e:
+                print(e)
+                pass
+
+            self.ENC1 = (ENC, time_encoder)
+
+        except:
+            pass
+
+        self.ser.close()
+
+    def _write(self):  # write data to platform
         pass
 
     def get_data(self):
@@ -34,12 +77,12 @@ class 귀여운_플랫폼_시리얼_통신_세트:
         # 사용자 입장에서 쓰고자 하는 데이터만 받아서 _write 로 전달
         pass
 
+
 if __name__ == '__main__':
     port = 'COM3'
-    ser_for_platform = 귀여운_플랫폼_시리얼_통신_세트(port)
+    ser_for_platform = PlatformSerial(port)
     ser_for_platform.get_data()
     ser_for_platform.give_data()
-
 
 # 아래부터는 2017 코드
 
@@ -52,28 +95,28 @@ dpp = dpr / ppr  # Distance per Pulse
 
 
 def read_PF():  # 플랫폼으로부터 컨트롤러(데스크탑)으로 데이터를 받음
-    global aData, rData, STEER, SPEED, ENC1, SPEED_E
+    global aData, read_data, STEER, SPEED, ENC1, SPEED_E
     ser_PF = serial.Serial(port=port_PF, baudrate=115200)  # open serial port
-    rData = bytearray(ser_PF.readline())  # byte 로 읽어옴
+    read_data = bytearray(ser_PF.readline())  # byte 로 읽어옴
     # 패킷 설명 (책자) 참조
     try:
-        ETX1 = rData[17]
-        AorM = rData[3]
-        ESTOP = rData[4]
-        GEAR = rData[5]
-        SPEED = rData[6] + rData[7] * 256
-        STEER = rData[8] + rData[9] * 256
+        ETX1 = read_data[17]
+        AorM = read_data[3]
+        ESTOP = read_data[4]
+        GEAR = read_data[5]
+        SPEED = read_data[6] + read_data[7] * 256
+        STEER = read_data[8] + read_data[9] * 256
         if STEER >= 32768:
             STEER = 65536 - STEER
         else:
             STEER = -STEER
-        BRAKE = rData[10]
+        BRAKE = read_data[10]
 
         t_enc = time.time()
-        ENC = rData[11] + rData[12] * 256 + rData[13] * 65536 + rData[14] * 16777216
+        ENC = read_data[11] + read_data[12] * 256 + read_data[13] * 65536 + read_data[14] * 16777216
         if ENC >= 2147483648:
             ENC = ENC - 4294967296
-        ALIVE = rData[15]
+        ALIVE = read_data[15]
         try:
             SPEED_E = (ENC - ENC1[0]) * dpp / (t_enc - ENC1[1]) * 0.036
         except Exception as e:
