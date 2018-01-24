@@ -24,8 +24,8 @@ def steering (linear, cross_track_error, stop_line, obs_pos)
     global steer_past
     ## obs_pos : (r,theta)값으로 받아오기
 
-    obs_x = (obs_pos[0] * math.cos(obs_pos[1]))
-    obs_y = (obs_pos[0] * math.sin(obs_pos[1]))
+    obs_x = round(obs_pos[0] * math.cos(obs_pos[1]), 2)
+    obs_y = round(obs_pos[0] * math.sin(obs_pos[1]), 2)
     ##########################################################
     if abs(obs_y)/100 < 2:
         if abs(obs_x)/100 < 1.5:
