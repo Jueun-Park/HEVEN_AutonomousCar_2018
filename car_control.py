@@ -27,11 +27,11 @@ def steering (linear, cross_track_error, stop_line, obs_pos)
     obs_x = (obs_pos[0] * math.cos(obs_pos[1]))
     obs_y = (obs_pos[0] * math.sin(obs_pos[1]))
     ##########################################################
-    if obs_y < 2:
-        if obs_x < 1.5:
+    if abs(obs_y)/100 < 2:
+        if abs(obs_x)/100 < 1.5:
             speed_Default = 0
     ##########################################################
-    if stop_line / 100 < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+    if abs(stop_line) / 100 < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
         if a[0] == 0:
             a[0] = time.time()
         a[1] = time.time()
