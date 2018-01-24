@@ -19,9 +19,11 @@ main_speed = 54
 
 
 ################Function######################
-def steering (linear, cross_track_error, stop_line, obs_pos)
+
+
+def steering(linear, cross_track_error, stop_line, obs_pos):
     global steer, gear, speed_Default
-    global steer_past
+    global a, steer_past
     ## obs_pos : (r,theta)값으로 받아오기
 
     obs_x = round(obs_pos[0] * math.cos(obs_pos[1]), 2)
