@@ -5,10 +5,13 @@ def f(k):
 
 if __name__ == '__main__':
     q = Queue()
-    p = Process(target=f, args=(q,))
-    p.start()
+    p1 = Process(target=f, args=(q,))
+    p2 = Process(target=f, args=(q,))
+    p1.start()
+    p2.start()
     print(q.get())    # prints "[42, None, 'hello']"
-    p.join()
+    p1.join()
+    p2.join()
 
 
 
