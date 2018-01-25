@@ -29,8 +29,7 @@ class Steering(Global):
         theta_1 = math.degrees(math.atan(tan_value))
 
         k = 1
-        if -15 < theta_1 < 15:
-            if abs(self.cross_track_error) < 0.27:
+        if -15 < theta_1 < 15 and abs(self.cross_track_error) < 0.27:
                 k = 0.5
 
         theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
@@ -65,6 +64,5 @@ class Steering(Global):
             obs_x = round(self.obs_pos[0] * math.cos(self.obs_pos[1]), 2)
             obs_y = round(self.obs_pos[0] * math.sin(self.obs_pos[1]), 2)
 
-            if abs(obs_y) / 100 < 2:
-                if abs(obs_x) / 100 < 1.5:
+            if abs(obs_y) / 100 < 2 and abs(obs_x) / 100 < 1.5:
                     Global.speed = 0
