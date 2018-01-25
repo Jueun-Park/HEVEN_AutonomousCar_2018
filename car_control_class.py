@@ -24,7 +24,7 @@ class Steering(Global):
         self.stop_line = stop_line
         self.obs_pos = obs_pos
 
-    def steer(self):
+    def steer_s(self):
         tan_value = self.linear * (-1)
         theta_1 = math.degrees(math.atan(tan_value))
 
