@@ -465,20 +465,38 @@ def front_Detect():
 
 
 def main():
+    Cam_process=Process(target=openCam())
+    Lidar_process = Process(target=read_Lidar())
+    Matrix_process = Process(target=matrix_Comb())
+    AS_process = Process(target=astar_Comb())
+    # IMU_process = Process(target = read_IMU())
+    PFread_process = Process(target=read_PF())
+    # GPS_process = Process(target = read_GPS())
+    STEER_process = Process(target=steer_Comb())
+    PFwrite_process= Process(target=write_PF())
+    Show_process= Process(target=show_Path())
+    Obs_process= Process(target=front_Detect())
+    # U_process = Process(target = uturn_detect())
 
 
+    Cam_process.start()
+    Lidar_process.start()
+    Matrix_process.start()
+    AS_process.start()
+    #IMU_process.start()
+    PFread_process.start()
+    #GPS_process.start()
+    STEER_process.start()
+    PFwrite_process.start()
+    Show_process.start()
+    Obs_process.start()
+    #U_process.start()
+
+    #직접 차로 실험해봐야 오류가 날지 안날지 알 수 있음, 스레드와 달리 메모리오류가 날수도 있음
+    #혹은 순차적으로 처리되지 않고 건너뛰는경우도 나올수도 있음
 
 
-
-
-
-
-
-
-
-
-
-    '''
+'''
     Cam_thread = threading.Thread(target = openCam())
     Cam_thread = threading.Thread(target = openCam())
     Lidar_thread = threading.Thread(target = read_Lidar())
@@ -507,6 +525,7 @@ def main():
     #U_thread.start()
     #print wSPEED
     '''
+
 
 
 if __name__ == "__main__":

@@ -461,7 +461,7 @@ def main():
 
 
 
-    '''
+
     Cam_thread = threading.Thread(target = openCam())
     Cam_thread = threading.Thread(target = openCam())
     Lidar_thread = threading.Thread(target = read_Lidar())
@@ -489,7 +489,7 @@ def main():
     Obs_thread.start()
     #U_thread.start()
     #print wSPEED
-    '''
+
 
 
 
