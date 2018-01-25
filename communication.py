@@ -14,6 +14,7 @@ DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
 DISTANCE_PER_PULSE = DISTANCE_PER_ROTATION / PULSE_PER_ROTATION  # Distance per Pulse
 
+
 class PlatformSerial:
     def __init__(self, platform_port):
         self.platform = platform_port
@@ -74,7 +75,8 @@ class PlatformSerial:
             if steer_for_write < 0:
                 steer_for_write = steer_for_write + 65536
             dummy_data[6] = 0
-            print("steer_for_write = ", steer_for_write, "/ speed_for_write = ", speed_for_write, "/ BRAKE = ", brake_for_write)
+            print("steer_for_write = ", steer_for_write, "/ speed_for_write = ", speed_for_write, "/ BRAKE = ",
+                  brake_for_write)
             dummy_data[7] = speed_for_write
             # 16진법 두 칸 전송
             dummy_data[8] = steer_for_write / 256
@@ -124,7 +126,8 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = 'COM3'
+    port = 'COM4'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
-    ser_for_platform = PlatformSerial(port)
-    ser_for_platform.get_data_real_time()
+    platform = PlatformSerial(port)
+    print('CONNECTED')
+    platform.get_data_real_time()
