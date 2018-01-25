@@ -124,13 +124,14 @@ def gaussian_Blur(img):
     blur = cv2.GaussianBlur(img, (3,3), 0)
     #cv2.imshow('Blur',blur)
     return blur
-
+'''
+안쓰기로 결정 (Gaussian Filter 만 쓰는게 더 좋을듯)
 def opening(img):
     kernel = np.ones((3,3), np.uint8)
     opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
     #cv2.imshow('Opening', opening)
     return opening
-
+'''
 def Rotate(src, degrees):
     if degrees == 90:
         dst = cv2.transpose(src)
@@ -171,27 +172,17 @@ while (True):
     ########################################
     cv2.imshow('ORIGINAL',frame)
     cv2.imshow('ROTATED',rotated)
-
-    blur_img = gaussian_Blur(rotated)
-    open_img = opening(rotated)
-    blur_hsv = BGR2HSV(blur_img)
-    open_hsv = BGR2HSV(open_img)
-    nothing = BGR2HSV(rotated)
-    blur_hsv = cv2.Canny(blur_hsv, 70, 140)
-    open_hsv = cv2.Canny(open_hsv, 70, 140)
-    nothing = cv2.Canny(nothing, 70, 140)
-
-
-    cv2.imshow('blur',blur_img)
-    cv2.imshow('opening', open_img)
-    cv2.imshow('blur_hsv',blur_hsv)
-    cv2.imshow('open_hsv',open_hsv)
-    cv2.imshow('nothing', nothing)
-
     height, width = rotated.shape[:2]
-
     dst = cv2.warpPerspective(rotated, M, (height, width))
     cv2.imshow('dst',dst)
+
+
+    blur_img = gaussian_Blur(dst)
+    cv2.imshow('blur',blur_img)
+    hsv = BGR2HSV(blur_img)
+    cv2.imshow('blur_hsv',hsv)
+    Canny = cv2.Canny(hsv, 40, 80)
+    cv2.imshow('blur_Canny', Canny)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
