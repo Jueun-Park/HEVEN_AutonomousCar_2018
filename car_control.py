@@ -4,11 +4,8 @@
 #        3. 통신 패킷 정보, 형식 미정 (from communication)
 # output: 통신 패킷 만드는 데 필요한 정보 (to communication)
 
-import cv2
 import time
 import math
-import numpy as np
-import matplotlib.pyplot as plt
 
 global gear, a, steer_past
 a = [0, 0]
@@ -42,18 +39,18 @@ def steering(linear, cross_track_error, stop_line, obs_pos):
             speed_Default = 0
     ##########################################################
     gear = 0
-    front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
-    car_front = 0.28
-    car_dis = front_dis + car_front
+    ## front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
+    ## car_front = 0.28
+    ## car_dis = front_dis + car_front
     velocity = 1.5
-    tan_value = (linear * (-1)) / car_dis
+    tan_value = linear * (-1)
     theta_1 = math.degrees(math.atan(tan_value))
     speed_Default = main_speed
     k = 1
     if -15 < theta_1 < 15:
         if abs(cross_track_error) / 100 < 0.27:
             k = 0.5
-    theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+    theta_2 = math.degrees(math.atan((k * cross_track_error/100) / velocity))
     steer_now = theta_1 + theta_2
     adjust = 0.3
     steer_final = (adjust * steer_past) + ((1 - adjust) * steer_now)
@@ -63,6 +60,9 @@ def steering(linear, cross_track_error, stop_line, obs_pos):
         steer = 1970
     elif steer < -1970:
         steer = -1970
+
+
+
     ##        print(cross_track_error)
     ##        print(steer_final)
     ##        print(steer)
