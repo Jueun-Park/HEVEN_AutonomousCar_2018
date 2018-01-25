@@ -494,6 +494,19 @@ def main():
 
     #직접 차로 실험해봐야 오류가 날지 안날지 알 수 있음, 스레드와 달리 메모리오류가 날수도 있음
     #혹은 순차적으로 처리되지 않고 건너뛰는경우도 나올수도 있음
+    Cam_process.join()
+    Lidar_process.join()
+    Matrix_process.join()
+    AS_process.join()
+    # IMU_process.join()
+    PFread_process.join()
+    # GPS_process.join()
+    STEER_process.join()
+    PFwrite_process.join()
+    Show_process.join()
+    Obs_process.join()
+    # U_process.join()
+
 
 
 '''
