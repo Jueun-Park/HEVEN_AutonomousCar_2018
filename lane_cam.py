@@ -45,27 +45,47 @@ L_E = 0
 R_E = 0
 mid_ransac = 135.
 lane_width = 30
-
-# set cross point
+'''
+# set cross point (Rotation 때문에 저번대회랑 다름)
 y1 = 185
 y2 = 269
 
-# 원래 Pixel
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
 L_x1 = 176  # 400
 L_x2 = 92
 R_x1 = 320  # 560
 R_x2 = 447
 road_width = R_x2 - L_x2
 
-# 바꿀 Pixel
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
+Ax1 = 85 + 5  # 50
+Ax2 = 215 - 5  # 470
+Ay1 = 0
+Ay2 = 570
+
+'''
+# set cross point (Rotation 때문에 저번대회랑 다름)
+x1 = 185
+x2 = 269
+
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
+L_y1 = 304  # 400
+L_y2 = 388
+R_y1 = 160  # 560
+R_y2 = 3
+road_width = R_y2 - L_y2
+
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
 Ax1 = 85 + 5  # 50
 Ax2 = 215 - 5  # 470
 Ay1 = 0
 Ay2 = 570
 
 # Homograpy transform
-pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
-pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
+#pts1 = np.float32([[x1, L_y1], [x1, R_y1], [x2, L_y2], [x2, R_y2]])
+#pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
+pts1 = np.float32([[185, 304], [485, 160], [269, 3], [269, 388]])
+pts2 = np.float32([[90, 570], [90, 0], [210, 0], [210, 570]])
 M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
@@ -166,7 +186,9 @@ while (True):
     cv2.imshow('open_hsv',open_hsv)
     cv2.imshow('nothing', nothing)
 
-    dst = cv2.warpPerspective(frame, M, (height, width))
+    height, width = rotated.shape[:2]
+
+    dst = cv2.warpPerspective(rotated, M, (width, height))
     cv2.imshow('dst',dst)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
