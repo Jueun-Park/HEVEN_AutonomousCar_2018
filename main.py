@@ -22,3 +22,14 @@ def getFunction(name, contents): # name은 함수의 이름, contents는 함수�
     return mod.get_function(name) # mod에서 이름이 name인 함수를 반환합니다.
 
 def main():
+    # 센서 값 받기
+    # 라이다
+    # 차선 비전
+    # 표지판 비전
+
+    # 플래닝
+    # 제어
+
+    # 통신
+
+    pass
