@@ -366,7 +366,7 @@ def astar_Comb():
             else:
                 pass
         except Exception as e:
-            print("[Path Planning Error] "), e
+            print("[Path Planning Error] ", e)
     else:  ### In Narrow, S-curve mission, when obstacle detected
         print("No Line")
         try:
