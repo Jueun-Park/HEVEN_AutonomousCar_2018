@@ -44,8 +44,10 @@ class Steering(Global):
 
         if Global.steer > 1970:
             Global.steer = 1970
+            Global.steer_past = 27.746
         elif Global.steer < -1970:
             Global.steer = -1970
+            Global.steer_past = -27.746
 
     def cross_walk(self):
         if abs(self.stop_line) / 100 < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
@@ -57,9 +59,12 @@ class Steering(Global):
                 Global.speed = 0
 
     def moving_obs(self):
-        obs_x = round(self.obs_pos[0] * math.cos(self.obs_pos[1]), 2)
-        obs_y = round(self.obs_pos[0] * math.sin(self.obs_pos[1]), 2)
+        if self.obs_pos[0] == 0 and self.obs_pos[1] == 0:
+            Global.speed = 54
+        else:
+            obs_x = round(self.obs_pos[0] * math.cos(self.obs_pos[1]), 2)
+            obs_y = round(self.obs_pos[0] * math.sin(self.obs_pos[1]), 2)
 
-        if abs(obs_y) / 100 < 2:
-            if abs(obs_x) / 100 < 1.5:
-                Global.speed = 0
+            if abs(obs_y) / 100 < 2:
+                if abs(obs_x) / 100 < 1.5:
+                    Global.speed = 0
