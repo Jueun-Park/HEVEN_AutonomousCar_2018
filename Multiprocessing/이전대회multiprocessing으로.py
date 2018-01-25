@@ -1,5 +1,6 @@
 ######################### Module ############################
-impoort
+import multiprocessing
+from multiprocessing import Process,Queue,Pipe,Pool
 import serial
 import socket
 import threading
@@ -13,7 +14,7 @@ import copy
 import Vision_0513 as VLD
 import a_star_88_a as AS
 import steering_yet_0515 as ST
-#import parking as P
+# import parking as P
 ##import goal_selection2 as GS
 from datetime import datetime
 
@@ -24,12 +25,12 @@ global l_Exist, r_Exist, left_Bottom, right_Bottom
 global park_detect, destination2
 ###########For test##########3
 global Mission, img, ch
-########################### server ##########################o	
+########################### server ##########################o
 
 HOST = '115.145.177.1'
 PORT = 2112
-#HOST = '127.0.0.1'
-#PORT = 10019
+# HOST = '127.0.0.1'
+# PORT = 10019
 BUFF = 57600
 MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
@@ -38,11 +39,11 @@ sock_lidar.connect((HOST, PORT))
 
 sock_lidar.send(MESG)
 fig = plt.figure()
-#port_IMU = '/dev/ttyUSB2'
+# port_IMU = '/dev/ttyUSB2'
 port_PF = '/dev/ttyUSB0'
-#port_GPS = '/dev/ttyUSB0'
-#ser_GPS = serial.Serial(port_GPS, 38400)
-#ser_IMU = None
+# port_GPS = '/dev/ttyUSB0'
+# ser_GPS = serial.Serial(port_GPS, 38400)
+# ser_IMU = None
 ser_PF = None
 
 ############################################################
@@ -66,11 +67,11 @@ in_Mission = True
 
 cam = cv2.VideoCapture('/dev/video0')
 
-cam.set(3,480)
+cam.set(3, 480)
 cam.set(4, 270)
 
-if (not cam.isOpened()): 
-    print ("cam open failed")
+if (not cam.isOpened()):
+    print("cam open failed")
 s, img = cam.read()
 '''while True:
     s, img = cam.read()
@@ -91,12 +92,12 @@ parkingcascade = cv2.CascadeClassifier('parkingdetect.xml')
 ##uturncascade = cv2.CascadeClassifier('uturndetect.xml')
 ##
 ####################### Path Planning ########################
-matrix_Show = np.zeros((80,80))
-list_Lane = np.zeros((80,80))
-lidar_Comb = np.zeros((80,80),dtype = float)
-lane_Comb = np.zeros((80,80))
-points_Path = [[39,79],[39,78],[39,77],[39,76],[39,75]]
-lane_Width = [15,15]
+matrix_Show = np.zeros((80, 80))
+list_Lane = np.zeros((80, 80))
+lidar_Comb = np.zeros((80, 80), dtype=float)
+lane_Comb = np.zeros((80, 80))
+points_Path = [[39, 79], [39, 78], [39, 77], [39, 76], [39, 75]]
+lane_Width = [15, 15]
 l_Exist = 0
 r_Exist = 0
 left_Bottom = 0
@@ -116,9 +117,9 @@ wSTEER = int(wSTEER * 1.015)
 
 if wSTEER < 0:
     wSTEER = wSTEER + 65536
-    
+
 aData[6] = 0
-aData[7] = wSPEED	
+aData[7] = wSPEED
 aData[8] = wSTEER / 256
 aData[9] = wSTEER % 256
 
@@ -127,11 +128,9 @@ wBRAKE = 0
 
 wData = bytearray.fromhex("5354580000000000000001000D0A")
 
-dpr = 54.02 * math.pi   # Distance per Rotation [cm]
-ppr = 100.              # Pulse per Rotation
-dpp = dpr/ppr           # Distance per Pulse
-
-
+dpr = 54.02 * math.pi  # Distance per Rotation [cm]
+ppr = 100.  # Pulse per Rotation
+dpp = dpr / ppr  # Distance per Pulse
 
 #########For test##############
 Mission = 1
@@ -147,14 +146,15 @@ Mission = 1
 obs_Detect = False
 u_Detect = False
 threshold = 6
-speed_Obs = 50     #Narrow/S-curve
-speed_Default = 50 #Moving/CrossWalk/Static
+speed_Obs = 50  # Narrow/S-curve
+speed_Default = 50  # Moving/CrossWalk/Static
 t1_Cross = 0
 t2_Cross = 0
 t3_Cross = 0
 time_Cross = 5
 k_check = 0.2
 dotted_Line = 0
+
 
 ########################## Funtion ###########################
 def uturn_detect():
@@ -163,43 +163,46 @@ def uturn_detect():
     if stop6 == 3 or (not in_Mission):
         pass
     else:
-        print ("Stop 6 is "), stop6
-        uturn = uturncascade.detectMultiScale(gray,1.08,5)
-        for (x,y,w,h) in uturn:
-            cv2.rectangle(img,(x,y),(x+w,y+h),(255,255,0),2)
+        print("Stop 6 is "), stop6
+        uturn = uturncascade.detectMultiScale(gray, 1.08, 5)
+        for (x, y, w, h) in uturn:
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
         rec6 = np.matrix(uturn)
 
         if np.sum(rec6) >= 1:
-            detect_uturn=6
-            stop6+=1
+            detect_uturn = 6
+            stop6 += 1
             Mission = 5
             if stop6 == 3:
                 in_Mission = True
-            print ("Uturn!!!! "), detect_uturn
+            print("Uturn!!!! "), detect_uturn
+
+
 def openCam():
     global s, img, lane_Comb, stop_Line
     global l_Exist, r_Exist, left_Bottom, right_Bottom, img
-    if (not cam.isOpened()): 
-        print ("cam open failed")
+    if (not cam.isOpened()):
+        print("cam open failed")
     s, img = cam.read()
-    #img = cv2.resize(img,(480,270))
+    # img = cv2.resize(img,(480,270))
     lane_c, stop_Line = VLD.lane_Detection(img)
     lane_Comb = lane_c[0]
     l_Exist, r_Exist, left_Bottom, right_Bottom = lane_c[2]
-    print ("Lane_Error"),l_Exist, r_Exist
-    print ("Bottom_Comb"), left_Bottom, right_Bottom
+    print("Lane_Error"), l_Exist, r_Exist
+    print("Bottom_Comb"), left_Bottom, right_Bottom
+
 
 def read_Lidar():
     global data_parsing, lidar_Comb, data
-    
+
     data = sock_lidar.recv(BUFF)
-##    f.write(str(data))
+    ##    f.write(str(data))
     try:
         parse1 = data.split('sSN LMDscandata')[1]
-        data_parsing = parse1[111 : parse1.find('0') - 14]
-        lidar_Comb = np.zeros((80, 80))        
+        data_parsing = parse1[111: parse1.find('0') - 14]
+        lidar_Comb = np.zeros((80, 80))
         distance = np.zeros(data_parsing.count(' ') + 2)
-        #print data_parsing
+        # print data_parsing
         try:
             for i in range(89, 451):
                 distance[i] = int(data_parsing.split(' ')[i], 16)
@@ -214,18 +217,18 @@ def read_Lidar():
                 except:
                     pass
         except Exception as e:
-            print (e)
+            print(e)
             pass
     except:
         pass
-    
-    #lidar_Comb[45:53,destination[1]-3:destination[1]+3] = np.zeros((8,6),dtype = float)
+
+    # lidar_Comb[45:53,destination[1]-3:destination[1]+3] = np.zeros((8,6),dtype = float)
 
 
 def read_GPS():
     global Lat, Lon
-    
-    #ser_GPS = serial.Serial('COM4', 38400)
+
+    # ser_GPS = serial.Serial('COM4', 38400)
 
     gpsData = ser_GPS.readline()
     if gpsData.split(",")[0] == '$GPGGA':
@@ -233,34 +236,35 @@ def read_GPS():
             line1 = gpsData.split(",")
             Lat = float(line1[2])
             Lon = float(line1[4])
-            LatH = Lat//100.0
-            LonH = Lon//100.0
-            LatM = (Lat - (LatH*100))/60
-            LonM = (Lon - (LonH*100))/60
+            LatH = Lat // 100.0
+            LonH = Lon // 100.0
+            LatM = (Lat - (LatH * 100)) / 60
+            LonM = (Lon - (LonH * 100)) / 60
             Lat = LatH + LatM
             Lon = LonH + LonM
         except:
             pass
-           
-    #ser_GPS.close()
-        
+
+    # ser_GPS.close()
+
+
 def read_IMU():
     global Yaw
-    
+
     ser_IMU = serial.Serial(port_IMU, 115200)
-    
+
     try:
         imuData = ser_IMU.readline()
         Yaw = float(imuData.split(',')[2])
-        #print Yaw
+        # print Yaw
     except:
         pass
     ser_IMU.close()
-    #threading.Timer(0.02, read_IMU).start()
- 
+    # threading.Timer(0.02, read_IMU).start()
+
 
 def read_PF():
-    global aData,rData, STEER, SPEED, ENC1, SPEED_E
+    global aData, rData, STEER, SPEED, ENC1, SPEED_E
     ser_PF = serial.Serial(port_PF, 115200)
     rData = bytearray(ser_PF.readline())
     try:
@@ -268,8 +272,8 @@ def read_PF():
         AorM = rData[3]
         ESTOP = rData[4]
         GEAR = rData[5]
-        SPEED = rData[6] + rData[7]*256
-        STEER = rData[8] + rData[9]*256
+        SPEED = rData[6] + rData[7] * 256
+        STEER = rData[8] + rData[9] * 256
         if STEER >= 32768:
             STEER = 65536 - STEER
         else:
@@ -277,25 +281,25 @@ def read_PF():
         BRAKE = rData[10]
 
         t_enc = time.time()
-        ENC = rData[11] + rData[12]*256 + rData[13]*65536 + rData[14]*16777216
-        if ENC >= 2147483648: 
+        ENC = rData[11] + rData[12] * 256 + rData[13] * 65536 + rData[14] * 16777216
+        if ENC >= 2147483648:
             ENC = ENC - 4294967296
         ALIVE = rData[15]
         try:
             SPEED_E = (ENC - ENC1[0]) * dpp / (t_enc - ENC1[1]) * 0.036
         except Exception as e:
-            print (e)
+            print(e)
             pass
         ENC1 = [ENC, t_enc]
-        #print SPEED, STEER
-        print ('STEER'), STEER
-        print ('SPEED_ENC'),SPEED_E
+        # print SPEED, STEER
+        print('STEER'), STEER
+        print('SPEED_ENC'), SPEED_E
 
-        #print STEER
+        # print STEER
     except:
         pass
     ser_PF.close()
-    #threading.Timer(0.01, read_PF).start(
+    # threading.Timer(0.01, read_PF).start(
 
 
 def write_PF():
@@ -311,97 +315,102 @@ def write_PF():
         if wSTEER < 0:
             wSTEER = wSTEER + 65536
         aData[6] = 0
-        print ("wSTEER = "), wSTEER
-        print ("wSPEED = "),wSPEED
+        print("wSTEER = "), wSTEER
+        print("wSPEED = "), wSPEED
         aData[7] = wSPEED
         aData[8] = wSTEER / 256
         aData[9] = wSTEER % 256
-        
+
         wData[3] = 1
-        wData[4] = 0 #E stop
-        wData[5] = 0     
+        wData[4] = 0  # E stop
+        wData[5] = 0
         wData[6] = aData[6]
         wData[7] = aData[7]
         wData[8] = aData[8]
         wData[9] = aData[9]
-        print ("BRAKE! "),wBRAKE
+        print("BRAKE! "), wBRAKE
         wData[10] = wBRAKE
         wData[11] = rData[15]
         wData[12] = rData[16]
         wData[13] = rData[17]
         ser_PF.write(str(wData))
-        
-        #print str(wData)
-        #f.write(str(wData))
-        #print wData[8], wData[9]
+
+        # print str(wData)
+        # f.write(str(wData))
+        # print wData[8], wData[9]
     except Exception as e:
-        print (e)
-        print ('autoerror')
+        print(e)
+        print('autoerror')
         ser_PF.write(str(wData))
     ser_PF.close()
 
+
 def matrix_Comb():
     global lidar_Comb, lane_Comb, list_Lane
-    
+
     list_Lane = lidar_Comb + lane_Comb
+
 
 def astar_Comb():
     global points_Path, list_Lane, lane_Width
-    global l_Exist, r_Exist, left_Bottom, right_Bottom,wSPEED
-    global lidar_Comb#, obs_Detect, Mission#, speed_Obs, speed_Default
-##    if Mission != 6:
+    global l_Exist, r_Exist, left_Bottom, right_Bottom, wSPEED
+    global lidar_Comb  # , obs_Detect, Mission#, speed_Obs, speed_Default
+    ##    if Mission != 6:
     if Mission % 2 != 0 or obs_Detect == False:
-        print ("Default!")
+        print("Default!")
         try:
-            points =  AS.pathFind(lidar_Comb,l_Exist,r_Exist,left_Bottom,right_Bottom,list_Lane, 39, 79)
+            points = AS.pathFind(lidar_Comb, l_Exist, r_Exist, left_Bottom, right_Bottom, list_Lane, 39, 79)
             if points:
                 points_Path = points
-                
-            else:
-                pass                
-        except Exception as e:
-            print ("[Path Planning Error] "), e
-    else: ### In Narrow, S-curve mission, when obstacle detected
-        print ("No Line")
-        try:
-            points =  AS.pathFind(lidar_Comb,False,False,left_Bottom,right_Bottom,list_Lane, 39, 79)
-            if points:
-                points_Path = points
-                
+
             else:
                 pass
-                
         except Exception as e:
-            print ("[Path Planning Error] ", e)
+            print("[Path Planning Error] "), e
+    else:  ### In Narrow, S-curve mission, when obstacle detected
+        print("No Line")
+        try:
+            points = AS.pathFind(lidar_Comb, False, False, left_Bottom, right_Bottom, list_Lane, 39, 79)
+            if points:
+                points_Path = points
+
+            else:
+                pass
+
+        except Exception as e:
+            print("[Path Planning Error] ", e)
+
+
 ##    else:
 ##        pass
 def steer_Comb():
-    global wSTEER,wSPEED,wBRAKE, STEER, SPEED, points_Path, u_Detect, Mission, obs_Detect
+    global wSTEER, wSPEED, wBRAKE, STEER, SPEED, points_Path, u_Detect, Mission, obs_Detect
     global t1_Cross, t2_Cross, t3_Cross, time_Cross, wBRAKE, k_check, stop_Line, dotted_Line
     global c, ch
-    print ("MISSION is = ", Mission)
+    print("MISSION is = ", Mission)
     if Mission != 5:
         ch = 1
     if Mission == 5:
         if c:
-            ch = 2 ##
+            ch = 2  ##
             c = 0
-        print ("ch_1", ch)
-        print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!")
+        print("ch_1", ch)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!")
         dotted_Line = VLD.dotted_Detection()[0]
-        print ('dotted', dotted_Line)
-        if((dotted_Line < 160) and (dotted_Line > 100)):
+        print('dotted', dotted_Line)
+        if ((dotted_Line < 160) and (dotted_Line > 100)):
             ch = 1
-            print ("Dotted Uturn!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print ("Before Steer Mission = ", Mission)
-    print ("ch_2", ch)
-    ch, wSTEER, wSPEED, Mission = ST.steering(Mission, ch, not obs_Detect,dotted_Line,points_Path, STEER)#, speed_Default, speed_Obs)## Mission * not obs : 0 = Obs Detect, 5 = Uturn, 7 = Parking, Default = Normal
-    print ("ch_3", ch)
-    print ("After Steer Mission = ",Mission)
-##    wSTEER = -wSTEER
+            print("Dotted Uturn!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("Before Steer Mission = ", Mission)
+    print("ch_2", ch)
+    ch, wSTEER, wSPEED, Mission = ST.steering(Mission, ch, not obs_Detect, dotted_Line, points_Path,
+                                              STEER)  # , speed_Default, speed_Obs)## Mission * not obs : 0 = Obs Detect, 5 = Uturn, 7 = Parking, Default = Normal
+    print("ch_3", ch)
+    print("After Steer Mission = ", Mission)
+    ##    wSTEER = -wSTEER
     if Mission == 3:
         if stop_Line:
-            t1_Cross = time.time()        
+            t1_Cross = time.time()
             if t2_Cross == 0:
                 t3_Cross = t1_Cross
                 t2_Cross = 1
@@ -418,7 +427,7 @@ def steer_Comb():
             t3_Cross = 0
     elif Mission == 1:
         if obs_Detect:
-            t1_Cross = time.time()        
+            t1_Cross = time.time()
             if t2_Cross == 0:
                 t3_Cross = t1_Cross
                 t2_Cross = 1
@@ -427,31 +436,39 @@ def steer_Comb():
             wSPEED = 1
             wSTEER = 0
             wBRAKE = 45
-        if not obs_Detect:#time.time() - t3_Cross - k_check > time_Cross:
+        if not obs_Detect:  # time.time() - t3_Cross - k_check > time_Cross:
             wSPEED = speed_Default
             wBRAKE = 1
             t1_Cross = 0
             t2_Cross = 0
             t3_Cross = 0
-                
+
+
 def show_Path():
     global points_Path, matrix_Show, list_Lane
     matrix_Show = np.array(list_Lane)
     for i in range(0, len(points_Path)):
-        matrix_Show[points_Path[i][1],points_Path[i][0]] = 3
-       # matrix_Show[destination[1],destination[0]] = 3
+        matrix_Show[points_Path[i][1], points_Path[i][0]] = 3
+    # matrix_Show[destination[1],destination[0]] = 3
+
 
 def front_Detect():
     global lidar_Comb, obs_Detect, threshold, Mission
     if Mission % 2 != 0 and Mission != 1:
         obs_Detect = False
     else:
-        #print "obs ",np.sum(lidar_Comb[60:80,20:59])
-        if np.sum(lidar_Comb[45:80,26:52]) > threshold:
+        # print "obs ",np.sum(lidar_Comb[60:80,20:59])
+        if np.sum(lidar_Comb[45:80, 26:52]) > threshold:
             obs_Detect = True
         else:
             obs_Detect = False
+
+
 def main():
+
+
+
+
 
 
 
@@ -475,7 +492,7 @@ def main():
     Show_thread = threading.Thread(target = show_Path())
     Obs_thread = threading.Thread(target = front_Detect())
     #U_thread = threading.Thread(target = uturn_detect())
-    
+
     Cam_thread.start()
     Lidar_thread.start()
     Matrix_thread.start()
@@ -492,31 +509,26 @@ def main():
     '''
 
 
-
-
-
-
-    
 if __name__ == "__main__":
     t1 = 0
     t2 = 0
     while True:
         t2 = time.time()
-        print (t1 - t2)
+        print(t1 - t2)
         t1 = time.time()
-        #openCam()
+        # openCam()
         main()
-        #astar_Comb()
+        # astar_Comb()
         dim = (500, 500)
-        #map_plot = cv2.resize(lane_Comb, dim, interpolation = cv2.INTER_AREA)
-        #lidar_plot = cv2.resize(lidar_Comb, dim, interpolation = cv2.INTER_AREA)
-        lane_plot = cv2.resize(matrix_Show, dim, interpolation =  cv2.INTER_AREA)
-        #cv2.imshow('map', map_plot)
-        #cv2.imshow('lidar', lidar_plot)
+        # map_plot = cv2.resize(lane_Comb, dim, interpolation = cv2.INTER_AREA)
+        # lidar_plot = cv2.resize(lidar_Comb, dim, interpolation = cv2.INTER_AREA)
+        lane_plot = cv2.resize(matrix_Show, dim, interpolation=cv2.INTER_AREA)
+        # cv2.imshow('map', map_plot)
+        # cv2.imshow('lidar', lidar_plot)
         cv2.imshow('Path', lane_plot)
-        #cv2.imshow('cam', img)
-        if cv2.waitKey(1)== 27:
+        # cv2.imshow('cam', img)
+        if cv2.waitKey(1) == 27:
             break
     cam.release()
     cv2.destroyAllWindows()
-    cv2.waitKey(0)    
+    cv2.waitKey(0)
