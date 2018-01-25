@@ -1,7 +1,7 @@
 from multiprocessing import Process, Queue
 
-def f(q):
-    q.put([42, None, 'hello'])
+def f(k):
+    k.put([42, None, 'hello'])
 
 if __name__ == '__main__':
     q = Queue()
