@@ -45,27 +45,49 @@ L_E = 0
 R_E = 0
 mid_ransac = 135.
 lane_width = 30
-
-# set cross point
+'''
+저번대회의 코드
+(Rotation 을 적용하지 않은 경우)
+# set cross point (Rotation 때문에 저번대회랑 다름)
 y1 = 185
 y2 = 269
 
-# 원래 Pixel
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
 L_x1 = 176  # 400
 L_x2 = 92
 R_x1 = 320  # 560
 R_x2 = 447
 road_width = R_x2 - L_x2
 
-# 바꿀 Pixel
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
 Ax1 = 85 + 5  # 50
 Ax2 = 215 - 5  # 470
 Ay1 = 0
 Ay2 = 570
 
+'''
+# set cross point (Rotation 때문에 저번대회랑 다름)
+x1 = 185
+x2 = 269
+
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
+L_y1 = 320
+L_y2 = 479
+R_y1 = 160
+R_y2 = 1
+road_width = R_y2 - L_y2
+
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
+Ax1 = 0
+Ax2 = 480
+Ay1 = 210
+Ay2 = 60
+
 # Homograpy transform
-pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
-pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
+pts1 = np.float32([[x1, L_y1], [x1, R_y1], [x2, R_y2], [x2, L_y2]])
+pts2 = np.float32([[Ax1, Ay1], [Ax1, Ay2], [Ax2, Ay2], [Ax2, Ay1]])
+#pts1 = np.float32([[185, 320], [185, 160], [269, 1], [269, 479]])
+#pts2 = np.float32([[0, 210], [0, 60], [480, 60], [480, 210]])
 M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
@@ -102,13 +124,14 @@ def gaussian_Blur(img):
     blur = cv2.GaussianBlur(img, (3,3), 0)
     #cv2.imshow('Blur',blur)
     return blur
-
+'''
+안쓰기로 결정 (Gaussian Filter 만 쓰는게 더 좋을듯)
 def opening(img):
     kernel = np.ones((3,3), np.uint8)
     opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
     #cv2.imshow('Opening', opening)
     return opening
-
+'''
 def Rotate(src, degrees):
     if degrees == 90:
         dst = cv2.transpose(src)
@@ -123,6 +146,28 @@ def Rotate(src, degrees):
     else:
         dst = null
     return dst
+
+def houghLines(Edge_img):
+
+    lines = cv2.HoughLines(Edge_img, 1, np.pi / 180, 200)
+
+    try:
+        for line in lines:
+            rho, theta = line[0]
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            x1 = int(x0 + 1000 * (-b))
+            y1 = int(y0 + 1000 * (a))
+            x2 = int(x0 - 1000 * (-b))
+            y2 = int(y0 - 1000 * (a))
+
+            cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
+    except:
+        pass
+    return Edge_img
+
 
 
 
@@ -149,25 +194,19 @@ while (True):
     ########################################
     cv2.imshow('ORIGINAL',frame)
     cv2.imshow('ROTATED',rotated)
-
-    blur_img = gaussian_Blur(rotated)
-    open_img = opening(rotated)
-    blur_hsv = BGR2HSV(blur_img)
-    open_hsv = BGR2HSV(open_img)
-    nothing = BGR2HSV(rotated)
-    blur_hsv = cv2.Canny(blur_hsv, 70, 140)
-    open_hsv = cv2.Canny(open_hsv, 70, 140)
-    nothing = cv2.Canny(nothing, 70, 140)
-
-
-    cv2.imshow('blur',blur_img)
-    cv2.imshow('opening', open_img)
-    cv2.imshow('blur_hsv',blur_hsv)
-    cv2.imshow('open_hsv',open_hsv)
-    cv2.imshow('nothing', nothing)
-
-    dst = cv2.warpPerspective(frame, M, (height, width))
+    height, width = rotated.shape[:2]
+    dst = cv2.warpPerspective(rotated, M, (height, width))
     cv2.imshow('dst',dst)
+
+
+    blur_img = gaussian_Blur(dst)
+    cv2.imshow('blur',blur_img)
+    hsv = BGR2HSV(blur_img)
+    cv2.imshow('blur_hsv',hsv)
+    Canny = cv2.Canny(hsv, 40, 80)
+    cv2.imshow('blur_Canny', Canny)
+    Houghed = houghLines(Canny)
+    cv2.imshow('hough', Houghed)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
