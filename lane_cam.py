@@ -70,8 +70,44 @@ M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
 real_Road_Width = 125
-
+#########################################################################################
 ##################################Sub-Functions##########################################
+
+
+#Filter Functions
+def set_Gray(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (255, 255, 255))
+    img_ROI = cv2.bitwise_and(img, mask)
+    #cv2.imshow('img_ROI',img_ROI)
+    return img_ROI
+
+def set_Red(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (0, 0, 255))
+    img_red = cv2.bitwise_and(img, mask)
+    #cv2.imshow('img_red',img_red)
+    return img_red
+
+def BGR2HSV(img):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower = np.array([0, 0, 160])
+    upper = np.array([255, 255, 255])
+    mask = cv2.inRange(img_hsv, lower, upper)
+    hsv = cv2.bitwise_and(img, img, mask=mask)
+    #cv2.imshow('hsv_Cvt',hsv)
+    return hsv
+
+def gaussian_Blur(img):
+    blur = cv2.GaussianBlur(img, (3,3), 0)
+    #cv2.imshow('Blur',blur)
+    return blur
+
+def opening(img):
+    kernel = np.ones((3,3), np.uint8)
+    opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+    #cv2.imshow('Opening', opening)
+    return opening
 
 def Rotate(src, degrees):
     if degrees == 90:
@@ -88,40 +124,58 @@ def Rotate(src, degrees):
         dst = null
     return dst
 
-def camopen(CAM_ID):
-    cam = cv2.VideoCapture(CAM_ID)  # 카메라 생성
-    if cam.isOpened() == False:  # 카메라 생성 확인
-        print('Can\'t open the CAM')
-        exit()
-
-    # 카메라 이미지 해상도 얻기
-    width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
-    height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    print('size = ', width, height)
 
 
+CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4'
+#CAM_ID = 0
+cam = cv2.VideoCapture(CAM_ID)  # 카메라 생성
+if cam.isOpened() == False:  # 카메라 생성 확인
+    print('Can\'t open the CAM')
 
-    while (True):
-        # 카메라에서 이미지 얻기
-        ret, frame = cam.read()
 
-        ########### 추가 ########################
-        # 이미지를 회전시켜서 img로 돌려받음
-        img = Rotate(frame, 270)  # 90 or 180 or 270
-        ########################################
+# 카메라 이미지 해상도 얻기
+width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+print('size = ', width, height)
 
-        # 얻어온 이미지 윈도우에 표시
-        cv2.imshow('CAM_OriginalWindow', frame)
 
-        ########### 추가 ########################
-        # 회전된 이미지 표시
-        cv2.imshow('CAM_RotateWindow', img)
-        #########################################
 
-        # Q 누르기 전까지 작동.
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+while (True):
+    # 카메라에서 이미지 얻기
+    ret, frame = cam.read()
 
-    cam.release()
-    cv2.destroyAllWindows()
-    cv2.waitKey(0)
+    # 이미지를 회전시켜서 rotated로 돌려받음
+    rotated = Rotate(frame, 270)  # 90 or 180 or 270
+    ########################################
+    cv2.imshow('ORIGINAL',frame)
+    cv2.imshow('ROTATED',rotated)
+
+    blur_img = gaussian_Blur(rotated)
+    open_img = opening(rotated)
+    blur_hsv = BGR2HSV(blur_img)
+    open_hsv = BGR2HSV(open_img)
+    nothing = BGR2HSV(rotated)
+    blur_hsv = cv2.Canny(blur_hsv, 70, 140)
+    open_hsv = cv2.Canny(open_hsv, 70, 140)
+    nothing = cv2.Canny(nothing, 70, 140)
+
+
+    cv2.imshow('blur',blur_img)
+    cv2.imshow('opening', open_img)
+    cv2.imshow('blur_hsv',blur_hsv)
+    cv2.imshow('open_hsv',open_hsv)
+    cv2.imshow('nothing', nothing)
+
+    dst = cv2.warpPerspective(frame, M, (height, width))
+    cv2.imshow('dst',dst)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cam.release()
+cv2.destroyAllWindows()
+cv2.waitKey(0)
+
+
+
+
