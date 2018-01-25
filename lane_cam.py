@@ -147,6 +147,28 @@ def Rotate(src, degrees):
         dst = null
     return dst
 
+def houghLines(Edge_img):
+
+    lines = cv2.HoughLines(Edge_img, 1, np.pi / 180, 200)
+
+    try:
+        for line in lines:
+            rho, theta = line[0]
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            x1 = int(x0 + 1000 * (-b))
+            y1 = int(y0 + 1000 * (a))
+            x2 = int(x0 - 1000 * (-b))
+            y2 = int(y0 - 1000 * (a))
+
+            cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
+    except:
+        pass
+    return Edge_img
+
+
 
 
 CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4'
@@ -183,6 +205,8 @@ while (True):
     cv2.imshow('blur_hsv',hsv)
     Canny = cv2.Canny(hsv, 40, 80)
     cv2.imshow('blur_Canny', Canny)
+    Houghed = houghLines(Canny)
+    cv2.imshow('hough', Houghed)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
