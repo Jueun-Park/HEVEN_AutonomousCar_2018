@@ -101,6 +101,7 @@ if __name__ == '__main__':
             info2[5:110, cols-111:cols-6] = (255, 255, 255)
             info = cv2.addWeighted(result, 1, info, 0.2, 0)
             info2 = cv2.addWeighted(info, 1, info2, 0.2, 0)
+
             road_map = print_road_map(w_color_result, left_line, right_line)
             info2[10:105, cols-106:cols-11] = road_map
             info2 = print_road_status(info2, left_line, right_line)

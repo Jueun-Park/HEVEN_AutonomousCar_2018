@@ -65,7 +65,7 @@ def get_fitline(img, f_lines):  # 대표선 구하기
     result = [x1, y1, x2, y2]
     return result
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/project_video.mp4')
 
 while (cap.isOpened()):
     ret, frame = cap.read()
@@ -88,35 +88,37 @@ while (cap.isOpened()):
     ROI_img = region_of_interest(canny_img, vertices)
 
     cv2.imshow('ROI_image', ROI_img)
+    try:
+        line_arr = hough_lines(ROI_img, 1, 1 * np.pi / 180, 30, 10, 20)  # 허프 변환
+        line_arr = np.squeeze(line_arr)
 
-    line_arr = hough_lines(ROI_img, 1, 1 * np.pi / 180, 30, 10, 20)  # 허프 변환
-    line_arr = np.squeeze(line_arr)
+        # 기울기 구하기
+        slope_degree = (np.arctan2(line_arr[:, 1] - line_arr[:, 3], line_arr[:, 0] - line_arr[:, 2]) * 180) / np.pi
 
-    # 기울기 구하기
-    slope_degree = (np.arctan2(line_arr[:, 1] - line_arr[:, 3], line_arr[:, 0] - line_arr[:, 2]) * 180) / np.pi
+        # 수평 기울기 제한
+        line_arr = line_arr[np.abs(slope_degree) < 160]
+        slope_degree = slope_degree[np.abs(slope_degree) < 160]
+        # 수직 기울기 제한
+        line_arr = line_arr[np.abs(slope_degree) > 95]
+        slope_degree = slope_degree[np.abs(slope_degree) > 95]
+        # 필터링된 직선 버리기
+        L_lines, R_lines = line_arr[(slope_degree > 0), :], line_arr[(slope_degree < 0), :]
+        temp = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
+        L_lines, R_lines = L_lines[:, None], R_lines[:, None]
+        # 왼쪽, 오른쪽 각각 대표선 구하기
 
-    # 수평 기울기 제한
-    line_arr = line_arr[np.abs(slope_degree) < 160]
-    slope_degree = slope_degree[np.abs(slope_degree) < 160]
-    # 수직 기울기 제한
-    line_arr = line_arr[np.abs(slope_degree) > 95]
-    slope_degree = slope_degree[np.abs(slope_degree) > 95]
-    # 필터링된 직선 버리기
-    L_lines, R_lines = line_arr[(slope_degree > 0), :], line_arr[(slope_degree < 0), :]
-    temp = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
-    L_lines, R_lines = L_lines[:, None], R_lines[:, None]
-    # 왼쪽, 오른쪽 각각 대표선 구하기
-    '''
-    left_fit_line = get_fitline(frame, L_lines)
-    right_fit_line = get_fitline(frame, R_lines)
+        left_fit_line = get_fitline(frame, L_lines)
+        right_fit_line = get_fitline(frame, R_lines)
     
-    # 대표선 그리기
-    draw_fit_line(temp, left_fit_line)
-    draw_fit_line(temp, right_fit_line)
-'''
-    result = weighted_img(temp, frame)  # 원본 이미지에 검출된 선 overlap
-    cv2.imshow('RESULT',result)
+        # 대표선 그리기
+        draw_fit_line(temp, left_fit_line)
+        draw_fit_line(temp, right_fit_line)
+        
+        result = weighted_img(temp, frame)  # 원본 이미지에 검출된 선 overlap
+        cv2.imshow('RESULT',result)
 
+    except:
+        cv2.imshow('RESULT',frame)
     k = cv2.waitKey(1) & 0xFF
     if k == 27:
         break
