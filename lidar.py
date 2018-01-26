@@ -3,33 +3,48 @@
 # output: numpy array? (to path_planner)
 
 import math
+import numpy
 import socket
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import threading
+import time
 
 class Lidar:
 
     def __init__(self):
         self.HOST = '169.254.248.220'
-        self.PORT = 2112
+        self.PORT = 2111
         self.BUFF = 57600
         self.MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
         self.fig = plt.figure(figsize = (6, 6))
         self.ax1 = self.fig.add_subplot(1, 1, 1)
 
+        self.data_list = []
+
     def set_ip(self, ip): self.HOST = ip
 
     def set_port(self, port): self.PORT = port
 
     # ROI_tuple: (theta_1, theta_2, radius)
-    def set_ROI(self, ROI_tuple): self.ROI = ROI_tuple
+    def set_ROI(self, ROI_tuple):
+        self.ROI = ROI_tuple
+        self.xmin = self.ROI[2] * math.cos(math.radians(self.ROI[1]))
+        self.xmax = self.ROI[2] * math.cos(math.radians(self.ROI[0]))
 
-    def connect(self):
+        self.x1 = numpy.arange(self.xmin, 0.05, 0.05)
+        self.x2 = numpy.arange(0, self.xmax + 0.05, 0.05)
+        self.x3 = numpy.arange(self.xmin, self.xmax + 0.05, 0.05)
+
+        self.y1 = [(math.tan(math.radians(self.ROI[1])) * v) for v in self.x1]
+        self.y2 = [(math.tan(math.radians(self.ROI[0])) * v) for v in self.x2]
+        self.y3 = [(math.sqrt(self.ROI[2] ** 2 - v ** 2)) for v in self.x3]
+
+
+    def loop(self):
         self.sock_lidar = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_lidar.connect((self.HOST, self.PORT))
-
-    def get_data(self):
         self.sock_lidar.send(str.encode(self.MESG))
 
         while True:
@@ -38,52 +53,56 @@ class Lidar:
             # 아래 줄은 그 응답 코드을 무시하고 바로 데이터를 받기 위해서 존재함
             if data.__contains__('sEA'): continue
 
-            data_list = data.split(' ')[26:567]
+            self.data_list = data.split(' ')[26:567]
 
-            parsed_data = []
+    def initiate(self):
+        t = threading.Thread(target = self.loop)
+        t.start()
 
-            for i in range(2 * self.ROI[0] + 90, 2 * self.ROI[1] + 91):
-                if int(data_list[i], 16) / 10 <= self.ROI[2]:
-                    parsed_data.append((int(data_list[i], 16) / 10, 0.5 * i - 45))
+    def get_data(self):
+        parsed_data = []
 
-            print(parsed_data)
+        for n in range(2 * self.ROI[0] + 90, 2 * self.ROI[1] + 91):
+            if 3 <= int(self.data_list[n], 16) / 10 and int(self.data_list[n], 16) / 10 <= self.ROI[2]:
+                parsed_data.append((int(self.data_list[n], 16) / 10, -45 + 0.5 * n))
 
-    def animate(self, i, sock_lidar):
-        self.sock_lidar.send(str.encode(self.MESG))
+        print(parsed_data)
 
+    def animate(self, i):
         try:
-            data = str(sock_lidar.recv(self.BUFF))
+            xs = []
+            ys = []
 
-            if data.__contains__('sSN'):
-                data_array = data.split(' ')[26:567]
+            for n in range(2 * self.ROI[0] + 90, 2 * self.ROI[1] + 91):
+                if 3 <= int(self.data_list[n], 16) / 10 and int(self.data_list[n], 16) / 10 <= self.ROI[2]:
+                    xs.append(int(self.data_list[n], 16) * math.cos(math.radians(0.5 * n - 45)) / 10)
+                    ys.append(int(self.data_list[n], 16) * math.sin(math.radians(0.5 * n - 45)) / 10)
 
-                xs = []
-                ys = []
+            # 이전에 찍었던 점들을 모두 지움
+            self.ax1.clear()
 
-                for i in range(2 * self.ROI[0] + 90, 2 * self.ROI[1] + 91):
-                    if int(data_array[i], 16) / 10 <= self.ROI[2]:
-                        xs.append(int(data_array[i], 16) * math.cos(math.radians(0.5 * i - 45)) / 10)
-                        ys.append(int(data_array[i], 16) * math.sin(math.radians(0.5 * i - 45)) / 10)
+            self.ax1.plot(xs, ys, 'ro', markersize = 1)
 
-                # 이전에 찍었던 점들을 모두 지움
-                self.ax1.clear()
-                # xs와 ys의 index 0, 1에서 노이즈가 발생하기 때문에 index 2부터 plot함
-                self.ax1.plot(xs, ys, 'ro', markersize = 2)
-                self.ax1.set_xlim(-400, 400)
-                self.ax1.set_ylim(-400, 400)
-                plt.grid(True)
+            # ROI 경계선 그리기: 개발자가 보기 편하도록
+            self.ax1.plot(self.x1, self.y1, 'b', linewidth = 1)
+            self.ax1.plot(self.x2, self.y2, 'b', linewidth = 1)
+            self.ax1.plot(self.x3, self.y3, 'b', linewidth = 1)
+
+            # 축 범위 지정하기
+            self.ax1.set_xlim(-100, 100)
+            self.ax1.set_ylim(0, 200)
 
         except:
             pass
 
     def plot_data(self):
-        try:
-            anim = animation.FuncAnimation(self.fig, self.animate, fargs = (self.sock_lidar,), interval = 1)
-            plt.show()
+        anim = animation.FuncAnimation(self.fig, self.animate, interval = 1)
+        plt.show()
 
-        except: pass
 
-current_lidar = Lidar()
-current_lidar.set_ROI((0, 180, 400))
-current_lidar.connect()
-current_lidar.get_data()
+if __name__ == "__main__":
+    current_lidar = Lidar()
+    current_lidar.set_ROI((0, 180, 80))
+    current_lidar.initiate()
+
+    current_lidar.plot_data()
