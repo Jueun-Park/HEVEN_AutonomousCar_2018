@@ -66,7 +66,7 @@ class Lidar:
             if 3 <= int(self.data_list[n], 16) / 10 and int(self.data_list[n], 16) / 10 <= self.ROI[2]:
                 parsed_data.append((int(self.data_list[n], 16) / 10, -45 + 0.5 * n))
 
-        print(parsed_data)
+        return parsed_data
 
     def animate(self, i):
         try:
@@ -81,7 +81,7 @@ class Lidar:
             # 이전에 찍었던 점들을 모두 지움
             self.ax1.clear()
 
-            self.ax1.plot(xs, ys, 'ro', markersize = 1)
+            self.ax1.plot(xs, ys, 'ro', markersize = 2)
 
             # ROI 경계선 그리기: 개발자가 보기 편하도록
             self.ax1.plot(self.x1, self.y1, 'b', linewidth = 1)
