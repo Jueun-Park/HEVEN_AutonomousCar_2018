@@ -82,23 +82,30 @@ class PlatformSerial:
             self.speed_for_write = speed_for_write
         if not steer_for_write == 0:
             self.steer_for_write = steer_for_write
+        if not brake_for_write == 0:
+            self.brake_for_write = brake_for_write
+
         try:
             self.steer_for_write = int(self.steer_for_write * 1.015)
 
             if self.steer_for_write < 0:
                 self.steer_for_write = self.steer_for_write + 65536
-            dummy_data[6] = 0
+
             print("steer_for_write = ", self.steer_for_write, "/ speed_for_write = ", self.speed_for_write,
                   "/ BRAKE = ",
                   self.brake_for_write)
+
+            # speed 입력
+            dummy_data[6] = 0
             dummy_data[7] = self.speed_for_write
-            # 16진법 두 칸 전송
+
+            # steer 입력, 16진법 두 칸 전송
             dummy_data[8] = int(self.steer_for_write / 256)
             dummy_data[9] = self.steer_for_write % 256
 
-            self.writing_data[3] = 1
+            self.writing_data[3] = 1  # AorM
             self.writing_data[4] = 0  # E stop
-            self.writing_data[5] = 0
+            self.writing_data[5] = 0  # GEAR
 
             # 임시 데이터를 최종 데이터에 입력
             self.writing_data[6] = dummy_data[6]
@@ -132,6 +139,7 @@ class PlatformSerial:
     def test_write_to_platform(self):
         self.speed_for_write = 0
         self.brake_for_write = 0
+
         if self.check % 3 == 0:
             self.steer_for_write = -1900
         elif self.check % 3 == 1:
@@ -139,6 +147,7 @@ class PlatformSerial:
         else:
             self.steer_for_write = 1900
 
+        # 1초마다 steer 값 변경해서 테스트
         if self.present_time - self.past_time > 1:
             self.check += 1
             self.past_time = time.time()
