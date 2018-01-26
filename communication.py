@@ -129,15 +129,6 @@ class PlatformSerial:
             pass
         self.ser.close()
 
-    def give_data(self, speed, steer, brake):
-        # 사용자 입장에서 쓰고자 하는 데이터만 받아서 _write 로 전달
-        try:
-            while True:
-                self._write(speed, steer, brake)
-        except KeyboardInterrupt:
-            pass
-        self.ser.close()
-
     def test_write_to_platform(self):
         self.speed_for_write = 0
         self.brake_for_write = 0
