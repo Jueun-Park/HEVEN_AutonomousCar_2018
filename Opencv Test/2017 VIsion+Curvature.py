@@ -629,15 +629,6 @@ def detect_Stop(dst, dst_canny, L_roi, R_roi):
                 pass
             return dst, stop_Lines
 
-#Rotation Function added(2018)
-def rotation(img):
-    rows, cols = img.shape[:2]
-
-    r_Img = cv2.getRotationMatrix2D((cols/2, rows/2),90,1)
-
-    rotated_img = cv2.warpAffine(img, r_Img, (cols, rows))
-
-    return rotated_img
 
 #####################################Main Function###################################
 
@@ -650,7 +641,7 @@ def lane_Detection(img):
 
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
-    cv2.imshow('d',dst)
+    # cv2.imshow('d',dst)
     img_canny = image_Processing(dst, pts1, pts2)
 
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
@@ -707,10 +698,43 @@ def lane_Detection(img):
 def dotted_Detection():
     return [len(edge_lx), len(edge_rx)]
 
+def rad_of_curvature(left_line, right_line):
+    """ measure radius of curvature  """
+
+    ploty = left_line.ally
+    leftx, rightx = left_line.allx, right_line.allx
+
+    leftx = leftx[::-1]  # Reverse to match top-to-bottom in y
+    rightx = rightx[::-1]  # Reverse to match top-to-bottom in y
+
+    # Define conversions in x and y from pixels space to meters
+    width_lanes = abs(right_line.startx - left_line.startx)
+    ym_per_pix = 30 / 720  # meters per pixel in y dimension
+    xm_per_pix = 3.7*(720/1280) / width_lanes  # meters per pixel in x dimension
+
+    # Define y-value where we want radius of curvature
+    # the maximum y-value, corresponding to the bottom of the image
+    y_eval = np.max(ploty)
+
+    # Fit new polynomials to x,y in world space
+    left_fit_cr = np.polyfit(ploty * ym_per_pix, leftx * xm_per_pix, 2)
+    right_fit_cr = np.polyfit(ploty * ym_per_pix, rightx * xm_per_pix, 2)
+    # Calculate the new radii of curvature
+    left_curverad = ((1 + (2 * left_fit_cr[0] * y_eval * ym_per_pix + left_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
+        2 * left_fit_cr[0])
+    right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
+        2 * right_fit_cr[0])
+    # radius of curvature result
+    left_line.radius_of_curvature = left_curverad
+    right_line.radius_of_curvature = right_curverad
+
 
 
 cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
-
+cam.set(3,480)
+cam.set(4,270)
+width = 480
+height = 270
 
 if (not cam.isOpened()):
     print ("cam open failed")
@@ -723,8 +747,9 @@ while True:
     resized = cv2.resize(lane_Matrix[0], dim, interpolation =  cv2.INTER_AREA)
     #print (lane_Matrix[0][54])
     cv2.imshow('ee',resized)
-    cv2.imshow('cam',img)
 
+
+    cv2.imshow('cam',img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -751,4 +776,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-'''
+'
