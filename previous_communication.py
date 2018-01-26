@@ -93,7 +93,7 @@ def write_PF():  # 컨트롤러에서 처리한 데이터를 플랫폼으로 전
         print("wSTEER = ", wSTEER, "/ wSPEED = ", wSPEED, "/ BRAKE = ", wBRAKE)
         aData[7] = wSPEED
         # 16진법 두 칸 전송
-        aData[8] = wSTEER / 256
+        aData[8] = int(wSTEER / 256)  # an integer is required -> int() 추가
         aData[9] = wSTEER % 256
 
         wData[3] = 1
@@ -112,7 +112,7 @@ def write_PF():  # 컨트롤러에서 처리한 데이터를 플랫폼으로 전
         wData[12] = rData[16]
         wData[13] = rData[17]
 
-        ser_PF.write(str(wData))
+        ser_PF.write(bytearray(wData))  # byte array 로 입력
 
     except Exception as e:
         print(e)
@@ -156,6 +156,6 @@ if __name__ == '__main__':
     t2 = 0
     while True:
         t1 = time.time()
-        print('delay: ', t2 - t1)
+        print('delay: ', t1 - t2)
         main()
         t2 = time.time()
