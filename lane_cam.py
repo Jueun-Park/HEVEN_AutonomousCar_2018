@@ -45,34 +45,93 @@ L_E = 0
 R_E = 0
 mid_ransac = 135.
 lane_width = 30
-
-# set cross point
+'''
+저번대회의 코드
+(Rotation 을 적용하지 않은 경우)
+# set cross point (Rotation 때문에 저번대회랑 다름)
 y1 = 185
 y2 = 269
 
-# 원래 Pixel
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
 L_x1 = 176  # 400
 L_x2 = 92
 R_x1 = 320  # 560
 R_x2 = 447
 road_width = R_x2 - L_x2
 
-# 바꿀 Pixel
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
 Ax1 = 85 + 5  # 50
 Ax2 = 215 - 5  # 470
 Ay1 = 0
 Ay2 = 570
 
+'''
+# set cross point (Rotation 때문에 저번대회랑 다름)
+x1 = 185
+x2 = 269
+
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
+L_y1 = 320
+L_y2 = 479
+R_y1 = 160
+R_y2 = 1
+road_width = R_y2 - L_y2
+
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
+Ax1 = 0
+Ax2 = 480
+Ay1 = 210
+Ay2 = 60
+
 # Homograpy transform
-pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
-pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
+pts1 = np.float32([[x1, L_y1], [x1, R_y1], [x2, R_y2], [x2, L_y2]])
+pts2 = np.float32([[Ax1, Ay1], [Ax1, Ay2], [Ax2, Ay2], [Ax2, Ay1]])
+#pts1 = np.float32([[185, 320], [185, 160], [269, 1], [269, 479]])
+#pts2 = np.float32([[0, 210], [0, 60], [480, 60], [480, 210]])
 M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
 real_Road_Width = 125
-
+#########################################################################################
 ##################################Sub-Functions##########################################
 
+
+#Filter Functions
+def set_Gray(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (255, 255, 255))
+    img_ROI = cv2.bitwise_and(img, mask)
+    #cv2.imshow('img_ROI',img_ROI)
+    return img_ROI
+
+def set_Red(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (0, 0, 255))
+    img_red = cv2.bitwise_and(img, mask)
+    #cv2.imshow('img_red',img_red)
+    return img_red
+
+def BGR2HSV(img):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower = np.array([0, 0, 160])
+    upper = np.array([255, 255, 255])
+    mask = cv2.inRange(img_hsv, lower, upper)
+    hsv = cv2.bitwise_and(img, img, mask=mask)
+    #cv2.imshow('hsv_Cvt',hsv)
+    return hsv
+
+def gaussian_Blur(img):
+    blur = cv2.GaussianBlur(img, (3,3), 0)
+    #cv2.imshow('Blur',blur)
+    return blur
+'''
+안쓰기로 결정 (Gaussian Filter 만 쓰는게 더 좋을듯)
+def opening(img):
+    kernel = np.ones((3,3), np.uint8)
+    opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+    #cv2.imshow('Opening', opening)
+    return opening
+'''
 def Rotate(src, degrees):
     if degrees == 90:
         dst = cv2.transpose(src)
@@ -88,40 +147,74 @@ def Rotate(src, degrees):
         dst = null
     return dst
 
-def camopen(CAM_ID):
-    cam = cv2.VideoCapture(CAM_ID)  # 카메라 생성
-    if cam.isOpened() == False:  # 카메라 생성 확인
-        print('Can\'t open the CAM')
-        exit()
+def houghLines(Edge_img):
 
-    # 카메라 이미지 해상도 얻기
-    width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
-    height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    print('size = ', width, height)
+    lines = cv2.HoughLines(Edge_img, 1, np.pi / 180, 200)
+
+    try:
+        for line in lines:
+            rho, theta = line[0]
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            x1 = int(x0 + 1000 * (-b))
+            y1 = int(y0 + 1000 * (a))
+            x2 = int(x0 - 1000 * (-b))
+            y2 = int(y0 - 1000 * (a))
+
+            cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
+    except:
+        pass
+    return Edge_img
 
 
 
-    while (True):
-        # 카메라에서 이미지 얻기
-        ret, frame = cam.read()
 
-        ########### 추가 ########################
-        # 이미지를 회전시켜서 img로 돌려받음
-        img = Rotate(frame, 270)  # 90 or 180 or 270
-        ########################################
+CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4'
+#CAM_ID = 0
+cam = cv2.VideoCapture(CAM_ID)  # 카메라 생성
+if cam.isOpened() == False:  # 카메라 생성 확인
+    print('Can\'t open the CAM')
 
-        # 얻어온 이미지 윈도우에 표시
-        cv2.imshow('CAM_OriginalWindow', frame)
 
-        ########### 추가 ########################
-        # 회전된 이미지 표시
-        cv2.imshow('CAM_RotateWindow', img)
-        #########################################
+# 카메라 이미지 해상도 얻기
+width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+print('size = ', width, height)
 
-        # Q 누르기 전까지 작동.
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
 
-    cam.release()
-    cv2.destroyAllWindows()
-    cv2.waitKey(0)
+
+while (True):
+    # 카메라에서 이미지 얻기
+    ret, frame = cam.read()
+
+    # 이미지를 회전시켜서 rotated로 돌려받음
+    rotated = Rotate(frame, 270)  # 90 or 180 or 270
+    ########################################
+    cv2.imshow('ORIGINAL',frame)
+    cv2.imshow('ROTATED',rotated)
+    height, width = rotated.shape[:2]
+    dst = cv2.warpPerspective(rotated, M, (height, width))
+    cv2.imshow('dst',dst)
+
+
+    blur_img = gaussian_Blur(dst)
+    cv2.imshow('blur',blur_img)
+    hsv = BGR2HSV(blur_img)
+    cv2.imshow('blur_hsv',hsv)
+    Canny = cv2.Canny(hsv, 40, 80)
+    cv2.imshow('blur_Canny', Canny)
+    Houghed = houghLines(Canny)
+    cv2.imshow('hough', Houghed)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cam.release()
+cv2.destroyAllWindows()
+cv2.waitKey(0)
+
+
+
+

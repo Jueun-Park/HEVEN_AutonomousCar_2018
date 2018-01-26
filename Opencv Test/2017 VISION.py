@@ -651,8 +651,6 @@ def lane_Detection(img):
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
     cv2.imshow('d',dst)
-    dst = rotation(dst)
-    cv2.imshow('r',dst)
     img_canny = image_Processing(dst, pts1, pts2)
 
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
