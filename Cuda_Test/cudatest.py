@@ -6,6 +6,8 @@ import time
 
 from pycuda.compiler import SourceModule
 
+def doublify(float *a) :
+
 doublify = """
   __global__ void doublify(float *a)
   {
