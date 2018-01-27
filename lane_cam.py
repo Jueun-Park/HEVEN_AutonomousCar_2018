@@ -11,6 +11,11 @@ from sklearn import linear_model
 from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.preprocessing import PolynomialFeatures
+import matplotlib
+from matplotlib import style
 
 
 ######################################변수 선언#########################################
@@ -92,6 +97,7 @@ M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
 real_Road_Width = 125
+
 #########################################################################################
 ##################################Sub-Functions##########################################
 
@@ -168,6 +174,126 @@ def houghLines(Edge_img):
         pass
     return Edge_img
 
+# ransac
+def linear_Ransac(x_points, y_points, y_min, y_max):
+    x_points = np.array(x_points)
+    y_points = np.array(y_points)
+
+    y_points = y_points.reshape(len(y_points), 1)
+    model_ransac = linear_model.RANSACRegressor(linear_model.LinearRegression())
+
+    try:
+        model_ransac.fit(y_points, x_points)
+    except ValueError:
+        pass
+    else:
+        line_Y = np.arange(y_min, y_max)
+        line_X_ransac = model_ransac.predict(line_Y[:, np.newaxis])
+
+        return line_X_ransac
+
+
+# ransac
+def polynomial_Ransac(x_points, y_points, y_min, y_max):
+    x_points = np.array(x_points)
+    y_points = np.array(y_points)
+    y_points = y_points.reshape(len(y_points), 1)
+    model_Sransac = make_pipeline(PolynomialFeatures(2), RANSACRegressor(random_state=42))
+    try:
+        model_Sransac.fit(y_points, x_points)
+    except ValueError:
+        pass
+    else:
+        line_Y = np.arange(y_min, y_max)
+        line_X_ransac = model_Sransac.predict(line_Y[:, np.newaxis])
+        return line_X_ransac
+
+def extract_Line(dst, img_canny, L_line, R_line):
+    global edge_lx, edge_rx
+    # draw line roi
+    cv2.polylines(dst, np.int32([L_line]), 1, (0, 255, 0), 5)
+    cv2.polylines(dst, np.int32([R_line]), 1, (0, 255, 0), 5)
+
+    # canny edge
+    L_edge = set_Gray(img_canny, np.int32([L_line]))
+    R_edge = set_Gray(img_canny, np.int32([R_line]))
+
+    # separate edge points
+    edge_lx, edge_ly = np.where(L_edge >= 255)
+    edge_rx, edge_ry = np.where(R_edge >= 255)
+
+    '''# dotted line
+    if len(edge_lx) <150 :
+        print "left dotted line"
+        print len(edge_lx)
+    if len(edge_rx) <150 :
+        print "right dotted line"
+        print len(edge_rx)'''
+
+    for i in range(len(edge_lx)):
+        try:
+            cv2.circle(dst, (int(edge_ly[i]), int(edge_lx[i])), 1, (0, 155, 255), 2)
+        except TypeError:
+            pass
+    for i in range(len(edge_rx)):
+        try:
+            cv2.circle(dst, (int(edge_ry[i]), int(edge_rx[i])), 1, (255, 155, 0), 2)
+        except TypeError:
+            pass
+    return dst, edge_lx, edge_ly, edge_rx, edge_ry
+
+# draw straight line
+def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+    if L_num == -1:
+        draw_Poly(dst, L_check, L_color)
+    else:
+        draw_Poly(dst, L_points, L_color)
+    if R_num == -1:
+        draw_Poly(dst, R_check, R_color)
+    else:
+        draw_Poly(dst, R_points, R_color)
+    return dst
+
+
+# draw poly line
+def draw_Poly_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+    if L_num == -1:
+        draw_Poly(dst, L_check, L_color)
+    else:
+        draw_Poly(dst, L_points, L_color)
+    if R_num == -1:
+        draw_Poly(dst, R_check, R_color)
+    else:
+        draw_Poly(dst, R_points, R_color)
+    return dst
+
+
+# get fit line
+def get_Fit_Line(f_lines):
+    try:
+        if len(f_lines) == 0:
+            return None
+        elif len(f_lines) == 1:
+            lines = lines.reshape(2, 2)
+        else:
+            lines = np.squeeze(f_lines)
+            lines = lines.reshape(lines.shape[0] * 2, 2)
+    except:
+        return None
+    else:
+        [vx, vy, x, y] = cv2.fitLine(lines, cv2.DIST_L2, 0, 0.01, 0.01)
+        x1 = 960 - 1  # width of cam(image)
+        y1 = int(((960 - x) * vy / vx) + y)
+        x2 = 0
+        y2 = int((-x * vy / vx) + y)
+        result = [x1, y1, x2, y2]
+        return result
+
+
+
+###############################Main Function#################################
+
+
 
 
 
@@ -192,22 +318,23 @@ while (True):
     # 이미지를 회전시켜서 rotated로 돌려받음
     rotated = Rotate(frame, 270)  # 90 or 180 or 270
     ########################################
-    cv2.imshow('ORIGINAL',frame)
-    cv2.imshow('ROTATED',rotated)
+    #cv2.imshow('ORIGINAL',frame)
+    #cv2.imshow('ROTATED',rotated)
     height, width = rotated.shape[:2]
     dst = cv2.warpPerspective(rotated, M, (height, width))
-    cv2.imshow('dst',dst)
-
+    #cv2.imshow('dst',dst)
 
     blur_img = gaussian_Blur(dst)
-    cv2.imshow('blur',blur_img)
+    #cv2.imshow('blur',blur_img)
     hsv = BGR2HSV(blur_img)
-    cv2.imshow('blur_hsv',hsv)
+    #cv2.imshow('blur_hsv',hsv)
     Canny = cv2.Canny(hsv, 40, 80)
-    cv2.imshow('blur_Canny', Canny)
+    #cv2.imshow('hsv_Canny', Canny)
     Houghed = houghLines(Canny)
-    cv2.imshow('hough', Houghed)
-
+    #cv2.imshow('hough', Houghed)
+    x,y = np.where(Canny >=255)
+    print(x)
+    print(y)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
