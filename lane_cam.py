@@ -174,6 +174,69 @@ def houghLines(Edge_img):
         pass
     return Edge_img
 
+def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
+    # left line roi
+    try:
+        if L_num != 0:
+            if direction == 'left' or direction == 'right':
+                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3), (80, bird_height - 60),
+                                   (20, bird_height - 60), (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
+            else:
+                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3),
+                                   (int(L_ransac[num_y - 50]) + 25, bird_height - 60),
+                                   (int(L_ransac[num_y - 50]) - 25, bird_height - 60),
+                                   (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y //3)]])
+        elif direction == 'straight':
+            L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
+                               (bird_width / 2 - 40, bird_height - 65), (15, bird_height - 65)]])
+        elif direction == 'right':
+            L_roi = L_roi_before
+        elif direction == 'left':
+            L_roi = L_roi_before
+        else:
+            L_roi = L_roi_before
+
+    except TypeError:
+        L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
+                           (bird_width / 2 - 40, bird_height - 65), (15, bird_height - 65)]])
+
+        # right line roi
+        try:
+            if R_num != 0:
+                if direction == 'left' or direction == 'right':
+                    R_roi = np.array([[(250, bird_height - 60), (190, bird_height - 60),
+                                       (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
+                                       (int(R_ransac[0]) - 25, height_ROI),
+                                       (int(R_ransac[0]) + 25, height_ROI),
+                                       (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
+                else:
+                    R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height - 60),
+                                       (int(R_ransac[num_y - 50]) - 25, bird_height - 60),
+                                       (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
+                                       (int(R_ransac[0]) - 25, height_ROI),
+                                       (int(R_ransac[0]) + 25, height_ROI),
+                                       (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
+
+            elif direction == 'straight':
+                R_roi = np.array([[(bird_width - 15, bird_height - 65), (bird_width / 2 + 40, bird_height - 65),
+                                   (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
+                                   (bird_width, 280)]])
+
+            elif direction == 'right':
+                R_roi = R_roi_before
+
+            elif direction == 'left':
+                R_roi = R_roi_before
+            else:
+                R_roi = R_roi_before
+        except TypeError:
+            R_roi = np.array([[(bird_width - 15, bird_height - 65), (bird_width / 2 + 40, bird_height - 65),
+                               (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
+                               (bird_width, 280)]])
+        return L_roi, R_roi
+
 # ransac
 def linear_Ransac(x_points, y_points, y_min, y_max):
     x_points = np.array(x_points)
@@ -323,7 +386,6 @@ while (True):
     height, width = rotated.shape[:2]
     dst = cv2.warpPerspective(rotated, M, (height, width))
     #cv2.imshow('dst',dst)
-
     blur_img = gaussian_Blur(dst)
     #cv2.imshow('blur',blur_img)
     hsv = BGR2HSV(blur_img)
@@ -332,9 +394,12 @@ while (True):
     #cv2.imshow('hsv_Canny', Canny)
     Houghed = houghLines(Canny)
     #cv2.imshow('hough', Houghed)
-    x,y = np.where(Canny >=255)
-    print(x)
-    print(y)
+
+
+    X,y = np.where(Canny >=255)
+
+
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
