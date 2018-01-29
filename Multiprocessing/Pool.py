@@ -9,7 +9,8 @@ def f(x):
     return x*x
 
 if __name__ == '__main__':
-    p = Pool(3) # 프로세스 3개 준비
+    p = Pool(3) # 프로세스 x개  준비-> 많이 늘린다고 좋은것은 아님 실행을 통해 적절한 값을 찾아야함
+
     startTime = int(time.time())
     print(p.map(f, range(0,10))) #mapping
     endTime = int(time.time())
