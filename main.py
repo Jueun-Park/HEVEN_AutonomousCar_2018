@@ -13,7 +13,6 @@ import numpy
 import cv2
 import pycuda.autoinit
 import pycuda.driver as cuda
-import multiprocessing
 from multiprocessing import pool, process
 
 
