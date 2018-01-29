@@ -267,6 +267,22 @@ def con_Bye(img, th_green):
 
     return img
 
+def BGR2HSV(img):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower = np.array([0, 0, 160]) # 이 Lower 값을 조절하여 날씨에 대한 대응 가능.
+    upper = np.array([255, 255, 255])
+    #Lower, Upper 에서 건드리는 건 hsv 중 v(Value)값임.[명도]
+    mask = cv2.inRange(img_hsv, lower, upper)
+    hsv = cv2.bitwise_and(img, img, mask=mask)
+    #cv2.imshow('hsv_Cvt',hsv)
+    return hsv
+
+#Gaussian Blur Filter 를 씌워 Noise 를 없앰.
+def gaussian_Blur(img):
+    blur = cv2.GaussianBlur(img, (3,3), 0)  #여기 (3,3)은 kernel 값. 조절 가능(Only 홀수)
+    #cv2.imshow('Blur',blur)
+    return blur
+
 
 # image processing
 def image_Processing(img, pts1, pts2):
@@ -274,7 +290,9 @@ def image_Processing(img, pts1, pts2):
     temp = np.zeros((bird_height, bird_width, 3), dtype=np.uint8)
     rect = np.array([[(0, 200), (0, bird_height),
                       (bird_width, bird_height), (bird_width, 200)]])
+    '''
     img_con_Bye = con_Bye(img, 50)
+    cv2.imshow('con_Bye',img_con_Bye)
     img_red = set_Red(img_con_Bye, rect)
     cv2.imshow('red', img_red)
     img_black_Bye = black_Bye(img_red, 165 - 70)  # + 50)
@@ -283,8 +301,15 @@ def image_Processing(img, pts1, pts2):
     kernel = np.ones((2, 2), np.uint8)
     img_dilation = cv2.dilate(img_black_Bye, kernel, iterations=1)
     img_erosion = cv2.erode(img_dilation, kernel, iterations=1)
+    #cv2.imshow('Erosion', img_erosion)
     img_canny = cv2.Canny(img_erosion, 20, 80)
     cv2.imshow('canny', img_canny)
+    '''
+    blur = gaussian_Blur(img)
+    hsv = BGR2HSV(blur)
+    #cv2.imshow('hsv', hsv)
+    img_canny = cv2.Canny(hsv, 20, 80)
+    #cv2.imshow('Canny',img_canny)
 
     return img_canny
 
@@ -639,6 +664,21 @@ def rotation(img):
 
     return rotated_img
 
+def Rotate(src, degrees):
+    if degrees == 90:
+        dst = cv2.transpose(src)
+        dst = cv2.flip(dst, 1)
+
+    elif degrees == 180:
+        dst = cv2.flip(src, -1)
+
+    elif degrees == 270:
+        dst = cv2.transpose(src)
+        dst = cv2.flip(dst, 0)
+    else:
+        dst = null
+    return dst
+
 #####################################Main Function###################################
 
 # read video
@@ -650,7 +690,7 @@ def lane_Detection(img):
 
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
-    cv2.imshow('d',dst)
+    #cv2.imshow('d',dst)
     img_canny = image_Processing(dst, pts1, pts2)
 
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
@@ -679,7 +719,6 @@ def lane_Detection(img):
                                                        road_Width)
         L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
         draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
-
         L_check = copy.deepcopy(L_linear)
         R_check = copy.deepcopy(R_linear)
         try:
@@ -693,7 +732,9 @@ def lane_Detection(img):
 
         L_check = copy.deepcopy(L_ransac)
         R_check = copy.deepcopy(R_ransac)
-    cv2.imshow('dst', dst)
+    #cv2.imshow('dst', dst)
+    rotated = Rotate(dst, 270)
+    cv2.imshow('Rotated', rotated)
     i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
 
     start_num += 1
@@ -722,9 +763,8 @@ while True:
     dim = (500, 500)
     resized = cv2.resize(lane_Matrix[0], dim, interpolation =  cv2.INTER_AREA)
     #print (lane_Matrix[0][54])
-    cv2.imshow('ee',resized)
-    cv2.imshow('cam',img)
-
+    #cv2.imshow('ee',resized)
+    #cv2.imshow('cam',img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
