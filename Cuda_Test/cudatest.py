@@ -1,4 +1,5 @@
 import pycuda.autoinit
+
 import pycuda.driver as cuda
 import numpy
 import easycuda as ezcuda
