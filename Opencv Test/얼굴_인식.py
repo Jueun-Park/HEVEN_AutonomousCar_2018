@@ -5,7 +5,8 @@ face_cascade = cv2.CascadeClassifier('C:/opencv/build/etc/haarcascades/haarcasca
 cam = cv2.VideoCapture(0)
 while True:
     ret, image = cam.read()
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # 영상을 흑백으로
+    image_umat = cv2.UMat(image)
+    gray = cv2.cvtColor(image_umat, cv2.COLOR_BGR2GRAY)  # 영상을 흑백으로
 
     faces = face_cascade.detectMultiScale(
         gray,
