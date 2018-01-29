@@ -40,12 +40,15 @@ r2_quad = r2_score(y, y_quad_pred)
 
 print('MSE\tLinear: %.2f, \tQuadratic: %.2f' %(mse_lin, mse_quad))
 print('R2\tLinear: %.2f, \tQuadratic: %.2f' %(r2_lin, r2_quad))
+print(y_quad_pred)
+print(X_quad)
 
 plt.scatter(X, y, label='Training Data')
 plt.plot(X_fit, y_lin_fit, label='linear fit', linestyle='--')
 plt.plot(X_fit, y_quad_fit, label='quadratic fit')
 plt.legend(loc=2)
 plt.show()
+
 
 
 

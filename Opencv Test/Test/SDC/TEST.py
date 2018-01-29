@@ -1,8 +1,4 @@
-import calibration
-import finding_lines
-import finding_lines_w
-import threshold
+import cv2
+import numpy as np
 
-
-img = 'C:/Users/jglee/Desktop/IMAGES/test3.jpg'
-calibration.calib(img)
+X_points =

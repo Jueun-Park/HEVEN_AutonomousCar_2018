@@ -1,5 +1,4 @@
 ######################### Module ############################
-import multiprocessing
 from multiprocessing import Process,Queue,Pipe,Pool
 import serial
 import socket
