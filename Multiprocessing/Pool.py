@@ -11,7 +11,9 @@ def function_pool():
     p = Pool(10)  # 프로세스 x개  준비-> 많이 늘린다고 좋은것은 아님 실행을 통해 적절한 값을 찾아야함
 
 
-    print(p.map(f, range(0, 10))) # mapping
+    print(p.map(f, range(0, 10)))
+
+    # mapping
 
 
 
