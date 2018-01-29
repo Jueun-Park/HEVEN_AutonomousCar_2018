@@ -35,3 +35,4 @@ class UTURN:
             elif (self.ct2 - self.ct1) >= 6.011:
                 self.steer = 0
                 self.escape = 1
+    ## 난 죄가 없다
