@@ -27,7 +27,7 @@ class Lidar:
 
     def set_port(self, port): self.PORT = port
 
-    # ROI_tuple: (theta_1, theta_2, radius)
+    # ROI_tuple: (theta_1, theta_2, radius, width, length)
     def set_ROI(self, ROI_tuple):
         self.ROI = ROI_tuple
         self.xmin = self.ROI[2] * math.cos(math.radians(self.ROI[1]))
@@ -41,6 +41,19 @@ class Lidar:
         self.y2 = [(math.tan(math.radians(self.ROI[0])) * v) for v in self.x2]
         self.y3 = [(math.sqrt(self.ROI[2] ** 2 - v ** 2)) for v in self.x3]
 
+        #Linear Equation x-axis
+        self.x4 = numpy.arange(-self.ROI[3] / 2, self.ROI[3] / 2 + 0.05, 0.05)
+
+        self.y4 = numpy.array([0 for i in self.x4])
+        self.y5 = numpy.array([self.ROI[4] for i in self.x4])
+        self.y6 = numpy.array([self.ROI[4] * 2 / 3 for i in self.x4])
+        self.y7 = numpy.array([self.ROI[4] / 3 for i in self.x4])
+
+        #Linear Equation y-axis
+        self.y8 = numpy.arange(0, self.ROI[4] + 0.05, 0.05)
+
+        self.x5 = numpy.array([-self.ROI[3] / 2 for i in self.y8])
+        self.x6 = numpy.array([self.ROI[3] / 2 for i in self.y8])
 
     def loop(self):
         self.sock_lidar = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -60,13 +73,29 @@ class Lidar:
         t.start()
 
     def get_data(self):
-        parsed_data = []
+        danger = []
+        look_out = []
+        object_dectected = []
 
         for n in range(2 * self.ROI[0] + 90, 2 * self.ROI[1] + 91):
-            if 3 <= int(self.data_list[n], 16) / 10 and int(self.data_list[n], 16) / 10 <= self.ROI[2]:
-                parsed_data.append((int(self.data_list[n], 16) / 10, -45 + 0.5 * n))
+            x = int(self.data_list[n], 16) * math.cos(math.radians(0.5 * n - 45)) / 10
+            y = int(self.data_list[n], 16) * math.sin(math.radians(0.5 * n - 45)) / 10
+            if 3 <= int(self.data_list[n], 16) / 10 and int(self.data_list[n], 16) / 10 <= self.ROI[2]\
+                    and abs(x) <= self.ROI[3] / 2 and y <= self.ROI[4]:
+                if y <= self.ROI[4]/3:
+                    danger.append((x,y))
+                elif y <= self.ROI[4] * 2 / 3:
+                    look_out.append((x,y))
+                elif y <= self.ROI[4] / 3:
+                    object_dectected.append((x,y))
+                else:
+                    continue
 
-        return parsed_data
+        print(danger)
+        print(look_out)
+        print(object_dectected)
+        #parsed_data.append((int(self.data_list[n], 16) / 10, -45 + 0.5 * n))
+        #return parsed_data
 
     def animate(self, i):
         try:
@@ -88,6 +117,14 @@ class Lidar:
             self.ax1.plot(self.x2, self.y2, 'b', linewidth = 1)
             self.ax1.plot(self.x3, self.y3, 'b', linewidth = 1)
 
+            self.ax1.plot(self.x4, self.y4, 'r', linewidth = 1)
+            self.ax1.plot(self.x4, self.y5, 'r', linewidth = 1)
+            self.ax1.plot(self.x4, self.y6, 'r', linewidth = 1)
+            self.ax1.plot(self.x4, self.y7, 'r', linewidth = 1)
+
+            self.ax1.plot(self.x5, self.y8, 'r', linewidth = 1)
+            self.ax1.plot(self.x6, self.y8, 'r', linewidth = 1)
+
             # 축 범위 지정하기
             self.ax1.set_xlim(-100, 100)
             self.ax1.set_ylim(0, 200)
@@ -102,7 +139,6 @@ class Lidar:
 
 if __name__ == "__main__":
     current_lidar = Lidar()
-    current_lidar.set_ROI((0, 180, 80))
+    current_lidar.set_ROI((0, 180, 80, 80, 300))
     current_lidar.initiate()
-
     current_lidar.plot_data()
