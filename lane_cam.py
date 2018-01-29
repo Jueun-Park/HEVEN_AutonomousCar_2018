@@ -175,7 +175,7 @@ def houghLinesP(Edge_img):
         lines = cv2.HoughLinesP(Edge_img, 1, np.pi / 360, 100, minLineLength, maxLineGap)
         for i in range(len(lines)):
             for x1, y1, x2, y2 in lines[i]:
-                cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 255, 255), 2)
     except:
         pass
     return Edge_img
@@ -295,11 +295,11 @@ while (True):
     hsv = BGR2HSV(blur_img)
     #cv2.imshow('blur_hsv',hsv)
     Canny = cv2.Canny(hsv, 40, 80)
-    #cv2.imshow('hsv_Canny', Canny)
+    cv2.imshow('hsv_Canny', Canny)
     Houghed = houghLines(Canny)
     #cv2.imshow('hough', Houghed)
     HoughedP = houghLinesP(Canny)
-    #cv2.imshow('houghP',HoughedP)
+    cv2.imshow('houghP',HoughedP)
 
     X,y = np.where(Canny >=255)
 
