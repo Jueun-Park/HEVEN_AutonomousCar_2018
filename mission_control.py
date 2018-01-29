@@ -20,9 +20,15 @@ class MSteering:
         tan_value = (abs(self.dis)/self.y)
         theta = math.degrees(math.atan(tan_value))
 
+        if self.dis < 0:
+            theta = theta * (-1)
+        else:
+            theta = theta
+
         steer_now = theta
         adjust = 0.8
         steer_final = adjust*steer_now + (1-adjust)*self.steer_past
+
         self.steer = steer_final
 
         self.steer_past = steer_final

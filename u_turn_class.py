@@ -1,40 +1,37 @@
-class GlobalU:
-    ct1 = 0
-    ct2 = 0
-    gear = 0
-    steer = 0
-    speed = 36
-    escape = 0
-    sit = 0
-
-
-class UTURN(GlobalU):
+class UTURN:
 
     car_front = 0.28
 
     def __init__(self, end_line):
         self.end_line = end_line/100
+        self.ct1 = 0
+        self.ct2 = 0
+        self.gear = 0
+        self.steer = 0
+        self.speed = 0
+        self.escape = 0
+        self.sit = 0
 
     def findline(self):
         if abs(self.end_line) < self.car_front:
-            GlobalU.speed = 0
-            GlobalU.sit = 1
+            self.speed = 0
+            self.sit = 1
 
     def turnning(self):
         Enc = PlatformSerial()
         Enc._read()
         ENC = Enc.ENC1
-        if GlobalU.sit == 1:
-            if GlobalU.ct1 == 0:
-                GlobalU.ct1 = ENC[0]
-            GlobalU.ct2 = ENC[0]
+        if self.sit == 1:
+            if self.ct1 == 0:
+                self.ct1 = ENC[0]
+            self.ct2 = ENC[0]
 
-            if (GlobalU.ct2 - GlobalU.ct1) < 1:
-                GlobalU.steer = 0
-            elif 1 <= (GlobalU.ct2 - GlobalU.ct1) < 5.50:
-                GlobalU.steer = -1970
-            elif 5.50 <= (GlobalU.ct2 - GlobalU.ct1) < 6:
-                GlobalU.steer = 1970
-            elif (GlobalU.ct2 - GlobalU.ct1) >= 6:
-                GlobalU.steer = 0
-                GlobalU.escape = 1
+            if (self.ct2 - self.ct1) < 1:
+                self.steer = 0
+            elif 1 <= (self.ct2 - self.ct1) < 5.573:
+                self.steer = -1970
+            elif 5.573 <= (self.ct2 - self.ct1) < 6.011:
+                self.steer = 1970
+            elif (self.ct2 - self.ct1) >= 6.011:
+                self.steer = 0
+                self.escape = 1
