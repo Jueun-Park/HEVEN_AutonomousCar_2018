@@ -9,32 +9,58 @@ class Steering:
     car_dis = 0.78  ## front_dis + car_front
     velocity = 1.5
 
-    x = 2.0 ## 임의의 값 설정
-    y = 0.6 ## 임의의 값 설정
-
-    def __init__(self, linear, cross_track_error, stop_line):
+    def __init__(self, mission, linear, cross_track_error, stop_line, obs):
+        self.mission = mission
         self.linear = linear
+
         self.cross_track_error = cross_track_error/100
         self.stop_line = stop_line
+
         self.t1 = 0
         self.t2 = 0
+
         self.gear = 0
         self.steer = 0
         self.steer_past = 0
         self.speed = 54
 
-    def steer_s(self):
-        tan_value = self.linear * (-1)
-        theta_1 = math.degrees(math.atan(tan_value))
+        self.dis = obs[0]
+        self.y = obs[1]
 
-        k = 1
-        if -15 < theta_1 < 15 and abs(self.cross_track_error) < 0.27:
+        self.theta_1 = 0
+        self.theta_2 = 0
+        self.theta_3 = 0
+        self.tan_value = 0
+        self.adjust = 0
+
+    def steer_s(self):
+        if self.linear is None and self.cross_track_error is None:
+            self.tan_value = (abs(self.dis) / self.y)
+            self.theta_3 = math.degrees(math.atan(self.tan_value))
+
+            if self.dis < 0:
+                self.theta_3 = self.theta_3 * (-1)
+            else:
+                self.theta_3 = self.theta_3
+
+            self.theta_1 = 0
+            self.theta_2 = 0
+            self.adjust = 0.1
+        else:
+            self.tan_value = self.linear * (-1)
+            self.theta_1 = math.degrees(math.atan(self.tan_value))
+
+            k = 1
+            if -15 < self.theta_1 < 15 and abs(self.cross_track_error) < 0.27:
                 k = 0.5
 
-        theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
-        steer_now = (theta_1 + theta_2)
-        adjust = 0.3
-        steer_final = (adjust * self.steer_past) + ((1 - adjust) * steer_now)
+            self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
+
+            self.theta_3 = 0
+            self.adjust = 0.3
+
+        steer_now = (self.theta_1 + self.theta_2 + self.theta_3)
+        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)
 
         self.steer = steer_final * 71
 
