@@ -2,8 +2,8 @@ class UTURN:
 
     car_front = 0.28
 
-    def __init__(self, mission, end_line):
-        self.end_line = end_line/100
+    def __init__(self, mission, obs):
+        self.obs_y = obs[1]/100
         self.ct1 = 0
         self.ct2 = 0
         self.gear = 0
@@ -14,7 +14,7 @@ class UTURN:
         self.mission = mission
 
     def findline(self):
-        if abs(self.end_line) < self.car_front:
+        if abs(self.obs_y) < self.car_front:
             self.speed = 0
             self.sit = 1
 
