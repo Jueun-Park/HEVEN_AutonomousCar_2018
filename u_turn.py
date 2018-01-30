@@ -24,6 +24,7 @@ def u_turn(end_line):  ## 후에 회의를 통해서 조정
         sit = 1
     ###########################################
     if sit == 1:
+        speed_Mission = 36
         if b[0] == 0:
             b[0][0] = ENC1[0]
             b[0][1] = ENC1[1]
@@ -38,5 +39,4 @@ def u_turn(end_line):  ## 후에 회의를 통해서 조정
             steer = 1970
         elif (b[1][0] - b[0][0]) >= 6.011:
             steer = 0
-            escape = 1
-    return steer, speed_Mission, escape, gear
+    return steer, speed_Mission, gear
