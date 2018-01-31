@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import threading
 import time
+import sys
 
 class Lidar:
 
@@ -27,10 +28,11 @@ class Lidar:
 
     def set_port(self, port): self.PORT = port
 
-    # ROI_tuple: (theta_1, theta_2, radius, width, length)
+    # ROI_tuple: (width, length)
     def set_ROI(self, ROI_tuple):
         self.ROI = ROI_tuple
-        ''''
+        #극좌표때 쓴 값들
+        '''
         self.xmin = self.ROI[2] * math.cos(math.radians(self.ROI[1]))
         self.xmax = self.ROI[2] * math.cos(math.radians(self.ROI[0]))
 
@@ -73,7 +75,17 @@ class Lidar:
         t = threading.Thread(target = self.loop)
         t.start()
 
+    def set_mode(self, n):
+        if n ==0:
+            self.mode = 0
+        elif n==1:
+            self.mode = 1
+        else:
+            sys.exit(0)
+
+
     def get_data(self):
+        parsed_data = []
         danger = []
         look_out = []
         object_dectected = []
@@ -82,6 +94,10 @@ class Lidar:
             x = (int(self.data_list[n], 16) * math.cos(math.radians(0.5 * n - 45)) / 10)
             y = (int(self.data_list[n], 16) * math.sin(math.radians(0.5 * n - 45)) / 10)
             if 3 <= int(self.data_list[n], 16) / 10 and abs(x) <= self.ROI[0] / 2 and y >= 0 and y <= self.ROI[1]:
+                if self.mode == 0:
+                    parsed_data.append((x,y))
+                    continue
+
                 if y <= self.ROI[1]/3:
                     danger.append((x, y))
                 elif y <= self.ROI[1] * 2 / 3:
@@ -89,14 +105,16 @@ class Lidar:
                 elif y <= self.ROI[1] / 3:
                     object_dectected.append((x, y))
 
-
-        print(danger)
-        print(look_out)
-        print(object_dectected)
+        if self.mode == 0:
+            print(parsed_data)
+        else:
+            print(danger)
+            print(look_out)
+            print(object_dectected)
         #parsed_data.append((int(self.data_list[n], 16) / 10, -45 + 0.5 * n))
         #return parsed_data
 
-    def animate(self, i):
+    def animate(self):
         try:
             xs = []
             ys = []
@@ -120,10 +138,14 @@ class Lidar:
             self.ax1.plot(self.x2, self.y2, 'b', linewidth = 1)
             self.ax1.plot(self.x3, self.y3, 'b', linewidth = 1)
             '''
-            self.ax1.plot(self.x4, self.y4, 'b', linewidth = 1)
-            self.ax1.plot(self.x4, self.y5, 'b', linewidth = 1)
-            self.ax1.plot(self.x4, self.y6, 'b', linewidth = 1)
-            self.ax1.plot(self.x4, self.y7, 'b', linewidth = 1)
+            if self.mode == 0:
+                self.ax1.plot(self.x4, self.y4, 'b', linewidth=1)
+                self.ax1.plot(self.x4, self.y7, 'b', linewidth=1)
+            else:
+                self.ax1.plot(self.x4, self.y4, 'b', linewidth = 1)
+                self.ax1.plot(self.x4, self.y5, 'b', linewidth = 1)
+                self.ax1.plot(self.x4, self.y6, 'b', linewidth = 1)
+                self.ax1.plot(self.x4, self.y7, 'b', linewidth = 1)
 
             self.ax1.plot(self.x5, self.y8, 'b', linewidth = 1)
             self.ax1.plot(self.x6, self.y8, 'b', linewidth = 1)
@@ -138,6 +160,7 @@ class Lidar:
     def plot_data(self):
         anim = animation.FuncAnimation(self.fig, self.animate, interval = 1)
         plt.show()
+
 
 
 if __name__ == "__main__":
