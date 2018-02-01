@@ -204,7 +204,7 @@ def read_Lidar():
         # print data_parsing
         try:
             for i in range(89, 451):
-                distance[i] = int(data_parsing.split(' ')[i], 16)
+                distance[i] = int(dat a_parsing.split(' ')[i], 16)
             for i in range(90, 450):
                 theta = (i * 0.5 - 45) / 180 * math.pi
                 x = math.cos(theta) * float(distance[i] / 1000.)
@@ -493,6 +493,7 @@ def main():
 
     #직접 차로 실험해봐야 오류가 날지 안날지 알 수 있음, 스레드와 달리 메모리오류가 날수도 있음
     #혹은 순차적으로 처리되지 않고 건너뛰는경우도 나올수도 있음
+    #개별함수도 멀티프로세싱이 가능하다면 해볼예정
     Cam_process.join()
     Lidar_process.join()
     Matrix_process.join()

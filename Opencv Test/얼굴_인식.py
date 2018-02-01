@@ -1,11 +1,16 @@
 import cv2
+import time
 
-face_cascade = cv2.CascadeClassifier('C:/opencv/build/etc/haarcascades/haarcascade_frontalface_default.xml')
-
+face_cascade = cv2.CascadeClassifier('/home/heven2018/PycharmProjects/HEVEN_AutonomousCar_2018/venv1/lib/python3.6/site-packages/cv2/data/haarcascade_frontalface_default.xml')
+check = 0
+t1 = time.time()
 cam = cv2.VideoCapture(0)
 while True:
+    t2 = time.time()
+    check += 1
     ret, image = cam.read()
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # 영상을 흑백으로
+    image_umat = cv2.UMat(image)
+    gray = cv2.cvtColor(image_umat, cv2.COLOR_BGR2GRAY)  # 영상을 흑백으로
 
     faces = face_cascade.detectMultiScale(
         gray,
@@ -14,7 +19,10 @@ while True:
         minSize=(30, 30)
     )
 
-    print("Found {0} 횡단보도_표지판_위치_리스트!".format(len(faces)))
+    # print("Found {0} faces!".format(len(faces)))
+    if check % 100 == 0:
+        print(t2 - t1)
+        t1 = time.time()
 
     for (x, y, w, h) in faces:
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
