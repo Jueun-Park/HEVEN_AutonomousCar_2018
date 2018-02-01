@@ -3,22 +3,21 @@
 # output: 표지판 종류 (to car_control)
 
 import cv2
-import numpy as np
 
-# 지난 대회 사용 안 함
-# narrow_cascade = cv2.CascadeClassifier('./sign_xml_files/narrowno.xml')
-# static_cascade = cv2.CascadeClassifier('./sign_xml_files/static_0514.xml')
-# s_curve_cascade = cv2.CascadeClassifier('./sign_xml_files/scurve_0517.xml')
-# parking_cascade = cv2.CascadeClassifier('./sign_xml_files/parkingdetect.xml')
+# modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
+#          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
-# 지난 대회에 사용함
-u_turn_cascade = cv2.CascadeClassifier('./sign_xml_files/uturndetect.xml')  # 1. 유턴
-crosswalk_cascade = cv2.CascadeClassifier('./sign_xml_files/crosswalk.xml')  # 2. 횡단보도
+parking_cascade = cv2.CascadeClassifier('./sign_xml_files/parkingdetect.xml')  # 1. 자동 주차
+static_cascade = cv2.CascadeClassifier('./sign_xml_files/static_0514.xml')  # 2. 정적 장애물
 moving_cascade = cv2.CascadeClassifier('./sign_xml_files/moving_0510.xml')  # 3. 동적 장애물
+s_curve_cascade = cv2.CascadeClassifier('./sign_xml_files/scurve_0517.xml')  # 4. S자 주행
+narrow_cascade = cv2.CascadeClassifier('./sign_xml_files/narrowno.xml')  # 5. 협로 주행
+u_turn_cascade = cv2.CascadeClassifier('./sign_xml_files/uturndetect.xml')  # 6. 유턴
+crosswalk_cascade = cv2.CascadeClassifier('./sign_xml_files/crosswalk.xml')  # 7. 횡단보도
 
 
 # 웹캠인 경우: capture = cv2.VideoCapture(0), 0은 주소값
-# 비디오인 경우: capture = cv2.VideoCapture('vtest.avi'), 파일명
+# 비디오인 경우: capture = cv2.VideoCapture('video_test.avi'), 파일명
 def show_video(capture):
     while True:
         # ret: frame capture 결과(boolean)
@@ -41,10 +40,26 @@ class SignDetection:
         self.frame = frame
         self.cascade = cascade
 
-    # 예전 코드 보고 객체로 짜긴 한 건데 솔직히 예전 코드의 알고리즘이
-    # 뭔지 잘 모르겠어서 일단
-    # ...모르겠음
-    # 하...
+        self.parking_stop = 0
+        self.static_stop = 0
+        self.moving_stop = 0
+        self.s_curve_stop = 0
+        self.narrow_stop = 0
+        self.u_turn_stop = 0
+        self.crosswalk_stop = 0
+
+        self.detect_crosswalk = 0
+        self.detect_narrow = 0
+        self.detect_moving = 0
+        self.detect_static = 0
+        self.detect_s_curve = 0
+        self.detect_u_turn = 0
+        self.detect_parking = 0
+
+    def cam_open(self):
+        pass
+
+
     def detect(self):
         if self.stop == 3 or self.is_in_mission:
             pass
@@ -53,7 +68,7 @@ class SignDetection:
             print("Stop is ", self.stop)
 
             # 흑백 이미지에서 횡단보도_표지판_위치_리스트 추출
-            sign = self.cascade.detectMultiScale(gray, 1.1, 20)
+            sign = self.cascade.detectMultiScale(image=gray, scaleFactor=1.1, minNeighbers=20)
 
             for (x, y, w, h) in sign:  # 횡단보도_표지판_위치_리스트 위치 화면에 사각형으로 표시
                 cv2.rectangle(self.frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
@@ -64,6 +79,9 @@ class SignDetection:
 
                 if self.stop == 3:
                     self.is_in_mission = True
+
+    def test_main(self):
+        pass
 
 
 def main():
