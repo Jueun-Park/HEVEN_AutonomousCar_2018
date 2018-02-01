@@ -307,7 +307,7 @@ def image_Processing(img, pts1, pts2):
     '''
     blur = gaussian_Blur(img)
     hsv = BGR2HSV(blur)
-    cv2.imshow('hsv', hsv)
+    #cv2.imshow('hsv', hsv)
     img_canny = cv2.Canny(hsv, 20, 80)
     #cv2.imshow('Canny',img_canny)
 
@@ -385,7 +385,7 @@ def extract_Line(dst, img_canny, L_line, R_line):
     # draw line roi
     cv2.polylines(dst, np.int32([L_line]), 1, (0, 255, 0), 5)
     cv2.polylines(dst, np.int32([R_line]), 1, (0, 255, 0), 5)
-    #cv2.imshow('poly',dst) --> ROI 부분만 추가됨.
+    #cv2.imshow('ROI added',dst) --> ROI 부분만 추가됨.
 
     # canny edge
     L_edge = set_Gray(img_canny, np.int32([L_line]))
@@ -657,14 +657,6 @@ def detect_Stop(dst, dst_canny, L_roi, R_roi):
             return dst, stop_Lines
 
 #Rotation Function added(2018)
-def rotation(img):
-    rows, cols = img.shape[:2]
-
-    r_Img = cv2.getRotationMatrix2D((cols/2, rows/2),90,1)
-
-    rotated_img = cv2.warpAffine(img, r_Img, (cols, rows))
-
-    return rotated_img
 
 def Rotate(src, degrees):
     if degrees == 90:
@@ -681,6 +673,26 @@ def Rotate(src, degrees):
         dst = null
     return dst
 
+#Corner Detection Function Added(2018)
+
+def cornerDetection(img):
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img2, img3 = None, None
+
+    fast = cv2.FastFeatureDetector_create(50)
+
+    kp = fast.detect(img, None)
+    img2 = cv2.drawKeypoints(img, kp, img2, (255, 0, 0))
+    cv2.imshow('FAST1', img2)
+
+    fast.setNonmaxSuppression(0)
+    kp = fast.detect(img, None)
+    img3 = cv2.drawKeypoints(img, kp, img3, (255, 0, 0))
+    cv2.imshow('FAST2', img3)
+
+
+
+
 #####################################Main Function###################################
 
 # read video
@@ -692,7 +704,8 @@ def lane_Detection(img):
 
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
-    #cv2.imshow('d',dst)
+    cv2.imshow('d',dst)
+
     img_canny = image_Processing(dst, pts1, pts2)
 
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
@@ -737,11 +750,11 @@ def lane_Detection(img):
 
         L_check = copy.deepcopy(L_ransac)
         R_check = copy.deepcopy(R_ransac)
-    #cv2.imshow('dst', dst)
+    cv2.imshow('dst', dst)
     rotated = Rotate(dst, 270)
     cv2.imshow('Rotated', rotated)
     i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
-
+    cv2.imshow('asd',i_dst)
     start_num += 1
     frame_num += 1
     L_num += 1
@@ -754,9 +767,16 @@ def dotted_Detection():
     return [len(edge_lx), len(edge_rx)]
 
 
-
 cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
+#cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
+#cam = cv2.VideoCapture(1)
 
+cam.set(cv2.CAP_PROP_FRAME_WIDTH,480)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT,270)
+
+w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+print('size = ', w, h)
 
 if (not cam.isOpened()):
     print ("cam open failed")
