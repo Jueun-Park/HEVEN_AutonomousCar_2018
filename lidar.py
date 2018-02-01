@@ -76,15 +76,19 @@ class Lidar:
         t.start()
 
     def set_mode(self, n):
-        if n ==0:
+        if n == 0:
             self.mode = 0
-        elif n==1:
+        elif n == 1:
             self.mode = 1
         else:
             sys.exit(0)
 
 
     def get_data(self):
+        #mode를 설정하지 않으면 프로그램이 안돌아감
+        if self.mode is None:
+            sys.exit(0)
+
         parsed_data = []
         danger = []
         look_out = []
@@ -111,8 +115,6 @@ class Lidar:
             print(danger)
             print(look_out)
             print(object_dectected)
-        #parsed_data.append((int(self.data_list[n], 16) / 10, -45 + 0.5 * n))
-        #return parsed_data
 
     def animate(self):
         try:
@@ -167,5 +169,6 @@ if __name__ == "__main__":
     current_lidar = Lidar()
     current_lidar.set_ROI((80, 300))
     current_lidar.initiate()
-    # time.sleep(1)
-    current_lidar.plot_data()
+    time.sleep(1)
+    current_lidar.set_mode(1)
+    current_lidar.get_data()
