@@ -1,5 +1,5 @@
 import time
-## 엔코더는 앞바퀴 왼쪽에 부탁되어 있음
+# 엔코더는 앞바퀴 왼쪽에 부탁되어 있음
 
 
 class Parking:
@@ -12,6 +12,7 @@ class Parking:
         self.pt2 = 0
         self.pt3 = 0
         self.pt4 = 0
+
         self.gear = 0
         self.steer = 0
         self.speed = 0
@@ -50,7 +51,7 @@ class Parking:
             if self.place == 1:
                 if self.corner2 < 0.1:
                     self.speed = 0
-                    self.sit =1
+                    self.sit = 1
 
         if self.sit == 1:
             if self.pt1 == 0:
@@ -91,6 +92,7 @@ class Parking:
             elif (self.pt4 - self.pt3) >= -3.724:
                 self.steer = 0
                 self.gear = 0
+
 
 
 

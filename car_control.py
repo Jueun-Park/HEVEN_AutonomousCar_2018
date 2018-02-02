@@ -10,9 +10,9 @@ import math
 
 class Steering:
 
-    front_dis = 0.5  ## 임의로 거리 지정 (실험값 필요)
+    front_dis = 0.5  # 임의로 거리 지정 (실험값 필요)
     car_front = 0.28
-    car_dis = 0.78  ## front_dis + car_front
+    car_dis = 0.78  # front_dis + car_front
     velocity = 1.5
 
     def __init__(self, mission, linear, cross_track_error, stop_line, obs):
@@ -80,12 +80,12 @@ class Steering:
             self.steer_past = -27.746
 
     def cross_walk(self):
-        if abs(self.stop_line) / 100 < 1:  ## 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(self.stop_line) / 100 < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
 
-            if (self.t2 - self.t1) < 3.0:  ## 3초간 정지, 실험을 통해 보정 필요
+            if (self.t2 - self.t1) < 3.0:  # 3초간 정지, 실험을 통해 보정 필요
                 self.speed = 0
             else:
                 self.speed = 54
