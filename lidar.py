@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import threading
 import time
-import sys
 
 class Lidar:
 
@@ -28,11 +27,10 @@ class Lidar:
 
     def set_port(self, port): self.PORT = port
 
-    # ROI_tuple: (width, length)
+    # ROI_tuple: (theta_1, theta_2, radius, width, length)
     def set_ROI(self, ROI_tuple):
         self.ROI = ROI_tuple
-        #극좌표때 쓴 값들
-        '''
+        ''''
         self.xmin = self.ROI[2] * math.cos(math.radians(self.ROI[1]))
         self.xmax = self.ROI[2] * math.cos(math.radians(self.ROI[0]))
 
@@ -80,14 +78,8 @@ class Lidar:
             self.mode = 0
         elif n == 1:
             self.mode = 1
-        else:
-            sys.exit(0)
-
 
     def get_data(self):
-        #mode를 설정하지 않으면 프로그램이 안돌아감
-        if self.mode is None:
-            sys.exit(0)
 
         parsed_data = []
         danger = []
@@ -116,7 +108,7 @@ class Lidar:
             print(look_out)
             print(object_dectected)
 
-    def animate(self):
+    def animate(self, i):
         try:
             xs = []
             ys = []
@@ -140,12 +132,10 @@ class Lidar:
             self.ax1.plot(self.x2, self.y2, 'b', linewidth = 1)
             self.ax1.plot(self.x3, self.y3, 'b', linewidth = 1)
             '''
-            if self.mode == 0:
-                self.ax1.plot(self.x4, self.y4, 'b', linewidth=1)
-                self.ax1.plot(self.x4, self.y7, 'b', linewidth=1)
-            else:
-                self.ax1.plot(self.x4, self.y4, 'b', linewidth = 1)
-                self.ax1.plot(self.x4, self.y5, 'b', linewidth = 1)
+
+            self.ax1.plot(self.x4, self.y4, 'b', linewidth = 1)
+            self.ax1.plot(self.x4, self.y5, 'b', linewidth = 1)
+            if self.mode == 1:
                 self.ax1.plot(self.x4, self.y6, 'b', linewidth = 1)
                 self.ax1.plot(self.x4, self.y7, 'b', linewidth = 1)
 
@@ -164,11 +154,10 @@ class Lidar:
         plt.show()
 
 
-
 if __name__ == "__main__":
     current_lidar = Lidar()
     current_lidar.set_ROI((80, 300))
     current_lidar.initiate()
     time.sleep(1)
     current_lidar.set_mode(1)
-    current_lidar.get_data()
+    current_lidar.plot_data()
