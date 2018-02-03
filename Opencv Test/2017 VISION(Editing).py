@@ -307,7 +307,7 @@ def image_Processing(img, pts1, pts2):
     '''
     blur = gaussian_Blur(img)
     hsv = BGR2HSV(blur)
-    #cv2.imshow('hsv', hsv)
+    cv2.imshow('hsv', hsv)
     img_canny = cv2.Canny(hsv, 20, 80)
     #cv2.imshow('Canny',img_canny)
 
@@ -385,6 +385,7 @@ def extract_Line(dst, img_canny, L_line, R_line):
     # draw line roi
     cv2.polylines(dst, np.int32([L_line]), 1, (0, 255, 0), 5)
     cv2.polylines(dst, np.int32([R_line]), 1, (0, 255, 0), 5)
+    #cv2.imshow('poly',dst) --> ROI 부분만 추가됨.
 
     # canny edge
     L_edge = set_Gray(img_canny, np.int32([L_line]))
@@ -412,6 +413,7 @@ def extract_Line(dst, img_canny, L_line, R_line):
             cv2.circle(dst, (int(edge_ry[i]), int(edge_rx[i])), 1, (255, 155, 0), 2)
         except TypeError:
             pass
+    #cv2.imshow('Extract line fin', dst)
     return dst, edge_lx, edge_ly, edge_rx, edge_ry
 
 
@@ -699,7 +701,8 @@ def lane_Detection(img):
 
     L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
-    '''try:
+    '''
+    try:
         print "Left! ",L_ransac[0],mid_ransac
     except: pass
     try:
@@ -718,7 +721,9 @@ def lane_Detection(img):
         L_linear, R_linear, L_num, R_num = check_Error(L_linear, R_linear, L_check, R_check, L_num, R_num, direction,
                                                        road_Width)
         L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
+        #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
         draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+        cv2.imshow('asdasdasd',dst)
         L_check = copy.deepcopy(L_linear)
         R_check = copy.deepcopy(R_linear)
         try:

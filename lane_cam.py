@@ -293,13 +293,13 @@ while (True):
     blur_img = gaussian_Blur(dst)
     #cv2.imshow('blur',blur_img)
     hsv = BGR2HSV(blur_img)
-    #cv2.imshow('blur_hsv',hsv)
+    cv2.imshow('blur_hsv',hsv)
     Canny = cv2.Canny(hsv, 40, 80)
     cv2.imshow('hsv_Canny', Canny)
     Houghed = houghLines(Canny)
     #cv2.imshow('hough', Houghed)
     HoughedP = houghLinesP(Canny)
-    cv2.imshow('houghP',HoughedP)
+    #cv2.imshow('houghP',HoughedP)
 
     X,y = np.where(Canny >=255)
 

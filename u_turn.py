@@ -1,3 +1,6 @@
+# 엔코더는 앞바퀴 왼쪽에 부탁되어 있음
+
+
 class UTURN:
 
     car_front = 0.28
@@ -30,9 +33,7 @@ class UTURN:
 
             if (self.ct2 - self.ct1) < 1:
                 self.steer = 0
-            elif 1 <= (self.ct2 - self.ct1) < 5.573:
+            elif 1 <= (self.ct2 - self.ct1) < 3.254:
                 self.steer = -1970
-            elif 5.573 <= (self.ct2 - self.ct1) < 6.011:
-                self.steer = 1970
-            elif (self.ct2 - self.ct1) >= 6.011:
+            elif (self.ct2 - self.ct1) >= 3.254:
                 self.steer = 0
