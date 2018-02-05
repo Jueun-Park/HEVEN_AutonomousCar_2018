@@ -15,8 +15,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import PolynomialFeatures
 import matplotlib
-from matplotlib import style
-
+from numpy.polynomial.polynomial import polyfit
 
 ######################################변수 선언#########################################
 global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
@@ -51,7 +50,7 @@ R_E = 0
 mid_ransac = 135.
 lane_width = 30
 
-'''
+
 #############################480x270###################################
 #저번대회의 코드
 #(Rotation 을 적용하지 않은 경우)
@@ -97,6 +96,7 @@ Ay2 = 432
 pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
 pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
 ###########################################################################
+'''
 ''' Rotation 한 후 
 # set cross point (Rotation 때문에 저번대회랑 다름)
 x1 = 185
@@ -130,7 +130,7 @@ real_Road_Width = 125
 ##################################Sub-Functions##########################################
 
 
-def image_Processing(img):
+def hsv_Image_Processing(img):
     #############가우시안 블러#############
     # #Gaussian Blur Filter 를 씌워 Noise 를 없앰.
     blur = cv2.GaussianBlur(img, (3, 3), 0)  # 여기 (3,3)은 kernel 값. 조절 가능(Only 홀수)
@@ -140,7 +140,7 @@ def image_Processing(img):
     ############HSV로 바꾸기##############
     # BGR image 를 HSV image 로 변환하여 차선만 잘 보이게 함.
     img_hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
-    lower = np.array([0, 0, 185])  # 이 Lower 값을 조절하여 날씨에 대한 대응 가능.
+    lower = np.array([0, 0, 160])  # 이 Lower 값을 조절하여 날씨에 대한 대응 가능.
     upper = np.array([255, 255, 255])
     # Lower, Upper 에서 건드리는 건 hsv 중 v(Value)값임.[명도]
     mask = cv2.inRange(img_hsv, lower, upper)
@@ -149,6 +149,20 @@ def image_Processing(img):
     #####################################
 
     return blur, hsv
+
+def bgr_Image_Processing(img):
+    ##############가우시안 블러#############
+    blur = cv2.GaussianBlur(img, (3,3), 0)
+    cv2.imshow('Blur',blur)
+    #####################################
+
+    #############Extract White############
+    bgr_Threshold = [200, 200, 200]
+    thresholds = (img[:, :, 0] < bgr_Threshold[0]) \
+                 | (img[:, :, 1] < bgr_Threshold[1]) \
+                 | (img[:, :, 2] < bgr_Threshold[2])
+    mark[thresholds] = [0, 0, 0]
+
 
 
 # 원하는 각도로 영상을 Rotate 시킬 수 있음.
@@ -167,40 +181,6 @@ def Rotate(src, degrees):
         dst = null
     return dst
 
-def houghLines(Edge_img):
-
-    lines = cv2.HoughLines(Edge_img, 1, np.pi / 180, 200)
-
-    try:
-        for line in lines:
-            rho, theta = line[0]
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
-            x1 = int(x0 + 1000 * (-b))
-            y1 = int(y0 + 1000 * (a))
-            x2 = int(x0 - 1000 * (-b))
-            y2 = int(y0 - 1000 * (a))
-
-            cv2.line(Edge_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-    except:
-        pass
-    return Edge_img
-
-def houghLinesP(Edge_img):
-
-    minLineLength = 100
-    maxLineGap = 10
-
-    try:
-        lines = cv2.HoughLinesP(Edge_img, 1, np.pi / 360, 100, minLineLength, maxLineGap)
-        for i in range(len(lines)):
-            for x1, y1, x2, y2 in lines[i]:
-                cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 255, 255), 2)
-    except:
-        pass
-    return Edge_img
 
 def lane_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
     # left line roi
@@ -275,6 +255,50 @@ def poly_Ransac(x_points, y_points, y_min, y_max):
 
     return
 
+# get fit line
+def get_Fit_Line(f_lines):
+    try:
+        if len(f_lines) == 0:
+            return None
+        elif len(f_lines) == 1:
+            lines = lines.reshape(2, 2)
+        else:
+            lines = np.squeeze(f_lines)
+            lines = lines.reshape(lines.shape[0] * 2, 2)
+    except:
+        return None
+    else:
+        [vx, vy, x, y] = cv2.fitLine(lines, cv2.DIST_L2, 0, 0.01, 0.01)
+        x1 = 960 - 1  # width of cam(image)
+        y1 = int(((960 - x) * vy / vx) + y)
+        x2 = 0
+        y2 = int((-x * vy / vx) + y)
+        result = [x1, y1, x2, y2]
+        return result
+
+#Detect Stop Line
+def detect_Stop(dst, dst_canny, L_roi, R_roi):
+    stop_Roi = np.array([[(45, 440), (205, 440), (205, 5), (45, 5)]])
+    # cv2.polylines(dst, stop_Roi, 1, (0,155,0),5)
+    img_Stop = set_Gray(dst_canny, stop_Roi)
+    line_arr = cv2.HoughLinesP(img_Stop, 1, 1 * np.pi / 180, 30, np.array([]), 10, 30)
+    line_arr = np.array(np.squeeze(line_arr))
+    line_arr_t = line_arr.transpose()
+    if line_arr.shape != ():
+        slope_Degree = ((np.arctan2(line_arr_t[1] - line_arr_t[3], line_arr_t[0] - line_arr_t[2]) * 180) / np.pi)
+        try:
+            line_arr = line_arr[np.abs(slope_Degree) > 160]
+            line_arr = line_arr[:, None]
+        except IndexError:
+            pass
+        else:
+            stop_Lines = get_Fit_Line(line_arr)
+            try:
+                cv2.line(dst, (stop_Lines[0], stop_Lines[1]), (stop_Lines[2], stop_Lines[3]), (0, 155, 0), 5)
+            except TypeError:
+                pass
+            return dst, stop_Lines
+
 
 
 ###############################Main Function#################################
@@ -288,8 +312,8 @@ def lane_Detection(img):
 
 
 #CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4'
-#CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4'
-CAM_ID = 1
+CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4'
+#CAM_ID = 1
 
 cam = cv2.VideoCapture(CAM_ID)  # 카메라 생성
 if cam.isOpened() == False:  # 카메라 생성 확인
@@ -318,9 +342,10 @@ while (True):
     dst = cv2.warpPerspective(frame, M, (width, height))
     #dst = cv2.warpPerspective(rotated, M, (height, width)) 이건 Rotate 한 후의 코드.
     cv2.imshow('dst',dst)
-    image_Processing(dst)
+    hsv_Image_Processing(dst)
     i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
     cv2.imshow('asd', i_dst)
+
 
 
     if cv2.waitKey(1) & 0xFF == ord('q'):

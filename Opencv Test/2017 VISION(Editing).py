@@ -385,7 +385,7 @@ def extract_Line(dst, img_canny, L_line, R_line):
     # draw line roi
     cv2.polylines(dst, np.int32([L_line]), 1, (0, 255, 0), 5)
     cv2.polylines(dst, np.int32([R_line]), 1, (0, 255, 0), 5)
-    #cv2.imshow('ROI added',dst) --> ROI 부분만 추가됨.
+    cv2.imshow('ROI added',dst) #--> ROI 부분만 추가됨.
 
     # canny edge
     L_edge = set_Gray(img_canny, np.int32([L_line]))
@@ -413,7 +413,7 @@ def extract_Line(dst, img_canny, L_line, R_line):
             cv2.circle(dst, (int(edge_ry[i]), int(edge_rx[i])), 1, (255, 155, 0), 2)
         except TypeError:
             pass
-    #cv2.imshow('Extract line fin', dst)
+    cv2.imshow('Extract line fin', dst)
     return dst, edge_lx, edge_ly, edge_rx, edge_ry
 
 
@@ -709,11 +709,11 @@ def lane_Detection(img):
     img_canny = image_Processing(dst, pts1, pts2)
 
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
-
     dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
-
+    cv2.imshow('extract',dst)
     L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
+    print(R_ransac)
     '''
     try:
         print "Left! ",L_ransac[0],mid_ransac
