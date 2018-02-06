@@ -640,7 +640,7 @@ def lane_Detection(img):
         R_check = copy.deepcopy(R_ransac)
     cv2.imshow('dst',dst)
     i_dst = cv2.warpPerspective(dst,i_M,(bird_height,bird_width))
-
+    cv2.imshow('i_dst', i_dst)
     start_num += 1
     frame_num += 1
     L_num += 1
