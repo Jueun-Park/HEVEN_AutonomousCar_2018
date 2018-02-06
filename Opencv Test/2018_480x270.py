@@ -45,18 +45,18 @@ lane_width = 30
 y1 = 185
 y2 = 269
 
-# º¯Çü Àü »ç°¢Á¡
-L_x1 = 176  # 400
-L_x2 = 92
+# 원래 Pixel
+L_x1 = 160  # 400
+L_x2 = 0
 R_x1 = 320  # 560
-R_x2 = 447
+R_x2 = 480
 road_width = R_x2 - L_x2
 
-# º¯Çü ÈÄ »ç°¢Á¡
-Ax1 = 85 + 5  # 50
-Ax2 = 215 - 5  # 470
+# 바꿀 Pixel
+Ax1 = 60  # 50
+Ax2 = 210  # 470
 Ay1 = 0
-Ay2 = 570
+Ay2 = 480
 
 # Homograpy transform
 pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
