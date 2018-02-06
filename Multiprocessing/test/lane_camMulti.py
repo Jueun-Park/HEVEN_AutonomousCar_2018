@@ -154,6 +154,7 @@ def houghLines(Edge_img):
     try:
 
         for line in lines:
+
             rho, theta = line[0]
             a = np.cos(theta)
             b = np.sin(theta)
