@@ -148,7 +148,9 @@ def hsv_Image_Processing(img):
     cv2.imshow('hsv',hsv)
     #####################################
 
-    return blur, hsv
+    ##############Canny Edge#############
+    img_canny = cv2.Canny(hsv, 20, 80)
+    return img_canny
 
 def bgr_Image_Processing(img):
     ##############가우시안 블러#############
@@ -163,7 +165,11 @@ def bgr_Image_Processing(img):
                  | (img[:, :, 2] < bgr_Threshold[2])
     mark[thresholds] = [0, 0, 0]
 
-
+def set_Gray(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (255, 255, 255))
+    img_ROI = cv2.bitwise_and(img, mask)
+    return img_ROI
 
 # 원하는 각도로 영상을 Rotate 시킬 수 있음.
 def Rotate(src, degrees):
@@ -246,6 +252,40 @@ def lane_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_r
     return L_roi, R_roi
 
 def lane_Extract(dst, img_canny, L_line, R_line):
+    global edge_lx, edge_rx
+
+    # draw line roi
+    cv2.polylines(dst, np.int32([L_line]), 1, (0, 255, 0), 5)
+    cv2.polylines(dst, np.int32([R_line]), 1, (0, 255, 0), 5)
+    cv2.imshow('ROI added', dst)  # --> ROI 부분만 추가됨.
+
+    # canny edge
+    L_edge = set_Gray(img_canny, np.int32([L_line]))
+    R_edge = set_Gray(img_canny, np.int32([R_line]))
+
+    # separate edge points
+    edge_lx, edge_ly = np.where(L_edge >= 255)
+    edge_rx, edge_ry = np.where(R_edge >= 255)
+
+    '''# dotted line
+    if len(edge_lx) <150 :
+        print "left dotted line"
+        print len(edge_lx)
+    if len(edge_rx) <150 :
+        print "right dotted line"
+        print len(edge_rx)'''
+
+    for i in range(len(edge_lx)):
+        try:
+            cv2.circle(dst, (int(edge_ly[i]), int(edge_lx[i])), 1, (0, 155, 255), 2)
+        except TypeError:
+            pass
+    for i in range(len(edge_rx)):
+        try:
+            cv2.circle(dst, (int(edge_ry[i]), int(edge_rx[i])), 1, (255, 155, 0), 2)
+        except TypeError:
+            pass
+    # cv2.imshow('Extract line fin', dst)
 
     return dst, edge_lx, edge_ly, edge_rx, edge_ry
 
@@ -300,14 +340,14 @@ def detect_Stop(dst, dst_canny, L_roi, R_roi):
             return dst, stop_Lines
 
 
-
 ###############################Main Function#################################
 
-def lane_Detection(img):
-    #일단, 보여줄 건 추출한 lane을 보여주고, 그에 따른 이차함수의 계수 3개를 보여줌.
+def lane_Coef(img):
+    #이차함수의 계수 3개를 보여줌.
 
     return coef1, coef2, coef3
     #이차함수 꼴 = coef1*(x^2) + coef2*x + coef3
+
 
 
 
@@ -331,6 +371,7 @@ print('size = ', width, height)
 
 
 while (True):
+
     # 카메라에서 이미지 얻기
     ret, frame = cam.read()
     # 이미지를 회전시켜서 rotated로 돌려받음
@@ -345,6 +386,7 @@ while (True):
     hsv_Image_Processing(dst)
     i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
     cv2.imshow('asd', i_dst)
+
 
 
 
