@@ -21,7 +21,7 @@ bird_height = 480
 bird_width = 270
 height = 270
 width = 480
-height_ROI = 270
+height_ROI = 270 # 얘만 잘 조절하면 ROI 길이 조절 가능.
 L_num = 0
 R_num = 0
 L_ransac = 0
@@ -390,7 +390,6 @@ def extract_Line(dst, img_canny, L_line, R_line):
     # canny edge
     L_edge = set_Gray(img_canny, np.int32([L_line]))
     R_edge = set_Gray(img_canny, np.int32([R_line]))
-
     # separate edge points
     edge_lx, edge_ly = np.where(L_edge >= 255)
     edge_rx, edge_ry = np.where(R_edge >= 255)
@@ -413,7 +412,7 @@ def extract_Line(dst, img_canny, L_line, R_line):
             cv2.circle(dst, (int(edge_ry[i]), int(edge_rx[i])), 1, (255, 155, 0), 2)
         except TypeError:
             pass
-    cv2.imshow('Extract line fin', dst)
+    #cv2.imshow('Extract line fin', dst)
     return dst, edge_lx, edge_ly, edge_rx, edge_ry
 
 
@@ -683,12 +682,12 @@ def cornerDetection(img):
 
     kp = fast.detect(img, None)
     img2 = cv2.drawKeypoints(img, kp, img2, (255, 0, 0))
-    cv2.imshow('FAST1', img2)
+    #cv2.imshow('FAST1', img2)
 
     fast.setNonmaxSuppression(0)
     kp = fast.detect(img, None)
     img3 = cv2.drawKeypoints(img, kp, img3, (255, 0, 0))
-    cv2.imshow('FAST2', img3)
+    #cv2.imshow('FAST2', img3)
 
 
 
@@ -704,16 +703,15 @@ def lane_Detection(img):
 
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
-    cv2.imshow('d',dst)
+    #cv2.imshow('d',dst)
 
     img_canny = image_Processing(dst, pts1, pts2)
 
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
     dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
-    cv2.imshow('extract',dst)
+    #cv2.imshow('extract',dst)
     L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
-    print(R_ransac)
     '''
     try:
         print "Left! ",L_ransac[0],mid_ransac
@@ -736,7 +734,7 @@ def lane_Detection(img):
         L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
         #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
         draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
-        cv2.imshow('asdasdasd',dst)
+        #cv2.imshow('asdasdasd',dst)
         L_check = copy.deepcopy(L_linear)
         R_check = copy.deepcopy(R_linear)
         try:
@@ -752,7 +750,7 @@ def lane_Detection(img):
         R_check = copy.deepcopy(R_ransac)
     cv2.imshow('dst', dst)
     rotated = Rotate(dst, 270)
-    cv2.imshow('Rotated', rotated)
+    #cv2.imshow('Rotated', rotated)
     i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
     cv2.imshow('asd',i_dst)
     start_num += 1
