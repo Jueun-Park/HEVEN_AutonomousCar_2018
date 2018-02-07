@@ -29,6 +29,7 @@ class Macro:
         Enc = PlatformSerial()
         Enc._read()
         ENC = Enc.ENC1
+
         if self.sit == 0:
             self.speed = 36
             if self.ct1 == 0:

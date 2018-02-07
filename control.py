@@ -7,6 +7,7 @@ import math
 
 
 class Control:
+
     velocity = 1.5
     car_front = 0.28
 
@@ -35,18 +36,28 @@ class Control:
         self.mission_num = mission_num
 
         if self.mission_num == 0:
-            self.cross_track_error = first
+            self.cross_track_error = first/100
             self.linear = second
 
             self.__default__()
 
-        elif self.mission_num == 2 or 4 or 5:
+        elif self.mission_num == 2:
+            self.obs_pos = first
+
+            self.__obs__()
+
+        elif self.mission_num == 4:
+            self.obs_pos = first
+
+            self.__obs__()
+
+        elif self.mission_num == 5:
             self.obs_pos = first
 
             self.__obs__()
 
         elif self.mission_num == 1:
-            self.stop_dot = first
+            self.corner = first
             self.place = second
 
             self.__parking__()
@@ -62,7 +73,7 @@ class Control:
             self.__uturn__()
 
         else:
-            self.stop_line = first
+            self.stop_line = first/100
 
             self.__cross__()
 
@@ -77,7 +88,7 @@ class Control:
         self.theta_1 = math.degrees(math.atan(self.tan_value))
 
         k = 1
-        if -15 < self.theta_1 < 15 and abs(self.cross_track_error) < 0.27:
+        if abs(self.theta_1) < 15 and abs(self.cross_track_error) < 0.27:
             k = 0.5
 
         self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
@@ -98,7 +109,7 @@ class Control:
             self.steer = -1970
             self.steer_past = -27.746
 
-        return self.steer, self.speed, self.gear
+        return self.steer, self.speed, self.gear, self.steer_past
 
     def __obs__(self):
         self.steer = 0
@@ -134,7 +145,7 @@ class Control:
             self.steer = -1970
             self.steer_past = -27.746
 
-        return self.steer, self.speed, self.gear
+        return self.steer, self.speed, self.gear, self.steer_past
 
     def __moving__(self):
         self.steer = 0
@@ -153,7 +164,7 @@ class Control:
         self.speed = 36
         self.gear = 0
 
-        if abs(self.stop_line) / 100 < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(self.stop_line) < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
@@ -170,9 +181,68 @@ class Control:
         self.speed = 36
         self.gear = 0
 
+        self.corner1 = self.corner[0]
+        self.corner2 = self.corner[1]
+        self.corner3 = self.corner[2]
+
         Enc = PlatformSerial()
         Enc._read()
         ENC = Enc.ENC1
+
+        self.speed = 36
+        if self.psit == 0:
+            if self.place == 1:
+                if self.corner1 < 0.1:
+                    self.speed = 0
+                    self.psit = 1
+
+            if self.place == 2:
+                if self.corner2 < 0.1:
+                    self.speed = 0
+                    self.psit = 1
+
+        if self.psit == 1:
+            if self.pt1 == 0:
+                self.pt1 = ENC[0]
+            self.pt2 = ENC[0]
+
+            if (self.pt2 - self.pt1) < 1.724:
+                self.steer = 1127
+                self.gear = 0
+            elif 1.724 <= (self.pt2 - self.pt1) < 3.724:
+                self.steer = 0
+                self.gear = 0
+
+        if 3.6 < (self.pt2 - self.pt1) < 3.8:
+            self.speed = 0
+            self.psit = 2
+            if self.st1 == 0:
+                self.st1 = time.time()
+            self.st2 = time.time()
+
+            if (self.st2 - self.st1) < 10:
+                self.speed = 0
+            else:
+                self.psit = 3
+
+        if self.psit == 3:
+            if self.pt3 == 0:
+                self.pt3 = ENC[0]
+            self.pt4 = ENC[0]
+
+            if 0 <= (self.pt4 - self.pt3) < -2:
+                self.steer = 0
+                self.speed = 36
+                self.gear = 1
+            elif -2 <= (self.pt4 - self.pt3) < -3.724:
+                self.steer = 1127
+                self.gear = 1
+            elif (self.pt4 - self.pt3) >= -3.724:
+                self.steer = 0
+                self.gear = 0
+
+
+
 
         return self.steer, self.speed, self.gear
 
