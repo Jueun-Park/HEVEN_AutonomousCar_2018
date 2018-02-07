@@ -435,7 +435,7 @@ def get_Fit_Line(f_lines):
 # detect stop line
 def detect_Stop(dst, dst_canny, L_roi, R_roi):
     stop_Roi = np.array([[(45, 440), (205, 440), (205, 5), (45, 5)]])
-    # cv2.polylines(dst, stop_Roi, 1, (0,155,0),5)
+    #cv2.polylines(dst, stop_Roi, 1, (0,155,0),5)
     img_Stop = set_Gray(dst_canny, stop_Roi)
     line_arr = cv2.HoughLinesP(img_Stop, 1, 1 * np.pi / 180, 30, np.array([]), 10, 30)
     line_arr = np.array(np.squeeze(line_arr))

@@ -53,8 +53,8 @@ R_x2 = 480
 road_width = R_x2 - L_x2
 
 # 바꿀 Pixel
-Ax1 = 60  # 50
-Ax2 = 210  # 470
+Ax1 = 60
+Ax2 = 210
 Ay1 = 0
 Ay2 = 480
 
@@ -358,28 +358,28 @@ def check_Direction(L_ransac, R_ransac, direction_before):
     else:
         if direction_before == 'right':
             if L_dif < 30 and R_dif < 30:
-                print ('str')
+                #print ('str')
                 direction = 'str'
             else:
                 direction = 'right'
-                print ('right')
+                #print ('right')
         elif direction_before == 'left':
             if L_dif > -30 and R_dif > -30:
-                print ('str')
+                #print ('str')
                 direction = 'str'
             else:
                 direction = 'left'
-                print ('left')
+                #print ('left')
         else:
             if L_dif > 45 and R_dif > 15:
-                print ('right')
+                #print ('right')
                 direction = 'right'
             elif R_dif < -45 and L_dif < -15:
-                print ('left')
+                #print ('left')
                 direction = 'left'
             else:
                 direction = 'straight'
-                print ('str')
+                #print ('str')
     return direction
 
 
@@ -553,8 +553,6 @@ if (not cam.isOpened()):
 while True:
     s, img = cam.read()
     s_Lines = lane_Detection(img)
-
-
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
