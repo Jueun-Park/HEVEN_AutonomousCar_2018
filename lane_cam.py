@@ -52,20 +52,19 @@ lane_width = 30
 
 
 #############################480x270###################################
-#저번대회의 코드
 #(Rotation 을 적용하지 않은 경우)
-# set cross point (Rotation 때문에 저번대회랑 다름)
+# set cross point
 y1 = 185
 y2 = 269
 
-# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
+# 원래 Pixel
 L_x1 = 160  # 400
 L_x2 = 0
 R_x1 = 320  # 560
 R_x2 = 480
 road_width = R_x2 - L_x2
 
-# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
+# 바꿀 Pixel
 Ax1 = 60  # 50
 Ax2 = 210  # 470
 Ay1 = 0
@@ -76,18 +75,18 @@ pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
 #########################################################################
 '''
 #################################432x240#################################
-# set cross point (Rotation 때문에 저번대회랑 다름)
+# set cross point 
 y1 = 160
 y2 = 239
 
-# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
+# 원래 Pixel 
 L_x1 = 100  # 400
 L_x2 = 10
 R_x1 = 332  # 560
 R_x2 = 422
 road_width = R_x2 - L_x2
 
-# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
+# 바꿀 Pixel 
 Ax1 = 40  # 50
 Ax2 = 200  # 470
 Ay1 = 0
