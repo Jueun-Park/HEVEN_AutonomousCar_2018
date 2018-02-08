@@ -290,7 +290,7 @@ def check_Error(L_ransac, R_ransac, L_check, R_check, L_num, R_num, direction, r
     except TypeError:
         R_num = -1
 
-    # 5. Â÷Œ±Æø
+    # 5. Left & Right lane should be in certain distance of virtual mid lane
     try:
         if abs(mid_ransac - L_ransac[0]) > 120:
             print("ERROR 5")
@@ -384,7 +384,7 @@ def check_Direction(L_ransac, R_ransac, direction_before):
 
 
 # draw straight line
-def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color):
     if L_num == -1:
         draw_Poly(dst, L_check, L_color)
     else:
@@ -397,7 +397,7 @@ def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, 
 
 
 # draw poly line
-def draw_Poly_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+def draw_Poly_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color):
     if L_num == -1:
         draw_Poly(dst, L_check, L_color)
     else:
@@ -474,7 +474,6 @@ def Rotate(src, degrees):
 
 #####################################Main Function###################################
 
-# read video
 
 def lane_Detection(img):
     global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
@@ -483,7 +482,7 @@ def lane_Detection(img):
 
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
-    #cv2.imshow('d',dst)
+    cv2.imshow('d',dst)
 
     img_canny = image_Processing(dst)
 
@@ -506,8 +505,8 @@ def lane_Detection(img):
         L_linear, R_linear, L_num, R_num = check_Error(L_linear, R_linear, L_check, R_check, L_num, R_num, direction,
                                                        road_Width)
         L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
-        #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
-        draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+        draw_Poly_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 255, 255), (255, 0, 255))
+        #draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0))
         #cv2.imshow('asdasdasd',dst)
         L_check = copy.deepcopy(L_linear)
         R_check = copy.deepcopy(R_linear)
@@ -531,6 +530,10 @@ def lane_Detection(img):
     frame_num += 1
     L_num += 1
     R_num += 1
+    print('start num:',start_num)
+    print('frame num:',frame_num)
+    print('L num',L_num)
+    print('R num',R_num)
     return stop_Lines
 
 
