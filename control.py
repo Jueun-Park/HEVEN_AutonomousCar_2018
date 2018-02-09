@@ -185,11 +185,9 @@ class Control:
         self.corner2 = self.corner[1]
         self.corner3 = self.corner[2]
 
-        Enc = PlatformSerial()
-        Enc._read()
-        ENC = Enc.ENC1
+        # self._read()
+        # ENC = Enc.ENC1
 
-        self.speed = 36
         if self.psit == 0:
             if self.place == 1:
                 if self.corner1 < 0.1:
@@ -216,12 +214,15 @@ class Control:
         if 3.6 < (self.pt2 - self.pt1) < 3.8:
             self.speed = 0
             self.psit = 2
+
             if self.st1 == 0:
                 self.st1 = time.time()
             self.st2 = time.time()
 
             if (self.st2 - self.st1) < 10:
                 self.speed = 0
+                self.steer = 0
+                self.gear = 0
             else:
                 self.psit = 3
 
@@ -236,13 +237,12 @@ class Control:
                 self.gear = 1
             elif -2 <= (self.pt4 - self.pt3) < -3.724:
                 self.steer = 1127
+                self.speed = 36
                 self.gear = 1
             elif (self.pt4 - self.pt3) >= -3.724:
                 self.steer = 0
+                self.speed = 36
                 self.gear = 0
-
-
-
 
         return self.steer, self.speed, self.gear
 
@@ -255,9 +255,8 @@ class Control:
 
         self.obs_y = self.obs_uturn[1] / 100
 
-        Enc = PlatformSerial()
-        Enc._read()
-        ENC = Enc.ENC1
+        # self._read()
+        # ENC = Enc.ENC1
 
         if abs(self.obs_y) < self.car_front:
             self.speed = 0
