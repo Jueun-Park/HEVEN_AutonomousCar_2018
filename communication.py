@@ -10,10 +10,6 @@ import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
 
-# 해결해야 할 문제(2018-02-10)
-# 엔코더 값이 안 읽힘
-# 기어 값 읽고 쓰기 가능해야 함
-
 # CONSTANTS for _read(), related with encoder
 DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
@@ -31,6 +27,7 @@ class PlatformSerial:
             print(e)
 
         self.reading_data = bytearray([0 for i in range(14)])
+
         # 쓰기 데이터 셋
         self.writing_data = bytearray.fromhex("5354580000000000000001000D0A")
         self.speed_for_write = 0
@@ -70,7 +67,8 @@ class PlatformSerial:
             ALIVE = reading_data[15]
 
             try:
-                speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC_with_time[1]) * 0.036
+                speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (
+                    time_encoder - self.ENC_with_time[1]) * 0.036
                 print('STEER = ', STEER, ' SPEED_ENC = ', speed_from_encoder)
             except Exception as e:
                 print(e)
@@ -81,14 +79,11 @@ class PlatformSerial:
         except:
             pass
 
-    def _write(self, speed_for_write=0, steer_for_write=0, brake_for_write=0):  # write data to platform
+    def _write(self, speed_for_write=0, steer_for_write=0, gear_for_write=0):  # write data to platform
         dummy_data = bytearray([0 for i in range(14)])
-        if not speed_for_write == 0:
-            self.speed_for_write = speed_for_write
-        if not steer_for_write == 0:
-            self.steer_for_write = steer_for_write
-        if not brake_for_write == 0:
-            self.brake_for_write = brake_for_write
+        self.speed_for_write = speed_for_write
+        self.steer_for_write = steer_for_write
+        self.gear_for_write = gear_for_write
 
         try:
             self.steer_for_write = int(self.steer_for_write * 1.015)
@@ -97,8 +92,7 @@ class PlatformSerial:
                 self.steer_for_write = self.steer_for_write + 65536
 
             print("steer_for_write = ", self.steer_for_write, "/ speed_for_write = ", self.speed_for_write,
-                  "/ BRAKE = ",
-                  self.brake_for_write)
+                  "/ BRAKE = ", self.brake_for_write, "/ GEAR =", self.gear_for_write)
 
             # speed 입력
             dummy_data[6] = 0
