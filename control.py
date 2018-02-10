@@ -204,14 +204,14 @@ class Control:
                 self.pt1 = ENC[0]
             self.pt2 = ENC[0]
 
-            if (self.pt2 - self.pt1) < 1.724:
+            if (self.pt2 - self.pt1) < 172:
                 self.steer = 1127
                 self.gear = 0
-            elif 1.724 <= (self.pt2 - self.pt1) < 3.724:
+            elif 172 <= (self.pt2 - self.pt1) < 372:
                 self.steer = 0
                 self.gear = 0
 
-        if 3.6 < (self.pt2 - self.pt1) < 3.8:
+        if 360 < (self.pt2 - self.pt1) < 380:
             self.speed = 0
             self.psit = 2
 
@@ -231,15 +231,15 @@ class Control:
                 self.pt3 = ENC[0]
             self.pt4 = ENC[0]
 
-            if 0 <= (self.pt4 - self.pt3) < -2:
+            if 0 <= (self.pt4 - self.pt3) < -200:
                 self.steer = 0
                 self.speed = 36
                 self.gear = 1
-            elif -2 <= (self.pt4 - self.pt3) < -3.724:
+            elif -200 <= (self.pt4 - self.pt3) < -372:
                 self.steer = 1127
                 self.speed = 36
                 self.gear = 1
-            elif (self.pt4 - self.pt3) >= -3.724:
+            elif (self.pt4 - self.pt3) >= -372:
                 self.steer = 0
                 self.speed = 36
                 self.gear = 0
@@ -268,11 +268,11 @@ class Control:
                     self.ct1 = ENC[0]
                 self.ct2 = ENC[0]
 
-                if (self.ct2 - self.ct1) < 1:
+                if (self.ct2 - self.ct1) < 100:
                     self.steer = 0
-                elif 1 <= (self.ct2 - self.ct1) < 3.254:
+                elif 100 <= (self.ct2 - self.ct1) < 325:
                     self.steer = -1970
-                elif (self.ct2 - self.ct1) >= 3.254:
+                elif (self.ct2 - self.ct1) >= 325:
                     self.steer = 0
 
         return self.steer, self.speed, self.gear
