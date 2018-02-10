@@ -3,6 +3,9 @@ import numpy as np
 import time
 import copy
 import matplotlib.pyplot as plt
+from multiprocessing import Process, Queue
+
+
 from sklearn import linear_model
 from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
@@ -173,7 +176,7 @@ def image_Processing(img):
 
 
 # choose roi
-def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
+def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before, output):
     # left line roi
     try:
         if L_num != 0:
@@ -234,8 +237,9 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
         R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
                            (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                            (bird_width, 280)]])
-    return L_roi, R_roi
 
+    #output.put(l_roi, r_roi)
+    return l_roi, r_roi
 
 # decide left, right edge points
 def extract_Line(dst, img_canny, L_line, R_line):
