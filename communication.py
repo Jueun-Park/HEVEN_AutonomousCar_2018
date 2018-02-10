@@ -64,7 +64,7 @@ class PlatformSerial:
             if ENC >= 2147483648:
                 ENC = ENC - 4294967296
 
-            ALIVE = reading_data[15]
+            ALIVE = reading_data[15]  # 플랫폼 통신 주기 체크
 
             try:
                 speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (
