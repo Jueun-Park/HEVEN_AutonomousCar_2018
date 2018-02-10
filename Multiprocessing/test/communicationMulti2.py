@@ -9,7 +9,6 @@ import serial
 import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
-import multiprocessing
 from multiprocessing import process
 
 
@@ -19,7 +18,7 @@ PULSE_PER_ROTATION = 100.  # Pulse per Rotation
 DISTANCE_PER_PULSE = DISTANCE_PER_ROTATION / PULSE_PER_ROTATION  # Distance per Pulse
 
 
-class PlatformSerial:
+class PlatformSerial(process):
     def __init__(self, platform_port):
         self.platform = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
 
@@ -158,7 +157,7 @@ class PlatformSerial:
         else:
             self.present_time = time.time()
 
-    def test_communication_main(self):
+
         '''
         read_thread = threading.Thread(target=self._read())
         write_thread = threading.Thread(target=self._write())
@@ -169,9 +168,27 @@ class PlatformSerial:
         test_write_thread.start()
 
         '''
-        read_Process = process(target=self._read())
-        write_Process = process(target=self._write())
-        test_write_Process = process(target=self.test_write_to_platform())
+
+
+
+if __name__ == '__main__':
+
+
+    port = 'COM3'
+    # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
+    platform = PlatformSerial(port)
+    print('CONNECTED')
+
+
+    while True:
+
+        read_Process = process(target=platform._read())
+
+        write_Process = process(target=platform._write())
+
+        test_write_Process = process(target=platform.test_write_to_platform())
+
+
 
         read_Process.start()
         write_Process.start()
@@ -181,13 +198,3 @@ class PlatformSerial:
         write_Process.join()
         test_write_Process.start()
 
-
-if __name__ == '__main__':
-    port = 'COM3'
-    # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
-    platform = PlatformSerial(port)
-    print('CONNECTED')
-
-
-    while True:
-        platform.test_communication_main()
