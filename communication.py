@@ -27,11 +27,13 @@ class PlatformSerial:
             print(e)
 
         self.reading_data = bytearray([0 for i in range(14)])
+
         # 쓰기 데이터 셋
         self.writing_data = bytearray.fromhex("5354580000000000000001000D0A")
         self.speed_for_write = 0
         self.steer_for_write = 0
         self.brake_for_write = 0
+        self.gear_for_write = 0  # 0: 전진, 1: 후진, 2: 중립
         self.check = 0
         self.present_time = 0
         self.past_time = 0
@@ -57,33 +59,33 @@ class PlatformSerial:
             BRAKE = reading_data[10]
             time_encoder = time.time()
 
-            # ENC0, ENC1, ENC2, ENC3
+            # ENC0, ENC_with_time, ENC2, ENC3
             ENC = reading_data[11] + reading_data[12] * 256 + reading_data[13] * 65536 + reading_data[14] * 16777216
             if ENC >= 2147483648:
                 ENC = ENC - 4294967296
 
-            ALIVE = reading_data[15]
+            ALIVE = reading_data[15]  # 플랫폼 통신 주기 체크
 
             try:
-                speed_from_encoder = (ENC - self.ENC1[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC1[1]) * 0.036
+                speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (
+                    time_encoder - self.ENC_with_time[1]) * 0.036
                 print('STEER = ', STEER, ' SPEED_ENC = ', speed_from_encoder)
             except Exception as e:
                 print(e)
                 pass
 
-            self.ENC1 = (ENC, time_encoder)
+            self.ENC_with_time = (ENC, time_encoder)
 
         except:
             pass
 
-    def _write(self, speed_for_write=0, steer_for_write=0, brake_for_write=0):  # write data to platform
-        dummy_data = bytearray([0 for i in range(14)])
-        if not speed_for_write == 0:
+    def _write(self, speed_for_write=None, steer_for_write=None, gear_for_write=None):  # write data to platform
+        if speed_for_write is not None:
             self.speed_for_write = speed_for_write
-        if not steer_for_write == 0:
+        if steer_for_write is not None:
             self.steer_for_write = steer_for_write
-        if not brake_for_write == 0:
-            self.brake_for_write = brake_for_write
+        if gear_for_write is not None:
+            self.gear_for_write = gear_for_write
 
         try:
             self.steer_for_write = int(self.steer_for_write * 1.015)
@@ -92,26 +94,23 @@ class PlatformSerial:
                 self.steer_for_write = self.steer_for_write + 65536
 
             print("steer_for_write = ", self.steer_for_write, "/ speed_for_write = ", self.speed_for_write,
-                  "/ BRAKE = ",
-                  self.brake_for_write)
-
-            # speed 입력
-            dummy_data[6] = 0
-            dummy_data[7] = self.speed_for_write
-
-            # steer 입력, 16진법 두 칸 전송
-            dummy_data[8] = int(self.steer_for_write / 256)
-            dummy_data[9] = self.steer_for_write % 256
+                  "/ BRAKE = ", self.brake_for_write, "/ GEAR =", self.gear_for_write)
 
             self.writing_data[3] = 1  # AorM
             self.writing_data[4] = 0  # E stop
-            self.writing_data[5] = 0  # GEAR
 
-            # 임시 데이터를 최종 데이터에 입력
-            self.writing_data[6] = dummy_data[6]
-            self.writing_data[7] = dummy_data[7]
-            self.writing_data[8] = dummy_data[8]
-            self.writing_data[9] = dummy_data[9]
+            # gear 입력
+            self.writing_data[5] = self.gear_for_write  # GEAR
+
+            # speed 입력
+            self.writing_data[6] = 0
+            self.writing_data[7] = self.speed_for_write
+
+            # steer 입력, 16진법 두 칸 전송
+            self.writing_data[8] = int(self.steer_for_write / 256)
+            self.writing_data[9] = self.steer_for_write % 256
+
+            # brake 입력
             self.writing_data[10] = self.brake_for_write
 
             # 받은 데이터와 똑같이 전송, 플랫폼 자체적으로 데이터 수신 간격을 알기 위함
@@ -119,7 +118,7 @@ class PlatformSerial:
             self.writing_data[12] = self.reading_data[16]
             self.writing_data[13] = self.reading_data[17]
 
-            self.ser.write(bytearray(self.writing_data))
+            self.ser.write(bytearray(self.writing_data))  # 플랫폼에 시리얼 데이터 패킷 전송
 
         except Exception as e:
             print(e)
@@ -166,10 +165,9 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = 'COM4'
+    port = 'COM5'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
-    print('CONNECTED')
 
     while True:
         platform.test_communication_main()
