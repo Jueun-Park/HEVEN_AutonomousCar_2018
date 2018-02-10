@@ -141,27 +141,43 @@ class PlatformSerial:
         self.ser.close()
 
     def test_write_to_platform(self):
-        self.ct1 = 0
-        self.ct2 = 0
-        self.sit = 0
 
-        self.speed_for_write = 36
+        self.speed_for_write = 0
         self.steer_for_write = 0
         self.brake_for_write = 0
 
         if self.sit == 0:
+            self.steer_for_write = 0
             self.speed_for_write = 36
+
             if self.ct1 == 0:
                 self.ct1 = self.ENC1[0]
             self.ct2 = self.ENC1[0]
 
-            if (self.ct2 - self.ct1) < 1:
+            if (self.ct2 - self.ct1) < 100:
                 self.steer_for_write = 0
-            elif 1 <= (self.ct2 - self.ct1) < 3.254:
+                self.speed_for_write = 36
+
+            elif 100 <= (self.ct2 - self.ct1) < 325:
                 self.steer_for_write = -1970
-            elif (self.ct2 - self.ct1) >= 3.254:
+                self.speed_for_write = 36
+
+            elif 325 <= (self.ct2 - self.ct1) < 425:
                 self.steer_for_write = 0
-                self.sit = 1
+                self.speed_for_write = 36
+
+            else:
+                self.steer_for_write = 0
+                self.speed_for_write = 0
+
+            print(self.ct1)
+            print("****")
+            print(self.ct2)
+            print("****")
+            print(self.ENC1[0])
+            print("****")
+            print(self.ENC1[1])
+            print("****")
 
 
     def test_communication_main(self):

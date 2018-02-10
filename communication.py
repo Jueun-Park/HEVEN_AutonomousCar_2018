@@ -169,7 +169,6 @@ class PlatformSerial:
         write_thread.start()
         test_write_thread.start()
 
-
 if __name__ == '__main__':
     port = 'COM4'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
