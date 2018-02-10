@@ -98,16 +98,20 @@ for i in range(20000):
     batch = mnist.train.next_batch(50)
     # 10회 단위로 한 번씩 모델 정합성 테스트
     if i % 100 == 0:
-        train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_:batch[1], keep_prob: 1.0})
-        print("step %d, training accuracy %g"%(i, train_accuracy))
+        train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+        print("step %d, training accuracy %g" % (i, train_accuracy))
     # batch[0] 28x28 이미지, batch[1] 숫자 태그, keep_prob: Dropout 비율
-    train_step.run(feed_dict={x:batch[0], y_:batch[1], keep_prob: 0.5})
+    train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
-save_path = saver.save(sess, "model.ckpt")
-print ("Model saved in file: ", save_path)
+# save_path = saver.save(sess, "model.ckpt")
+# print("Model saved in file: ", save_path)
+# tensorflow.python.framework.errors_impl.NotFoundError: Failed to create a directory: ; No such file or directory
+# tensorflow.python.framework.errors_impl.NotFoundError: Failed to create a directory: ; No such file or directory
+# NotFoundError (see above for traceback): Failed to create a directory: ; No such file or directory
+# ValueError: Parent directory of model.ckpt doesn't exist, can't save.
 
-#최종적으로 모델의 정합성을 체크한다
-print("test accuracy %g"%accuracy.eval(feed_dict={
+# 최종적으로 모델의 정합성을 체크한다
+print("test accuracy %g" % accuracy.eval(feed_dict={
     x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
 
 sess.close()
