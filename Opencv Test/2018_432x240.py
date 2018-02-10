@@ -21,7 +21,7 @@ bird_height = 432
 bird_width = 240
 height = 240
 width = 432
-height_ROI = 210 # 얘만 잘 조절하면 ROI 길이 조절 가능.
+height_ROI = 222 # 얘만 잘 조절하면 ROI 길이 조절 가능.
 L_num = 0
 R_num = 0
 L_ransac = 0
@@ -166,9 +166,9 @@ def gaussian_Blur(img):
 def image_Processing(img):
     blur = gaussian_Blur(img)
     hsv = BGR2HSV(blur)
-    #cv2.imshow('hsv', hsv)
+    cv2.imshow('hsv', hsv)
     img_canny = cv2.Canny(hsv, 20, 80)
-    #cv2.imshow('Canny',img_canny)
+    cv2.imshow('Canny',img_canny)
 
     return img_canny
 
@@ -537,9 +537,9 @@ def lane_Detection(img):
 
 
 
-#cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
+cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
 #cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
-cam = cv2.VideoCapture(1)
+#cam = cv2.VideoCapture(1)
 
 cam.set(cv2.CAP_PROP_FRAME_WIDTH,480)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT,270)

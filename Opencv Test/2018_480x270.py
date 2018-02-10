@@ -130,20 +130,6 @@ def draw_Poly(img, points, color):
             pass
 
 
-# black bye
-def black_Bye(img, threshold):
-    thresholds = (img[:, :, 2] < threshold)
-    img[thresholds] = [0, 0, 0]
-    return img
-
-
-def con_Bye(img, th_green):
-    thresholds = (img[:, :, 1] < th_green)
-
-    img[thresholds] = [0, 0, 0]
-
-    return img
-
 def BGR2HSV(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lower = np.array([0, 0, 160]) # 이 Lower 값을 조절하여 날씨에 대한 대응 가능.
