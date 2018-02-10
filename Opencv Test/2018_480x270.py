@@ -3,6 +3,9 @@ import numpy as np
 import time
 import copy
 import matplotlib.pyplot as plt
+from multiprocessing import Process, Queue
+
+
 from sklearn import linear_model
 from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
@@ -45,18 +48,18 @@ lane_width = 30
 y1 = 185
 y2 = 269
 
-# º¯Çü Àü »ç°¢Á¡
-L_x1 = 176  # 400
-L_x2 = 92
+# 원래 Pixel
+L_x1 = 160  # 400
+L_x2 = 0
 R_x1 = 320  # 560
-R_x2 = 447
+R_x2 = 480
 road_width = R_x2 - L_x2
 
-# º¯Çü ÈÄ »ç°¢Á¡
-Ax1 = 85 + 5  # 50
-Ax2 = 215 - 5  # 470
+# 바꿀 Pixel
+Ax1 = 60
+Ax2 = 210
 Ay1 = 0
-Ay2 = 570
+Ay2 = 480
 
 # Homograpy transform
 pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
@@ -173,7 +176,7 @@ def image_Processing(img):
 
 
 # choose roi
-def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
+def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before, output):
     # left line roi
     try:
         if L_num != 0:
@@ -234,8 +237,9 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
         R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
                            (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                            (bird_width, 280)]])
-    return L_roi, R_roi
 
+    #output.put(l_roi, r_roi)
+    return l_roi, r_roi
 
 # decide left, right edge points
 def extract_Line(dst, img_canny, L_line, R_line):
@@ -290,7 +294,7 @@ def check_Error(L_ransac, R_ransac, L_check, R_check, L_num, R_num, direction, r
     except TypeError:
         R_num = -1
 
-    # 5. Â÷Œ±Æø
+    # 5. Left & Right lane should be in certain distance of virtual mid lane
     try:
         if abs(mid_ransac - L_ransac[0]) > 120:
             print("ERROR 5")
@@ -358,33 +362,33 @@ def check_Direction(L_ransac, R_ransac, direction_before):
     else:
         if direction_before == 'right':
             if L_dif < 30 and R_dif < 30:
-                print ('str')
+                #print ('str')
                 direction = 'str'
             else:
                 direction = 'right'
-                print ('right')
+                #print ('right')
         elif direction_before == 'left':
             if L_dif > -30 and R_dif > -30:
-                print ('str')
+                #print ('str')
                 direction = 'str'
             else:
                 direction = 'left'
-                print ('left')
+                #print ('left')
         else:
             if L_dif > 45 and R_dif > 15:
-                print ('right')
+                #print ('right')
                 direction = 'right'
             elif R_dif < -45 and L_dif < -15:
-                print ('left')
+                #print ('left')
                 direction = 'left'
             else:
                 direction = 'straight'
-                print ('str')
+                #print ('str')
     return direction
 
 
 # draw straight line
-def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color):
     if L_num == -1:
         draw_Poly(dst, L_check, L_color)
     else:
@@ -397,7 +401,7 @@ def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, 
 
 
 # draw poly line
-def draw_Poly_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+def draw_Poly_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color):
     if L_num == -1:
         draw_Poly(dst, L_check, L_color)
     else:
@@ -474,7 +478,6 @@ def Rotate(src, degrees):
 
 #####################################Main Function###################################
 
-# read video
 
 def lane_Detection(img):
     global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
@@ -483,7 +486,7 @@ def lane_Detection(img):
 
     # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.warpPerspective(img, M, (height, width))
-    #cv2.imshow('d',dst)
+    cv2.imshow('d',dst)
 
     img_canny = image_Processing(dst)
 
@@ -506,8 +509,8 @@ def lane_Detection(img):
         L_linear, R_linear, L_num, R_num = check_Error(L_linear, R_linear, L_check, R_check, L_num, R_num, direction,
                                                        road_Width)
         L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
-        #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
-        draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+        draw_Poly_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 255, 255), (255, 0, 255))
+        #draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0))
         #cv2.imshow('asdasdasd',dst)
         L_check = copy.deepcopy(L_linear)
         R_check = copy.deepcopy(R_linear)
@@ -531,6 +534,10 @@ def lane_Detection(img):
     frame_num += 1
     L_num += 1
     R_num += 1
+    print('start num:',start_num)
+    print('frame num:',frame_num)
+    print('L num',L_num)
+    print('R num',R_num)
     return stop_Lines
 
 
@@ -553,8 +560,6 @@ if (not cam.isOpened()):
 while True:
     s, img = cam.read()
     s_Lines = lane_Detection(img)
-
-
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
