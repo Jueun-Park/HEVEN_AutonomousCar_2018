@@ -79,11 +79,13 @@ class PlatformSerial:
         except:
             pass
 
-    def _write(self, speed_for_write=0, steer_for_write=0, gear_for_write=0):  # write data to platform
-        dummy_data = bytearray([0 for i in range(14)])
-        self.speed_for_write = speed_for_write
-        self.steer_for_write = steer_for_write
-        self.gear_for_write = gear_for_write
+    def _write(self, speed_for_write=None, steer_for_write=None, gear_for_write=None):  # write data to platform
+        if speed_for_write is not None:
+            self.speed_for_write = speed_for_write
+        if steer_for_write is not None:
+            self.steer_for_write = steer_for_write
+        if gear_for_write is not None:
+            self.gear_for_write = gear_for_write
 
         try:
             self.steer_for_write = int(self.steer_for_write * 1.015)
@@ -94,23 +96,21 @@ class PlatformSerial:
             print("steer_for_write = ", self.steer_for_write, "/ speed_for_write = ", self.speed_for_write,
                   "/ BRAKE = ", self.brake_for_write, "/ GEAR =", self.gear_for_write)
 
-            # speed 입력
-            dummy_data[6] = 0
-            dummy_data[7] = self.speed_for_write
-
-            # steer 입력, 16진법 두 칸 전송
-            dummy_data[8] = int(self.steer_for_write / 256)
-            dummy_data[9] = self.steer_for_write % 256
-
             self.writing_data[3] = 1  # AorM
             self.writing_data[4] = 0  # E stop
-            self.writing_data[5] = 0  # GEAR
 
-            # 임시 데이터를 최종 데이터에 입력
-            self.writing_data[6] = dummy_data[6]
-            self.writing_data[7] = dummy_data[7]
-            self.writing_data[8] = dummy_data[8]
-            self.writing_data[9] = dummy_data[9]
+            # gear 입력
+            self.writing_data[5] = self.gear_for_write  # GEAR
+
+            # speed 입력
+            self.writing_data[6] = 0
+            self.writing_data[7] = self.speed_for_write
+
+            # steer 입력, 16진법 두 칸 전송
+            self.writing_data[8] = int(self.steer_for_write / 256)
+            self.writing_data[9] = self.steer_for_write % 256
+
+            # brake 입력
             self.writing_data[10] = self.brake_for_write
 
             # 받은 데이터와 똑같이 전송, 플랫폼 자체적으로 데이터 수신 간격을 알기 위함
@@ -118,7 +118,7 @@ class PlatformSerial:
             self.writing_data[12] = self.reading_data[16]
             self.writing_data[13] = self.reading_data[17]
 
-            self.ser.write(bytearray(self.writing_data))
+            self.ser.write(bytearray(self.writing_data))  # 플랫폼에 시리얼 데이터 패킷 전송
 
         except Exception as e:
             print(e)
@@ -163,11 +163,11 @@ class PlatformSerial:
         write_thread.start()
         test_write_thread.start()
 
+
 if __name__ == '__main__':
-    port = 'COM4'
+    port = 'COM5'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
-    print('CONNECTED')
 
     while True:
         platform.test_communication_main()
