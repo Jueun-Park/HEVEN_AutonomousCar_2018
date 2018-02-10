@@ -75,7 +75,7 @@ class PlatformSerial:
                 print(e)
                 pass
 
-            self.ENC1 = (ENC, time_encoder)
+            self.ENC_with_time = (ENC, time_encoder)
 
         except:
             pass

@@ -10,6 +10,10 @@ import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
 
+# 해결해야 할 문제(2018-02-10)
+# 엔코더 값이 안 읽힘
+# 기어 값 읽고 쓰기 가능해야 함
+
 # CONSTANTS for _read(), related with encoder
 DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
@@ -32,6 +36,7 @@ class PlatformSerial:
         self.speed_for_write = 0
         self.steer_for_write = 0
         self.brake_for_write = 0
+        self.gear_for_write = 0  # 0: 전진, 1: 후진, 2: 중립
         self.check = 0
         self.present_time = 0
         self.past_time = 0
@@ -57,7 +62,7 @@ class PlatformSerial:
             BRAKE = reading_data[10]
             time_encoder = time.time()
 
-            # ENC0, ENC1, ENC2, ENC3
+            # ENC0, ENC_with_time, ENC2, ENC3
             ENC = reading_data[11] + reading_data[12] * 256 + reading_data[13] * 65536 + reading_data[14] * 16777216
             if ENC >= 2147483648:
                 ENC = ENC - 4294967296
@@ -65,13 +70,13 @@ class PlatformSerial:
             ALIVE = reading_data[15]
 
             try:
-                speed_from_encoder = (ENC - self.ENC1[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC1[1]) * 0.036
+                speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC_with_time[1]) * 0.036
                 print('STEER = ', STEER, ' SPEED_ENC = ', speed_from_encoder)
             except Exception as e:
                 print(e)
                 pass
 
-            self.ENC1 = (ENC, time_encoder)
+            self.ENC_with_time = (ENC, time_encoder)
 
         except:
             pass
