@@ -7,6 +7,7 @@ from sklearn import linear_model
 from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
+import multiprocessing
 
 ######################################변수 설정######################################
 global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
@@ -171,10 +172,7 @@ def image_Processing(img):
 
     return img_canny
 
-
-# choose roi
-def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
-    # left line roi
+def left_line_roi(direction, L_num, L_ransac, L_roi_before):
     try:
         if L_num != 0:
             if direction == 'left' or direction == 'right':
@@ -201,25 +199,28 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
         L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
                            (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
 
-    # right line roi
+    return L_roi
+
+
+def right_line_roi(direction, R_num, R_ransac, R_roi_before) :
     try:
         if R_num != 0:
             if direction == 'left' or direction == 'right':
-                R_roi = np.array([[(250, bird_height ), (190, bird_height ),
+                R_roi = np.array([[(250, bird_height), (190, bird_height),
                                    (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
                                    (int(R_ransac[0]) - 25, height_ROI),
                                    (int(R_ransac[0]) + 25, height_ROI),
                                    (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
             else:
-                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height ),
-                                   (int(R_ransac[num_y - 50]) - 25, bird_height ),
+                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height),
+                                   (int(R_ransac[num_y - 50]) - 25, bird_height),
                                    (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
                                    (int(R_ransac[0]) - 25, height_ROI),
                                    (int(R_ransac[0]) + 25, height_ROI),
                                    (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
 
         elif direction == 'straight':
-            R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
+            R_roi = np.array([[(bird_width - 15, bird_height), (bird_width / 2 + 40, bird_height),
                                (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                                (bird_width, 280)]])
 
@@ -231,10 +232,30 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
         else:
             R_roi = R_roi_before
     except TypeError:
-        R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
+        R_roi = np.array([[(bird_width - 15, bird_height), (bird_width / 2 + 40, bird_height),
                            (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                            (bird_width, 280)]])
-    return L_roi, R_roi
+
+    return R_roi
+
+
+
+# choose roi
+def choose_Roi(dst,direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
+
+    L_Roi=multiprocessing.Process(target=left_line_roi,args=(direction, L_num, L_ransac, L_roi_before))
+    R_Roi=multiprocessing.Process(target=right_line_roi,args=(direction, R_num, R_ransac,R_roi_before))
+
+    L_Roi.start()
+    R_Roi.start()
+
+    L_Roi.join()
+    R_Roi.join()
+
+
+    return L_Roi, R_Roi
+
+
 
 
 # decide left, right edge points
@@ -537,30 +558,31 @@ def lane_Detection(img):
     return stop_Lines
 
 
+if __name__=="__main__" :
 
+    cam = cv2.VideoCapture('C:/Users/zenon/Desktop/0507_one_lap_normal.mp4')
+    # cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
+    # cam = cv2.VideoCapture(1)
 
-cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
-#cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
-#cam = cv2.VideoCapture(1)
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 270)
 
-cam.set(cv2.CAP_PROP_FRAME_WIDTH,480)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT,270)
+    w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+    h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    print('size = ', w, h)
 
-w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
-h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
-print('size = ', w, h)
+    if (not cam.isOpened()):
+        print("cam open failed")
 
-if (not cam.isOpened()):
-    print ("cam open failed")
+    while True:
 
-while True:
-    s, img = cam.read()
-    s_Lines = lane_Detection(img)
+        s, img = cam.read()
+        s_Lines = lane_Detection(img)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-cam.release()
-cv2.destroyAllWindows()
-cv2.waitKey(0)
+    cam.release()
+    cv2.destroyAllWindows()
+    cv2.waitKey(0)
 
