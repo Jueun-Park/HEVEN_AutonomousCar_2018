@@ -10,10 +10,6 @@ import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
 
-# 해결해야 할 문제(2018-02-10)
-# 엔코더 값이 안 읽힘
-# 기어 값 읽고 쓰기 가능해야 함
-
 # CONSTANTS for _read(), related with encoder
 DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
@@ -36,10 +32,13 @@ class PlatformSerial:
         self.speed_for_write = 0
         self.steer_for_write = 0
         self.brake_for_write = 0
-        self.gear_for_write = 0  # 0: 전진, 1: 후진, 2: 중립
         self.check = 0
         self.present_time = 0
         self.past_time = 0
+
+        self.ct1 = 0
+        self.ct2 = 0
+        self.sit = 0
 
     def _read(self):  # read data from platform
         reading_data = bytearray(self.ser.readline())  # byte array 로 읽어옴
@@ -62,7 +61,7 @@ class PlatformSerial:
             BRAKE = reading_data[10]
             time_encoder = time.time()
 
-            # ENC0, ENC_with_time, ENC2, ENC3
+            # ENC0, ENC1, ENC2, ENC3
             ENC = reading_data[11] + reading_data[12] * 256 + reading_data[13] * 65536 + reading_data[14] * 16777216
             if ENC >= 2147483648:
                 ENC = ENC - 4294967296
@@ -70,7 +69,7 @@ class PlatformSerial:
             ALIVE = reading_data[15]
 
             try:
-                speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC_with_time[1]) * 0.036
+                speed_from_encoder = (ENC - self.ENC1[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC1[1]) * 0.036
                 print('STEER = ', STEER, ' SPEED_ENC = ', speed_from_encoder)
             except Exception as e:
                 print(e)
@@ -142,23 +141,28 @@ class PlatformSerial:
         self.ser.close()
 
     def test_write_to_platform(self):
-        self.speed_for_write = 0
+        self.ct1 = 0
+        self.ct2 = 0
+        self.sit = 0
+
+        self.speed_for_write = 36
+        self.steer_for_write = 0
         self.brake_for_write = 0
 
-        if self.check % 3 == 0:
-            self.steer_for_write = -1900
-        elif self.check % 3 == 1:
-            self.steer_for_write = 0
-        else:
-            self.steer_for_write = 1900
+        if self.sit == 0:
+            self.speed_for_write = 36
+            if self.ct1 == 0:
+                self.ct1 = self.ENC1[0]
+            self.ct2 = self.ENC1[0]
 
-        # 1초마다 steer 값 변경해서 테스트
-        if self.present_time - self.past_time > 1:
-            self.check += 1
-            self.past_time = time.time()
-            self.present_time = time.time()
-        else:
-            self.present_time = time.time()
+            if (self.ct2 - self.ct1) < 1:
+                self.steer_for_write = 0
+            elif 1 <= (self.ct2 - self.ct1) < 3.254:
+                self.steer_for_write = -1970
+            elif (self.ct2 - self.ct1) >= 3.254:
+                self.steer_for_write = 0
+                self.sit = 1
+
 
     def test_communication_main(self):
         read_thread = threading.Thread(target=self._read())

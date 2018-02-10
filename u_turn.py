@@ -1,42 +1,39 @@
-global gear, b, sit, ENC1
-b = [0, 0]
-sit = 0
-gear = 0
-steer = 0
-main_speed = 54
-mission_speed = 36
-car_front = 0.28
-##  small_angle = 19.189
-##  small_radius = 2.2346
-##  one_turn = 1.70
-
-################Function######################
+# 엔코더는 앞바퀴 왼쪽에 부탁되어 있음
 
 
-def u_turn(end_line):  ## 후에 회의를 통해서 조정
-    global steer, gear, b, sit, speed_Mission
-    escape = 0
-    gear = 0
-    steer = 0
-    speed_Mission = mission_speed
-    if abs(end_line) < car_front:
-        speed_Mission = 0
-        sit = 1
-    ###########################################
-    if sit == 1:
-        speed_Mission = 36
-        if b[0] == 0:
-            b[0][0] = ENC1[0]
-            b[0][1] = ENC1[1]
-        b[1][0] = ENC1[0]
-        b[1][1] = ENC1[1]
+class UTURN:
 
-        if (b[1][0] - b[0][0]) < 1:
-            steer = 0
-        elif 1 <= (b[1][0] - b[0][0]) < 5.573:
-            steer = -1970
-        elif 5.573 <= (b[1][0] - b[0][0]) < 6.011:
-            steer = 1970
-        elif (b[1][0] - b[0][0]) >= 6.011:
-            steer = 0
-    return steer, speed_Mission, gear
+    car_front = 0.28
+
+    def __init__(self, mission, obs):
+        self.obs_y = obs[1]/100
+        self.ct1 = 0
+        self.ct2 = 0
+        self.gear = 0
+        self.steer = 0
+        self.speed = 0
+        self.sit = 0
+
+        self.mission = mission
+
+    def findline(self):
+        if abs(self.obs_y) < self.car_front:
+            self.speed = 0
+            self.sit = 1
+
+    def turnning(self):
+        Enc = PlatformSerial()
+        Enc._read()
+        ENC = Enc.ENC1
+        if self.sit == 1:
+            self.speed = 36
+            if self.ct1 == 0:
+                self.ct1 = ENC[0]
+            self.ct2 = ENC[0]
+
+            if (self.ct2 - self.ct1) < 1:
+                self.steer = 0
+            elif 1 <= (self.ct2 - self.ct1) < 3.254:
+                self.steer = -1970
+            elif (self.ct2 - self.ct1) >= 3.254:
+                self.steer = 0
