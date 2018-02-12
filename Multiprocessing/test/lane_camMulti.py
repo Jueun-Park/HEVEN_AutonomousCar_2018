@@ -1,26 +1,16 @@
-# -*- Encoding:UTF-8 -*- #
-
-# 카메라 통신 및 차선 인식
-# input: sign_cam
-# output: numpy array? (to path_planner)
-
+from multiprocessing import Process, Queue
+import os
 import cv2
 import numpy as np
+import time
+import copy
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from sklearn.preprocessing import PolynomialFeatures
-import matplotlib
-from matplotlib import style
-import multiprocessing
-from multiprocessing import pool
 
-
-######################################변수 선언#########################################
+######################################변수 설정######################################
 global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
 global frame_num, L_check, R_check, stop_Lines, destination_J, destination_I
 global L_E, R_E, mid_ransac, lane_width
@@ -29,11 +19,11 @@ global edge_lx, edge_rx  # dotted line detection
 destination_J = 39
 stop_Lines = 0
 frame_num = 0
-bird_height = 480
-bird_width = 270
-height = 270
-width = 480
-height_ROI = 270
+bird_height = 432
+bird_width = 240
+height = 240
+width = 432
+height_ROI = 210 # 얘만 잘 조절하면 ROI 길이 조절 가능.
 L_num = 0
 R_num = 0
 L_ransac = 0
@@ -52,61 +42,111 @@ L_E = 0
 R_E = 0
 mid_ransac = 135.
 lane_width = 30
-'''
-저번대회의 코드
-(Rotation 을 적용하지 않은 경우)
+
+#################################432x240#################################
 # set cross point (Rotation 때문에 저번대회랑 다름)
-y1 = 185
-y2 = 269
+y1 = 160
+y2 = 239
 
 # 원래 Pixel (Rotation 때문에 저번대회랑 다름)
-L_x1 = 176  # 400
-L_x2 = 92
-R_x1 = 320  # 560
-R_x2 = 447
+L_x1 = 100  # 400
+L_x2 = 10
+R_x1 = 332  # 560
+R_x2 = 422
 road_width = R_x2 - L_x2
 
 # 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
-Ax1 = 85 + 5  # 50
-Ax2 = 215 - 5  # 470
+Ax1 = 40  # 50
+Ax2 = 200  # 470
 Ay1 = 0
-Ay2 = 570
+Ay2 = 432
 
-'''
-# set cross point (Rotation 때문에 저번대회랑 다름)
-x1 = 185
-x2 = 269
-
-# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
-L_y1 = 320
-L_y2 = 479
-R_y1 = 160
-R_y2 = 1
-road_width = R_y2 - L_y2
-
-# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
-Ax1 = 0
-Ax2 = 480
-Ay1 = 210
-Ay2 = 60
-
-# Homograpy transform
-pts1 = np.float32([[x1, L_y1], [x1, R_y1], [x2, R_y2], [x2, L_y2]])
-pts2 = np.float32([[Ax1, Ay1], [Ax1, Ay2], [Ax2, Ay2], [Ax2, Ay1]])
-#pts1 = np.float32([[185, 320], [185, 160], [269, 1], [269, 479]])
-#pts2 = np.float32([[0, 210], [0, 60], [480, 60], [480, 210]])
+pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
+pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
+###########################################################################
 M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
 real_Road_Width = 125
 
-#########################################################################################
-##################################Sub-Functions##########################################
+
+###################################Sub Functions####################################
 
 
-#Filter Function
+# set ROI of gray scale
+def set_Gray(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (255, 255, 255))
+    img_ROI = cv2.bitwise_and(img, mask)
+    return img_ROI
 
-# BGR image 를 HSV image 로 변환하여 차선만 잘 보이게 함.
+
+# set ROI of red scale
+def set_Red(img, region):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, region, (0, 0, 255))
+    img_red = cv2.bitwise_and(img, mask)
+    return img_red
+
+
+# Linear ransac
+def linear_Ransac(x_points, y_points, y_min, y_max):
+    x_points = np.array(x_points)
+    y_points = np.array(y_points)
+
+    y_points = y_points.reshape(len(y_points), 1)
+    model_ransac = linear_model.RANSACRegressor(linear_model.LinearRegression())
+
+    try:
+        model_ransac.fit(y_points, x_points)
+    except ValueError:
+        pass
+    else:
+        line_Y = np.arange(y_min, y_max)
+        line_X_ransac = model_ransac.predict(line_Y[:, np.newaxis])
+
+        return line_X_ransac
+
+
+# Polynomial ransac
+def polynomial_Ransac(x_points, y_points, y_min, y_max):
+    x_points = np.array(x_points)
+    y_points = np.array(y_points)
+    y_points = y_points.reshape(len(y_points), 1)
+    model_Sransac = make_pipeline(PolynomialFeatures(2), RANSACRegressor(random_state=42))
+    try:
+        model_Sransac.fit(y_points, x_points)
+    except ValueError:
+        pass
+    else:
+        line_Y = np.arange(y_min, y_max)
+        line_X_ransac = model_Sransac.predict(line_Y[:, np.newaxis])
+        return line_X_ransac
+
+
+# draw polynomial
+def draw_Poly(img, points, color):
+    for i in range(num_y):
+        try:
+            cv2.circle(img, (int(points[i]), height_ROI + i), 1, color, 2)
+        except TypeError:
+            pass
+
+
+# black bye
+def black_Bye(img, threshold):
+    thresholds = (img[:, :, 2] < threshold)
+    img[thresholds] = [0, 0, 0]
+    return img
+
+
+def con_Bye(img, th_green):
+    thresholds = (img[:, :, 1] < th_green)
+
+    img[thresholds] = [0, 0, 0]
+
+    return img
+
 def BGR2HSV(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lower = np.array([0, 0, 160]) # 이 Lower 값을 조절하여 날씨에 대한 대응 가능.
@@ -122,16 +162,306 @@ def gaussian_Blur(img):
     blur = cv2.GaussianBlur(img, (3,3), 0)  #여기 (3,3)은 kernel 값. 조절 가능(Only 홀수)
     #cv2.imshow('Blur',blur)
     return blur
-'''
-안쓰기로 결정 (Gaussian Filter 만 쓰는게 더 좋을듯)
-def opening(img):
-    kernel = np.ones((3,3), np.uint8)
-    opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
-    #cv2.imshow('Opening', opening)
-    return opening
-'''
 
-# 원하는 각도로 영상을 Rotate 시킬 수 있음.
+
+# image processing
+def image_Processing(img, output1):
+    blur = gaussian_Blur(img)
+    hsv = BGR2HSV(blur)
+    #cv2.imshow('hsv', hsv)
+    img_canny = cv2.Canny(hsv, 20, 80)
+    #cv2.imshow('Canny',img_canny)
+
+    #return img_canny
+    output1.put(img_canny)
+
+
+# choose roi
+def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before, output1, output2):
+    # left line roi
+    try:
+        if L_num != 0:
+            if direction == 'left' or direction == 'right':
+                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3), (80, bird_height ),
+                                   (20, bird_height ), (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
+            else:
+                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3),
+                                   (int(L_ransac[num_y - 50]) + 25, bird_height ),
+                                   (int(L_ransac[num_y - 50]) - 25, bird_height ),
+                                   (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y //3)]])
+        elif direction == 'straight':
+            L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
+                               (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
+        elif direction == 'right':
+            L_roi = L_roi_before
+        elif direction == 'left':
+            L_roi = L_roi_before
+        else:
+            L_roi = L_roi_before
+
+    except TypeError:
+        L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
+                           (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
+
+    # right line roi
+    try:
+        if R_num != 0:
+            if direction == 'left' or direction == 'right':
+                R_roi = np.array([[(250, bird_height ), (190, bird_height ),
+                                   (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
+                                   (int(R_ransac[0]) - 25, height_ROI),
+                                   (int(R_ransac[0]) + 25, height_ROI),
+                                   (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
+            else:
+                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height ),
+                                   (int(R_ransac[num_y - 50]) - 25, bird_height ),
+                                   (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
+                                   (int(R_ransac[0]) - 25, height_ROI),
+                                   (int(R_ransac[0]) + 25, height_ROI),
+                                   (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
+
+        elif direction == 'straight':
+            R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
+                               (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
+                               (bird_width, 280)]])
+
+        elif direction == 'right':
+            R_roi = R_roi_before
+
+        elif direction == 'left':
+            R_roi = R_roi_before
+        else:
+            R_roi = R_roi_before
+    except TypeError:
+        R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
+                           (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
+                           (bird_width, 280)]])
+    #return L_roi, R_roi
+    output1.put(L_roi)
+    output2.put(R_roi)
+
+
+# decide left, right edge points
+def extract_Line(dst, img_canny, L_line, R_line):
+    global edge_lx, edge_rx
+    # draw line roi
+    cv2.polylines(dst, np.int32([L_line]), 1, (0, 255, 0), 5)
+    cv2.polylines(dst, np.int32([R_line]), 1, (0, 255, 0), 5)
+    #cv2.imshow('ROI added',dst) #--> ROI 부분만 추가됨.
+
+    # canny edge
+    L_edge = set_Gray(img_canny, np.int32([L_line]))
+    R_edge = set_Gray(img_canny, np.int32([R_line]))
+
+    # separate edge points
+    edge_lx, edge_ly = np.where(L_edge >= 255)
+    edge_rx, edge_ry = np.where(R_edge >= 255)
+
+
+    for i in range(len(edge_lx)):
+        try:
+            cv2.circle(dst, (int(edge_ly[i]), int(edge_lx[i])), 1, (0, 155, 255), 2)
+        except TypeError:
+            pass
+    for i in range(len(edge_rx)):
+        try:
+            cv2.circle(dst, (int(edge_ry[i]), int(edge_rx[i])), 1, (255, 155, 0), 2)
+        except TypeError:
+            pass
+    #cv2.imshow('Extract line fin', dst)
+    return dst, edge_lx, edge_ly, edge_rx, edge_ry
+
+
+# check error
+def check_Error(L_ransac, R_ransac, L_check, R_check, L_num, R_num, direction, road_Width):
+    global mid_ransac
+
+    # 4. Left Lane have to primary than Right Lane
+    try:
+        if (not R_E) and (L_ransac[0] > mid_ransac + 30 or L_ransac[209] > mid_ransac + 30):
+            print("ERROR 4")
+            L_ransac = copy.deepcopy(L_check)
+            L_num = -1
+
+    except TypeError:
+        L_num = -1
+
+    try:
+        if (not L_E) and (R_ransac[0] < mid_ransac - 30 or R_ransac[209] < mid_ransac - 30):
+            print("ERROR 4")
+            R_ransac = copy.deepcopy(R_check)
+            R_num = -1
+    except TypeError:
+        R_num = -1
+
+    # 5. Â÷Œ±Æø
+    try:
+        if abs(mid_ransac - L_ransac[0]) > 120:
+            print("ERROR 5")
+            L_ransac = copy.deepcopy(L_check)
+            L_num = -1
+    except TypeError:
+        L_num = -1
+    try:
+        if abs(mid_ransac - R_ransac[0]) > 120:
+            print("ERROR 5")
+            R_ransac = copy.deepcopy(R_check)
+            R_num = -1
+    except TypeError:
+        R_num = -1
+
+    return L_ransac, R_ransac, L_num, R_num
+
+
+# reset error 3 frame
+def error_3frames(L_num, R_num, L_error, R_error, start_num):
+    global L_E, R_E
+    L_E = 0
+    R_E = 0
+    if L_num == -1:
+        L_E = 1
+        if L_error == 0 or L_error == 1 or L_error == 2:
+            L_error += 1
+        else:
+            L_error = 0
+            start_num = -1  # roi
+    else:
+        L_error = 0
+
+    if R_num == -1:
+        R_E = 1
+        if R_error == 0 or R_error == 1 or R_error == 2:
+            R_error += 1
+        else:
+            R_error = 0
+            start_num = -1
+    else:
+        R_error = 0
+    return L_error, R_error, start_num
+
+
+# check road width
+def check_Road_Width(L_ransac, R_ransac):
+    road_Width = [0, 0, 0]
+    try:
+        road_Width[0] = R_ransac[0] - L_ransac[0]
+        road_Width[1] = R_ransac[num_y // 3] - L_ransac[num_y // 3]
+        road_Width[2] = R_ransac[num_y - 1] - L_ransac[num_y - 1]
+    except TypeError:
+        return 0
+    return max(road_Width)
+
+
+# check direction
+def check_Direction(L_ransac, R_ransac, direction_before):
+    try:
+        L_dif = L_ransac[0] - L_ransac[num_y // 3]
+        R_dif = R_ransac[0] - R_ransac[num_y // 3]
+    except TypeError:
+        direction = 'straight'
+    else:
+        if direction_before == 'right':
+            if L_dif < 30 and R_dif < 30:
+                #print ('str')
+                direction = 'str'
+            else:
+                direction = 'right'
+                #print ('right')
+        elif direction_before == 'left':
+            if L_dif > -30 and R_dif > -30:
+                #print ('str')
+                direction = 'str'
+            else:
+                direction = 'left'
+                #print ('left')
+        else:
+            if L_dif > 45 and R_dif > 15:
+                #print ('right')
+                direction = 'right'
+            elif R_dif < -45 and L_dif < -15:
+                #print ('left')
+                direction = 'left'
+            else:
+                direction = 'straight'
+                #print ('str')
+    return direction
+
+
+# draw straight line
+def draw_Straight_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+    if L_num == -1:
+        draw_Poly(dst, L_check, L_color)
+    else:
+        draw_Poly(dst, L_points, L_color)
+    if R_num == -1:
+        draw_Poly(dst, R_check, R_color)
+    else:
+        draw_Poly(dst, R_points, R_color)
+    return dst
+
+
+# draw poly line
+def draw_Poly_Line(dst, L_points, R_points, L_check, R_check, L_num, R_num, L_color, R_color, start_num):
+    if L_num == -1:
+        draw_Poly(dst, L_check, L_color)
+    else:
+        draw_Poly(dst, L_points, L_color)
+    if R_num == -1:
+        draw_Poly(dst, R_check, R_color)
+    else:
+        draw_Poly(dst, R_points, R_color)
+    return dst
+
+
+# get fit line
+def get_Fit_Line(f_lines):
+    try:
+        if len(f_lines) == 0:
+            return None
+        elif len(f_lines) == 1:
+            lines = lines.reshape(2, 2)
+        else:
+            lines = np.squeeze(f_lines)
+            lines = lines.reshape(lines.shape[0] * 2, 2)
+    except:
+        return None
+    else:
+        [vx, vy, x, y] = cv2.fitLine(lines, cv2.DIST_L2, 0, 0.01, 0.01)
+        x1 = 960 - 1  # width of cam(image)
+        y1 = int(((960 - x) * vy / vx) + y)
+        x2 = 0
+        y2 = int((-x * vy / vx) + y)
+        result = [x1, y1, x2, y2]
+        return result
+
+
+# detect stop line
+def detect_Stop(dst, dst_canny, L_roi, R_roi):
+    stop_Roi = np.array([[(45, 440), (205, 440), (205, 5), (45, 5)]])
+    #cv2.polylines(dst, stop_Roi, 1, (0,155,0),5)
+    img_Stop = set_Gray(dst_canny, stop_Roi)
+    line_arr = cv2.HoughLinesP(img_Stop, 1, 1 * np.pi / 180, 30, np.array([]), 10, 30)
+    line_arr = np.array(np.squeeze(line_arr))
+    line_arr_t = line_arr.transpose()
+    if line_arr.shape != ():
+        slope_Degree = ((np.arctan2(line_arr_t[1] - line_arr_t[3], line_arr_t[0] - line_arr_t[2]) * 180) / np.pi)
+        try:
+            line_arr = line_arr[np.abs(slope_Degree) > 160]
+            line_arr = line_arr[:, None]
+        except IndexError:
+            pass
+        else:
+            stop_Lines = get_Fit_Line(line_arr)
+            try:
+                cv2.line(dst, (stop_Lines[0], stop_Lines[1]), (stop_Lines[2], stop_Lines[3]), (0, 155, 0), 5)
+            except TypeError:
+                pass
+            return dst, stop_Lines
+
+#Rotation Function added(2018)
+
 def Rotate(src, degrees):
     if degrees == 90:
         dst = cv2.transpose(src)
@@ -147,174 +477,144 @@ def Rotate(src, degrees):
         dst = null
     return dst
 
-def houghLines(Edge_img):
 
-    lines = cv2.HoughLines(Edge_img, 1, np.pi / 180, 200)
+#####################################Main Function###################################
 
-    try:
+# read video
 
-        for line in lines:
+def lane_Detection(cam):
+    global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
+    global frame_num, L_check, R_check, stop_Lines, destination_J, destination_I
+    global mid_ransac
 
-            rho, theta = line[0]
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
-            x1 = int(x0 + 1000 * (-b))
-            y1 = int(y0 + 1000 * (a))
-            x2 = int(x0 - 1000 * (-b))
-            y2 = int(y0 - 1000 * (a))
+    while 1:
+        s, img = cam.read()
+        procs = []
 
-            cv2.line(Edge_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-    except:
-        pass
-    return Edge_img
+        # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        dst = cv2.warpPerspective(img, M, (height, width))
+        #cv2.imshow('d',dst)
 
-def houghLinesP(Edge_img):
+        output1 = Queue()
+        output2 = Queue()
+        output3 = Queue()
 
-    minLineLength = 100
-    maxLineGap = 10
+        #img_canny = image_Processing(dst)
+        procs.append(Process(target=image_Processing, args=(dst, output1)))
+        #L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
+        procs.append(Process(target=choose_Roi, args=(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, output2, output3)))#왼쪽 오른쪽 각각 구하기?
 
-    try:
-        lines = cv2.HoughLinesP(Edge_img, 1, np.pi / 360, 100, minLineLength, maxLineGap)
-        for i in range(len(lines)):
-            for x1, y1, x2, y2 in lines[i]:
-                cv2.line(Edge_img, (x1, y1), (x2, y2), (255, 255, 255), 2)
-    except:
-        pass
-    return Edge_img
+        for p in procs:
+            p.start()
 
-def lane_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
-    # left line roi
-    try:
-        if L_num != 0:
-            if direction == 'left' or direction == 'right':
-                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
-                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3), (80, bird_height - 60),
-                                   (20, bird_height - 60), (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
-            else:
-                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
-                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3),
-                                   (int(L_ransac[num_y - 50]) + 25, bird_height - 60),
-                                   (int(L_ransac[num_y - 50]) - 25, bird_height - 60),
-                                   (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
-        elif direction == 'straight':
-            L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
-                               (bird_width / 2 - 40, bird_height - 65), (15, bird_height - 65)]])
-        elif direction == 'right':
-            L_roi = L_roi_before
-        elif direction == 'left':
-            L_roi = L_roi_before
+
+        img_canny = output1.get()
+        L_roi = output2.get()
+        R_roi = output3.get()
+
+        output1.close()
+        output2.close()
+        output3.close()
+
+        for p in procs:
+            p.join()
+        dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
+        #cv2.imshow('extract',dst)
+
+        procs=[]
+        outputL_ransac=Queue()
+        outputR_ransac=Queue()
+        outputL_linear=Queue()
+        outputR_linear=Queue()
+
+
+        procs.append(Process(target=polynomial_Ransac(), args=(edge_ly, edge_lx, height_ROI, bird_height,outputL_ransac)))
+        procs.append(Process(target=polynomial_Ransac(), args=(edge_ry, edge_rx, height_ROI, bird_height,outputR_ransac)))
+        procs.append(Process(target=linear_Ransac(), args=(edge_ly, edge_lx, height_ROI, bird_height,outputL_linear)))
+        procs.append(Process(target=linear_Ransac(), args=(edge_ry, edge_rx, height_ROI, bird_height,outputR_linear)))
+
+        L_ransac = outputL_ransac.get()
+        R_ransac =outputR_ransac.get()
+        L_linear = outputL_linear.get()
+        R_linear= outputR_linear.get()
+
+        outputL_ransac.close()
+        outputR_ransac.close()
+        outputL_linear.close()
+        outputR_linear.close()
+
+        for p in procs:
+            p.join()
+
+
+
+
+
+        road_Width = check_Road_Width(L_ransac, R_ransac)
+
+        if start_num == 0:
+            L_check = copy.deepcopy(L_ransac)
+            R_check = copy.deepcopy(R_ransac)
+
+        direction = check_Direction(L_ransac, R_ransac, direction)
+        if direction == 'straight':
+            L_linear, R_linear, L_num, R_num = check_Error(L_linear, R_linear, L_check, R_check, L_num, R_num, direction,
+                                                           road_Width)
+            L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
+            #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+            draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+            #cv2.imshow('asdasdasd',dst)
+            L_check = copy.deepcopy(L_linear)
+            R_check = copy.deepcopy(R_linear)
+            try:
+                dst, stop_Lines = detect_Stop(dst, img_canny, L_roi, R_roi)
+            except TypeError:
+                pass
         else:
-            L_roi = L_roi_before
+            L_ransac, R_ransac, L_num, R_num = check_Error(L_ransac, R_ransac, L_check, R_check, L_num, R_num, direction,
+                                                           real_Road_Width)
+            L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
 
-    except TypeError:
-        L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
-                           (bird_width / 2 - 40, bird_height - 65), (15, bird_height - 65)]])
-
-    # right line roi
-    try:
-        if R_num != 0:
-            if direction == 'left' or direction == 'right':
-                R_roi = np.array([[(250, bird_height - 60), (190, bird_height - 60),
-                                   (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
-                                   (int(R_ransac[0]) - 25, height_ROI),
-                                   (int(R_ransac[0]) + 25, height_ROI),
-                                   (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
-            else:
-                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height - 60),
-                                   (int(R_ransac[num_y - 50]) - 25, bird_height - 60),
-                                   (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
-                                   (int(R_ransac[0]) - 25, height_ROI),
-                                   (int(R_ransac[0]) + 25, height_ROI),
-                                   (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
-
-        elif direction == 'straight':
-            R_roi = np.array([[(bird_width - 15, bird_height - 65), (bird_width / 2 + 40, bird_height - 65),
-                               (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
-                               (bird_width, 280)]])
-
-        elif direction == 'right':
-            R_roi = R_roi_before
-
-        elif direction == 'left':
-            R_roi = R_roi_before
-        else:
-            R_roi = R_roi_before
-    except TypeError:
-        R_roi = np.array([[(bird_width - 15, bird_height - 65), (bird_width / 2 + 40, bird_height - 65),
-                           (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
-                           (bird_width, 280)]])
-    return L_roi, R_roi
-
-def lane_Extract(dst, img_canny, L_line, R_line):
-
-    return dst, edge_lx, edge_ly, edge_rx, edge_ry
+            L_check = copy.deepcopy(L_ransac)
+            R_check = copy.deepcopy(R_ransac)
+        cv2.imshow('dst', dst)
+        rotated = Rotate(dst, 270)
+        #cv2.imshow('Rotated', rotated)
+        i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
+        cv2.imshow('asd',i_dst)
+        start_num += 1
+        frame_num += 1
+        L_num += 1
+        R_num += 1
+        #return stop_Lines
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 
-def poly_Ransac(x_points, y_points, y_min, y_max):
+cam = cv2.VideoCapture('C:/Users/zenon/Desktop/0507_one_lap_normal.mp4')
 
+cam.set(cv2.CAP_PROP_FRAME_WIDTH,480)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT,270)
 
-    return
+w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+#print('size = ', w, h)
 
-###############################Main Function#################################
+if (not cam.isOpened()):
+    print ("cam open failed")
 
-def lane_Detection(img):
-    #일단, 보여줄 건 추출한 lane을 보여주고, 그에 따른 이차함수의 계수 3개를 보여줌.
+if __name__ == "__main__":
+    lane_Detection(cam)
 
-    return coef1, coef2, coef3
-    #이차함수 꼴 = coef1*(x^2) + coef2*x + coef3
-
-
-
-
-CAM_ID = 'C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4'
-#CAM_ID = 0
-cam = cv2.VideoCapture(CAM_ID)  # 카메라 생성
-if cam.isOpened() == False:  # 카메라 생성 확인
-    print('Can\'t open the CAM')
-
-
-# 카메라 이미지 해상도 얻기
-width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
-height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
-print('size = ', width, height)
-
-
-
-while (True):
-    # 카메라에서 이미지 얻기
-    ret, frame = cam.read()
-
-    # 이미지를 회전시켜서 rotated로 돌려받음
-    rotated = Rotate(frame, 270)  # 90 or 180 or 270
-    ########################################
-    #cv2.imshow('ORIGINAL',frame)
-    #cv2.imshow('ROTATED',rotated)
-    height, width = rotated.shape[:2]
-    dst = cv2.warpPerspective(rotated, M, (height, width))
-    #cv2.imshow('dst',dst)
-    blur_img = gaussian_Blur(dst)
-    #cv2.imshow('blur',blur_img)
-    hsv = BGR2HSV(blur_img)
-    cv2.imshow('blur_hsv',hsv)
-    Canny = cv2.Canny(hsv, 40, 80)
-    cv2.imshow('hsv_Canny', Canny)
-    Houghed = houghLines(Canny)
-    #cv2.imshow('hough', Houghed)
-    HoughedP = houghLinesP(Canny)
-    #cv2.imshow('houghP',HoughedP)
-
-    X,y = np.where(Canny >=255)
-
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+# while True:
+#     s, img = cam.read()
+#     s_Lines = lane_Detection(img)
+#
+#
+#
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
 
 cam.release()
 cv2.destroyAllWindows()
 cv2.waitKey(0)
-
-
-
-
