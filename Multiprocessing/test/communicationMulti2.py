@@ -9,7 +9,7 @@ import serial
 import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
-from multiprocessing import process
+import multiprocessing
 
 
 # CONSTANTS for _read(), related with encoder
@@ -182,11 +182,11 @@ if __name__ == '__main__':
 
     while True:
 
-        read_Process = process(target=platform._read())
+        read_Process = multiprocessing.process(target=platform._read())
 
-        write_Process = process(target=platform._write())
+        write_Process = multiprocessing.process(target=platform._write())
 
-        test_write_Process = process(target=platform.test_write_to_platform())
+        test_write_Process = multiprocessing.process(target=platform.test_write_to_platform())
 
 
 
