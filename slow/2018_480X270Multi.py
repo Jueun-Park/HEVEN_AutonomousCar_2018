@@ -7,6 +7,7 @@ from sklearn import linear_model
 from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
+from multiprocessing import Process, Queue
 
 ######################################변수 설정######################################
 global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
@@ -159,6 +160,7 @@ def image_Processing(img):
 
 
 # choose roi
+'''
 def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
     # left line roi
     try:
@@ -221,6 +223,76 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
                            (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                            (bird_width, 280)]])
     return L_roi, R_roi
+'''
+
+def L_choose_Roi(dst, direction, L_num, L_ransac, L_roi_before, outputL_roi):
+    # left line roi
+    try:
+        if L_num != 0:
+            if direction == 'left' or direction == 'right':
+                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3), (80, bird_height ),
+                                   (20, bird_height ), (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
+            else:
+                L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3),
+                                   (int(L_ransac[num_y - 50]) + 25, bird_height ),
+                                   (int(L_ransac[num_y - 50]) - 25, bird_height ),
+                                   (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y //3)]])
+        elif direction == 'straight':
+            L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
+                               (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
+        elif direction == 'right':
+            L_roi = L_roi_before
+        elif direction == 'left':
+            L_roi = L_roi_before
+        else:
+            L_roi = L_roi_before
+
+    except TypeError:
+        L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
+                           (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
+
+    outputL_roi.put(L_roi)
+
+def R_choose_Roi(dst, direction, R_num, R_ransac, R_roi_before,outputR_roi):
+    try:
+        if R_num != 0:
+            if direction == 'left' or direction == 'right':
+                R_roi = np.array([[(250, bird_height), (190, bird_height),
+                                   (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
+                                   (int(R_ransac[0]) - 25, height_ROI),
+                                   (int(R_ransac[0]) + 25, height_ROI),
+                                   (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
+            else:
+                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height),
+                                   (int(R_ransac[num_y - 50]) - 25, bird_height),
+                                   (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
+                                   (int(R_ransac[0]) - 25, height_ROI),
+                                   (int(R_ransac[0]) + 25, height_ROI),
+                                   (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
+
+        elif direction == 'straight':
+            R_roi = np.array([[(bird_width - 15, bird_height), (bird_width / 2 + 40, bird_height),
+                               (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
+                               (bird_width, 280)]])
+
+        elif direction == 'right':
+            R_roi = R_roi_before
+
+        elif direction == 'left':
+            R_roi = R_roi_before
+        else:
+            R_roi = R_roi_before
+    except TypeError:
+        R_roi = np.array([[(bird_width - 15, bird_height), (bird_width / 2 + 40, bird_height),
+                           (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
+                           (bird_width, 280)]])
+    outputR_roi.put(R_roi)
+
+
+
+
 
 
 # decide left, right edge points
@@ -472,13 +544,37 @@ def lane_Detection(img):
 
     img_canny = image_Processing(dst)
 
-    L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
+    #Roi 구하기 멀티프로세스
+
+    outputL_roi=Queue()
+    outputR_roi=Queue()
+
+    p1=(Process(target=L_choose_Roi,args=(dst,direction,L_num,L_ransac, L_roi, outputL_roi)))
+    p2=(Process(target=R_choose_Roi, args=(dst, direction, R_num, R_ransac , R_roi, outputR_roi)))
+
+    p1.start()
+    p2.start()
+
+    L_roi=outputL_roi.get()
+    R_roi=outputR_roi.get()
+
+    ctx=None
+    outputL_roi.__init__()#큐 초기화
+    outputR_roi.__init__()
+
+
+    p1.join()
+    p2.join()
+
+
+
+    #L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
     dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
     #cv2.imshow('extract',dst)
 
     L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
-    print(L_ransac)
+
 
     L_linear = linear_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_linear = linear_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
@@ -526,6 +622,7 @@ def lane_Detection(img):
 
 
 
+
 if __name__=="__main__" :
     cam = cv2.VideoCapture('C:/Users/zenon/Desktop/0507_one_lap_normal.mp4')
     # cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
@@ -543,18 +640,8 @@ if __name__=="__main__" :
 
     while True:
         s, img = cam.read()
+
         s_Lines = lane_Detection(img)
-
-
-
-
-
-
-
-
-
-
-
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
