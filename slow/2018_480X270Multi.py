@@ -475,8 +475,10 @@ def lane_Detection(img):
     L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
     dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
     #cv2.imshow('extract',dst)
+
     L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
+    print(L_ransac)
 
     L_linear = linear_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
     R_linear = linear_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
@@ -524,29 +526,39 @@ def lane_Detection(img):
 
 
 
+if __name__=="__main__" :
+    cam = cv2.VideoCapture('C:/Users/zenon/Desktop/0507_one_lap_normal.mp4')
+    # cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
+    # cam = cv2.VideoCapture(1)
 
-cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
-#cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
-#cam = cv2.VideoCapture(1)
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 270)
 
-cam.set(cv2.CAP_PROP_FRAME_WIDTH,480)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT,270)
+    w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+    h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    print('size = ', w, h)
 
-w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
-h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
-print('size = ', w, h)
+    if (not cam.isOpened()):
+        print("cam open failed")
 
-if (not cam.isOpened()):
-    print ("cam open failed")
+    while True:
+        s, img = cam.read()
+        s_Lines = lane_Detection(img)
 
-while True:
-    s, img = cam.read()
-    s_Lines = lane_Detection(img)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
-cam.release()
-cv2.destroyAllWindows()
-cv2.waitKey(0)
 
+
+
+
+
+
+
+
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cam.release()
+    cv2.destroyAllWindows()
+    cv2.waitKey(0)
