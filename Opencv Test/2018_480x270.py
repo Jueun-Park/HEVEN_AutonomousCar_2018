@@ -539,7 +539,7 @@ def lane_Detection(img):
 
 
 
-cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
+cam = cv2.VideoCapture('C:/Users/zenon/Desktop/0507_one_lap_normal.mp4')
 #cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
 #cam = cv2.VideoCapture(1)
 
