@@ -1,3 +1,5 @@
+from multiprocessing import Process, Queue
+import os
 import cv2
 import numpy as np
 import time
@@ -8,7 +10,7 @@ from sklearn.linear_model import (LinearRegression, RANSACRegressor)
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 
-######################################°ª ÃÊ±âÈ­######################################
+######################################변수 설정######################################
 global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
 global frame_num, L_check, R_check, stop_Lines, destination_J, destination_I
 global L_E, R_E, mid_ransac, lane_width
@@ -17,11 +19,11 @@ global edge_lx, edge_rx  # dotted line detection
 destination_J = 39
 stop_Lines = 0
 frame_num = 0
-bird_height = 480
-bird_width = 270
-height = 270
-width = 480
-height_ROI = 270 # 얘만 잘 조절하면 ROI 길이 조절 가능.
+bird_height = 432
+bird_width = 240
+height = 240
+width = 432
+height_ROI = 210 # 얘만 잘 조절하면 ROI 길이 조절 가능.
 L_num = 0
 R_num = 0
 L_ransac = 0
@@ -41,26 +43,27 @@ R_E = 0
 mid_ransac = 135.
 lane_width = 30
 
-# set cross point
-y1 = 185
-y2 = 269
+#################################432x240#################################
+# set cross point (Rotation 때문에 저번대회랑 다름)
+y1 = 160
+y2 = 239
 
-# º¯Çü Àü »ç°¢Á¡
-L_x1 = 176  # 400
-L_x2 = 92
-R_x1 = 320  # 560
-R_x2 = 447
+# 원래 Pixel (Rotation 때문에 저번대회랑 다름)
+L_x1 = 100  # 400
+L_x2 = 10
+R_x1 = 332  # 560
+R_x2 = 422
 road_width = R_x2 - L_x2
 
-# º¯Çü ÈÄ »ç°¢Á¡
-Ax1 = 85 + 5  # 50
-Ax2 = 215 - 5  # 470
+# 바꿀 Pixel (Rotation 때문에 저번대회랑 다름)
+Ax1 = 40  # 50
+Ax2 = 200  # 470
 Ay1 = 0
-Ay2 = 570
+Ay2 = 432
 
-# Homograpy transform
 pts1 = np.float32([[L_x1, y1], [R_x1, y1], [L_x2, y2], [R_x2, y2]])
 pts2 = np.float32([[Ax1, Ay1], [Ax2, Ay1], [Ax1, Ay2], [Ax2, Ay2]])
+###########################################################################
 M = cv2.getPerspectiveTransform(pts1, pts2)
 i_M = cv2.getPerspectiveTransform(pts2, pts1)
 
@@ -86,7 +89,7 @@ def set_Red(img, region):
     return img_red
 
 
-# ransac
+# Linear ransac
 def linear_Ransac(x_points, y_points, y_min, y_max):
     x_points = np.array(x_points)
     y_points = np.array(y_points)
@@ -105,7 +108,7 @@ def linear_Ransac(x_points, y_points, y_min, y_max):
         return line_X_ransac
 
 
-# ransac
+# Polynomial ransac
 def polynomial_Ransac(x_points, y_points, y_min, y_max):
     x_points = np.array(x_points)
     y_points = np.array(y_points)
@@ -123,7 +126,7 @@ def polynomial_Ransac(x_points, y_points, y_min, y_max):
 
 # draw polynomial
 def draw_Poly(img, points, color):
-    for i in range(num_y - 60):
+    for i in range(num_y):
         try:
             cv2.circle(img, (int(points[i]), height_ROI + i), 1, color, 2)
         except TypeError:
@@ -162,34 +165,35 @@ def gaussian_Blur(img):
 
 
 # image processing
-def image_Processing(img):
+def image_Processing(img, output1):
     blur = gaussian_Blur(img)
     hsv = BGR2HSV(blur)
     #cv2.imshow('hsv', hsv)
     img_canny = cv2.Canny(hsv, 20, 80)
     #cv2.imshow('Canny',img_canny)
 
-    return img_canny
+    #return img_canny
+    output1.put(img_canny)
 
 
 # choose roi
-def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before):
+def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R_roi_before, output2, output3):
     # left line roi
     try:
         if L_num != 0:
             if direction == 'left' or direction == 'right':
                 L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
-                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3), (80, bird_height - 60),
-                                   (20, bird_height - 60), (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
+                                   (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3), (80, bird_height ),
+                                   (20, bird_height ), (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y // 3)]])
             else:
                 L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
                                    (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3),
-                                   (int(L_ransac[num_y - 50]) + 25, bird_height - 60),
-                                   (int(L_ransac[num_y - 50]) - 25, bird_height - 60),
+                                   (int(L_ransac[num_y - 50]) + 25, bird_height ),
+                                   (int(L_ransac[num_y - 50]) - 25, bird_height ),
                                    (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y //3)]])
         elif direction == 'straight':
             L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
-                               (bird_width / 2 - 40, bird_height - 65), (15, bird_height - 65)]])
+                               (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
         elif direction == 'right':
             L_roi = L_roi_before
         elif direction == 'left':
@@ -199,27 +203,27 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
 
     except TypeError:
         L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
-                           (bird_width / 2 - 40, bird_height - 65), (15, bird_height - 65)]])
+                           (bird_width / 2 - 40, bird_height ), (15, bird_height )]])
 
     # right line roi
     try:
         if R_num != 0:
             if direction == 'left' or direction == 'right':
-                R_roi = np.array([[(250, bird_height - 60), (190, bird_height - 60),
+                R_roi = np.array([[(250, bird_height ), (190, bird_height ),
                                    (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
                                    (int(R_ransac[0]) - 25, height_ROI),
                                    (int(R_ransac[0]) + 25, height_ROI),
                                    (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
             else:
-                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height - 60),
-                                   (int(R_ransac[num_y - 50]) - 25, bird_height - 60),
+                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height ),
+                                   (int(R_ransac[num_y - 50]) - 25, bird_height ),
                                    (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
                                    (int(R_ransac[0]) - 25, height_ROI),
                                    (int(R_ransac[0]) + 25, height_ROI),
                                    (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
 
         elif direction == 'straight':
-            R_roi = np.array([[(bird_width - 15, bird_height - 65), (bird_width / 2 + 40, bird_height - 65),
+            R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
                                (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                                (bird_width, 280)]])
 
@@ -231,10 +235,12 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
         else:
             R_roi = R_roi_before
     except TypeError:
-        R_roi = np.array([[(bird_width - 15, bird_height - 65), (bird_width / 2 + 40, bird_height - 65),
+        R_roi = np.array([[(bird_width - 15, bird_height ), (bird_width / 2 + 40, bird_height ),
                            (bird_width / 2 + 40, height_ROI + num_y / 2), (bird_width / 2 + 40, 280),
                            (bird_width, 280)]])
-    return L_roi, R_roi
+    #return L_roi, R_roi
+    output2.put(L_roi)
+    output3.put(R_roi)
 
 
 # decide left, right edge points
@@ -358,28 +364,28 @@ def check_Direction(L_ransac, R_ransac, direction_before):
     else:
         if direction_before == 'right':
             if L_dif < 30 and R_dif < 30:
-                print ('str')
+                #print ('str')
                 direction = 'str'
             else:
                 direction = 'right'
-                print ('right')
+                #print ('right')
         elif direction_before == 'left':
             if L_dif > -30 and R_dif > -30:
-                print ('str')
+                #print ('str')
                 direction = 'str'
             else:
                 direction = 'left'
-                print ('left')
+                #print ('left')
         else:
             if L_dif > 45 and R_dif > 15:
-                print ('right')
+                #print ('right')
                 direction = 'right'
             elif R_dif < -45 and L_dif < -15:
-                print ('left')
+                #print ('left')
                 direction = 'left'
             else:
                 direction = 'straight'
-                print ('str')
+                #print ('str')
     return direction
 
 
@@ -434,7 +440,7 @@ def get_Fit_Line(f_lines):
 # detect stop line
 def detect_Stop(dst, dst_canny, L_roi, R_roi):
     stop_Roi = np.array([[(45, 440), (205, 440), (205, 5), (45, 5)]])
-    # cv2.polylines(dst, stop_Roi, 1, (0,155,0),5)
+    #cv2.polylines(dst, stop_Roi, 1, (0,155,0),5)
     img_Stop = set_Gray(dst_canny, stop_Roi)
     line_arr = cv2.HoughLinesP(img_Stop, 1, 1 * np.pi / 180, 30, np.array([]), 10, 30)
     line_arr = np.array(np.squeeze(line_arr))
@@ -476,75 +482,91 @@ def Rotate(src, degrees):
 
 # read video
 
-def lane_Detection(img):
+def lane_Detection(cam):
     global direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, start_num, L_error, R_error
     global frame_num, L_check, R_check, stop_Lines, destination_J, destination_I
     global mid_ransac
 
-    # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    dst = cv2.warpPerspective(img, M, (height, width))
-    #cv2.imshow('d',dst)
+    while (True):
+        s, img = cam.read()
+        procs = []
 
-    img_canny = image_Processing(dst)
+        # gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        dst = cv2.warpPerspective(img, M, (height, width))
+        #cv2.imshow('d',dst)
 
-    L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
-    dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
-    #cv2.imshow('extract',dst)
-    L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
-    R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
-    '''
-    try:
-        print "Left! ",L_ransac[0],mid_ransac
-    except: pass
-    try:
-        print "Right! ",R_ransac[0],mid_ransac
-    except: pass'''
-    L_linear = linear_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
-    R_linear = linear_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
-    road_Width = check_Road_Width(L_ransac, R_ransac)
+        output1 = Queue()
+        output2 = Queue()
+        output3 = Queue()
 
-    if start_num == 0:
-        L_check = copy.deepcopy(L_ransac)
-        R_check = copy.deepcopy(R_ransac)
+        #img_canny = image_Processing(dst)
+        procs.append(Process(target=image_Processing, args=(dst, output1)))
+        #L_roi, R_roi = choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi)
+        procs.append(Process(target=choose_Roi, args=(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi, R_roi, output2, output3)))
 
-    direction = check_Direction(L_ransac, R_ransac, direction)
-    if direction == 'straight':
-        L_linear, R_linear, L_num, R_num = check_Error(L_linear, R_linear, L_check, R_check, L_num, R_num, direction,
-                                                       road_Width)
-        L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
-        #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
-        draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
-        #cv2.imshow('asdasdasd',dst)
-        L_check = copy.deepcopy(L_linear)
-        R_check = copy.deepcopy(R_linear)
-        try:
-            dst, stop_Lines = detect_Stop(dst, img_canny, L_roi, R_roi)
-        except TypeError:
-            pass
-    else:
-        L_ransac, R_ransac, L_num, R_num = check_Error(L_ransac, R_ransac, L_check, R_check, L_num, R_num, direction,
-                                                       real_Road_Width)
-        L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
-
-        L_check = copy.deepcopy(L_ransac)
-        R_check = copy.deepcopy(R_ransac)
-    #cv2.imshow('dst', dst)
-    rotated = Rotate(dst, 270)
-    #cv2.imshow('Rotated', rotated)
-    i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
-    #cv2.imshow('asd',i_dst)
-    start_num += 1
-    frame_num += 1
-    L_num += 1
-    R_num += 1
-    return dst, rotated, i_dst, stop_Lines
+        for p in procs:
+            p.start()
 
 
+        img_canny = output1.get()
+        L_roi = output2.get()
+        R_roi = output3.get()
+
+        output1.close()
+        output2.close()
+        output3.close()
+
+        for p in procs:
+            p.join()
+        dst, edge_lx, edge_ly, edge_rx, edge_ry = extract_Line(dst, img_canny, L_roi, R_roi)
+        #cv2.imshow('extract',dst)
+        L_ransac = polynomial_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
+        R_ransac = polynomial_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
+
+        L_linear = linear_Ransac(edge_ly, edge_lx, height_ROI, bird_height)
+        R_linear = linear_Ransac(edge_ry, edge_rx, height_ROI, bird_height)
+        road_Width = check_Road_Width(L_ransac, R_ransac)
+
+        if start_num == 0:
+            L_check = copy.deepcopy(L_ransac)
+            R_check = copy.deepcopy(R_ransac)
+
+        direction = check_Direction(L_ransac, R_ransac, direction)
+        if direction == 'straight':
+            L_linear, R_linear, L_num, R_num = check_Error(L_linear, R_linear, L_check, R_check, L_num, R_num, direction,
+                                                           road_Width)
+            L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
+            #draw_Straight_Line(dst, L_ransac, R_ransac, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+            draw_Straight_Line(dst, L_linear, R_linear, L_check, R_check, L_num, R_num, (0, 0, 255), (255, 0, 0), start_num)
+            #cv2.imshow('asdasdasd',dst)
+            L_check = copy.deepcopy(L_linear)
+            R_check = copy.deepcopy(R_linear)
+            try:
+                dst, stop_Lines = detect_Stop(dst, img_canny, L_roi, R_roi)
+            except TypeError:
+                pass
+        else:
+            L_ransac, R_ransac, L_num, R_num = check_Error(L_ransac, R_ransac, L_check, R_check, L_num, R_num, direction,
+                                                           real_Road_Width)
+            L_error, R_error, start_num = error_3frames(L_num, R_num, L_error, R_error, start_num)
+
+            L_check = copy.deepcopy(L_ransac)
+            R_check = copy.deepcopy(R_ransac)
+        cv2.imshow('dst', dst)
+        rotated = Rotate(dst, 270)
+        #cv2.imshow('Rotated', rotated)
+        i_dst = cv2.warpPerspective(dst, i_M, (bird_height, bird_width))
+        cv2.imshow('asd',i_dst)
+        start_num += 1
+        frame_num += 1
+        L_num += 1
+        R_num += 1
+        #return stop_Lines
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 
 cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/0507_one_lap_normal.mp4')
-#cam = cv2.VideoCapture('C:/Users/jglee/Desktop/VIDEOS/Parking Detection.mp4')
-#cam = cv2.VideoCapture(1)
 
 cam.set(cv2.CAP_PROP_FRAME_WIDTH,480)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT,270)
@@ -556,16 +578,18 @@ print('size = ', w, h)
 if (not cam.isOpened()):
     print ("cam open failed")
 
-while True:
-    s, img = cam.read()
-    dst, rotated, i_dst, s_Lines = lane_Detection(img)
-    cv2.imshow('dst', dst)
+if __name__ == "__main__":
+    lane_Detection(cam)
 
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+# while True:
+#     s, img = cam.read()
+#     s_Lines = lane_Detection(img)
+#
+#
+#
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
 
 cam.release()
 cv2.destroyAllWindows()
 cv2.waitKey(0)
-
