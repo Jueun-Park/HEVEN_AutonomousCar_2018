@@ -1,8 +1,8 @@
 from multiprocessing import Pool
 
-def findCenterofMassX(y) :
+def findCenterofMassX(y,l) :
     sum_of_x_mass_coordinates = 0
-    for x in range(0,len(src[0])) :
+    for x in range(0,l) :
         if[y][x] !=0 :
             sum_of_x_mass_coordinates += x
 
@@ -43,20 +43,11 @@ def function_pool(src) :
     p=Pool(24)
     len_Y=len(src)
     len_X=len(src[0])
-    num_of_mass_points = sum(p.map(findCenterofMassP, range(0, len_Y)),0.00)
+    num_of_mass_points = sum(p.map(findCenterofMassP, range(0, len_Y),len_X),0.00)
     center_of_mass_x = int(sum(p.map(findCenterofMassX, range(0, len_Y)),0.00)/num_of_mass_points)
     center_of_mass_y = int(sum(p.map(findCenterofMassY, range(0, len_Y)),0.00)/num_of_mass_points)
 
     return (center_of_mass_x,center_of_mass_y)
-
-
-
-
-
-    sum_of_x_mass_coordinates = 0
-    sum_of_y_mass_coordinates = 0
-    num_of_mass_points = 0
-
 
 
 if __name__ == "__main__" :
