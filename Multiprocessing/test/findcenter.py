@@ -1,6 +1,7 @@
 from multiprocessing import Pool
 
-def findCenterofMassX(y,l) :
+
+def findCenterofMassX(y) :
     sum_of_x_mass_coordinates = 0
     for x in range(0,l) :
         if[y][x] !=0 :
@@ -24,20 +25,6 @@ def findCenterofMassP(y) :
 
     return num_of_mass_points
 
-"""
-    for y in range(0,len(src)) :
-        for x in range(0,len(src[0])) :
-            if[y][x] !=0 :
-                sum_of_x_mass_coordinates += x
-                sum_of_y_mass_coordinates += y
-                num_of_mass_points+=1
-
-    center_of_mass_x = int(sum_of_x_mass_coordinates / num_of_mass_points)
-    center_of_mass_y = int(sum_of_y_mass_coordinates / num_of_mass_points)
-
-    return (center_of_mass_x,center_of_mass_y)
-"""
-
 
 def function_pool(src) :
     p=Pool(24)
@@ -51,7 +38,10 @@ def function_pool(src) :
 
 
 if __name__ == "__main__" :
-    function_pool()
+
+    function_pool(src)
+
+    #src값은 정해져있는 값인가? 아님 계속 변동하는 값인가?
 
 
 
