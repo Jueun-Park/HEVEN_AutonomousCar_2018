@@ -3,7 +3,7 @@ from multiprocessing import Pool
 
 def findCenterofMassX(y) :
     sum_of_x_mass_coordinates = 0
-    for x in range(0,l) :
+    for x in range(0,len(src[0])) :
         if[y][x] !=0 :
             sum_of_x_mass_coordinates += x
 
@@ -42,6 +42,7 @@ if __name__ == "__main__" :
     function_pool(src)
 
     #src값은 정해져있는 값인가? 아님 계속 변동하는 값인가?
+    #쿠다로 돌리는것도 짜보는중
 
 
 
