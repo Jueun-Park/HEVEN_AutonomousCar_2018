@@ -2,11 +2,13 @@ from multiprocessing import Pool
 import time
 import os
 import math
-
+center=0
 def f(x):
+    global center
     print("값", x, "에 대한 작업 Pid = ",os.getpid())
     time.sleep(1)# 한 프로세스가 멈추어도 다른 프로세스가 돌아가는지 확인하기 위해 넣은 값
-    return x*x
+    center = center+ (x*x)
+    return center
 
 
 def function_pool():
@@ -14,12 +16,14 @@ def function_pool():
 
 
     print(p.map(f, range(0, 10)))
+    print(center)
 
     # mapping
 
 
 
 if __name__ == '__main__':
+
     startTime = float(time.time())
     function_pool()
     endTime = float(time.time())
