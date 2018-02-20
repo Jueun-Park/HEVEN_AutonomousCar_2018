@@ -549,22 +549,29 @@ def lane_Detection(img):
     outputL_roi=Queue()
     outputR_roi=Queue()
 
-    p1=(Process(target=L_choose_Roi,args=(dst,direction,L_num,L_ransac, L_roi, outputL_roi)))
-    p2=(Process(target=R_choose_Roi, args=(dst, direction, R_num, R_ransac , R_roi, outputR_roi)))
-
-    p1.start()
-    p2.start()
-
-    L_roi=outputL_roi.get()
-    R_roi=outputR_roi.get()
-
-    ctx=None
-    outputL_roi.__init__()#큐 초기화
-    outputR_roi.__init__()
 
 
-    p1.join()
-    p2.join()
+        p1=(Process(target=L_choose_Roi,args=(dst,direction,L_num,L_ransac, L_roi, outputL_roi)))
+        p2=(Process(target=R_choose_Roi, args=(dst, direction, R_num, R_ransac , R_roi, outputR_roi)))
+
+
+        p1.start()
+        p2.start()
+
+        print(p1.pid)
+        print(p2.pid)
+
+
+        L_roi=outputL_roi.get()
+
+        R_roi=outputR_roi.get()
+
+
+        outputL_roi.close()#큐 초기화
+        outputR_roi.close()
+
+    #print(p1.pid)
+    #print(p2.pid)
 
 
 
