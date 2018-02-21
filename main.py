@@ -8,6 +8,7 @@ import lane_cam
 import path_planner
 import car_control
 import communication
+
 # module
 import numpy
 import cv2
@@ -38,7 +39,6 @@ def main():
 
     pass
 
-
 if __name__ == "__main__" :
 
     start_time=0
@@ -50,18 +50,9 @@ if __name__ == "__main__" :
         end_time = time.time()
         # openCam()
         main()
-        # astar_Comb()
-        dim = (500, 500)
-        # map_plot = cv2.resize(lane_Comb, dim, interpolation = cv2.INTER_AREA)
-        # lidar_plot = cv2.resize(lidar_Comb, dim, interpolation = cv2.INTER_AREA)
-        lane_plot = cv2.resize(matrix_Show, dim, interpolation=cv2.INTER_AREA)
-        # cv2.imshow('map', map_plot)
-        # cv2.imshow('lidar', lidar_plot)
-        cv2.imshow('Path', lane_plot)
-        # cv2.imshow('cam', img)
-        if cv2.waitKey(1) == 27:
-            break
-    cam.release()
+
+
+
     cv2.destroyAllWindows()
     cv2.waitKey(0)
 
