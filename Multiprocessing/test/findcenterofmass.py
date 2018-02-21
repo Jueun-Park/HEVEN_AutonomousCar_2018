@@ -2,8 +2,6 @@ from multiprocessing import Pool
 
 def findCenterofMass(src)
 
-
-
     for y in range(0,len(src)) :
         for x in range(0,len(src[0])) :
             if[y][x] !=0 :
