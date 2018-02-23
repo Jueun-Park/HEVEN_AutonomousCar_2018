@@ -170,8 +170,8 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
             else:
                 L_roi = np.array([[(int(L_ransac[0]) - 25, height_ROI), (int(L_ransac[0]) + 25, height_ROI),
                                    (int(L_ransac[num_y // 3]) + 25, height_ROI + num_y // 3),
-                                   (int(L_ransac[num_y - 50]) + 25, bird_height ),
-                                   (int(L_ransac[num_y - 50]) - 25, bird_height ),
+                                   (int(L_ransac[num_y - 25]) + 25, bird_height ),
+                                   (int(L_ransac[num_y - 25]) - 25, bird_height ),
                                    (int(L_ransac[num_y // 3]) - 25, height_ROI + num_y //3)]])
         elif direction == 'straight':
             L_roi = np.array([[(0, 280), (bird_width / 2 - 40, 280), (bird_width / 2 - 40, height_ROI + num_y / 2),
@@ -197,8 +197,8 @@ def choose_Roi(dst, direction, L_num, R_num, L_ransac, R_ransac, L_roi_before, R
                                    (int(R_ransac[0]) + 25, height_ROI),
                                    (int(R_ransac[num_y // 3]) + 25, height_ROI + num_y // 3)]])
             else:
-                R_roi = np.array([[(int(R_ransac[num_y - 100]) + 25, bird_height ),
-                                   (int(R_ransac[num_y - 50]) - 25, bird_height ),
+                R_roi = np.array([[(int(R_ransac[num_y - 25]) + 25, bird_height ),
+                                   (int(R_ransac[num_y - 25]) - 25, bird_height ),
                                    (int(R_ransac[num_y // 3]) - 25, height_ROI + num_y // 3),
                                    (int(R_ransac[0]) - 25, height_ROI),
                                    (int(R_ransac[0]) + 25, height_ROI),
