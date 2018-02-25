@@ -29,7 +29,8 @@ def main():
     #openCam
     lane_detection_thread=threading.Thread(target=lane_cam.lane_Detection())
     sign_cam_thread=threading.Thread(target=sign_cam.main())
-    read_lidar_thread=threading.Thread(target=read_lidar())
+    read_lidar_thread=threading.Thread(target=lidar())
+
 
 
 
