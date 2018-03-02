@@ -1,8 +1,11 @@
 from multiprocessing import Pool
+import numpy as np
+import cv2
 
-def findCenterofMass(black_image)
-
-
+def findCenterofMass(src) :
+    sum_of_x_mass_coordinates = 0
+    sum_of_y_mass_coordinates = 0
+    num_of_mass_points =0
 
     for y in range(0,len(src)) :
         for x in range(0,len(src[0])) :
@@ -16,18 +19,8 @@ def findCenterofMass(black_image)
 
     return (center_of_mass_x,center_of_mass_y)
 
-def function_pool :
-    p=Pool(10)
-
-    sum_of_x_mass_coordinates = 0
-    sum_of_y_mass_coordinates = 0
-    num_of_mass_points = 0
-
-
-
 if __name__ == "__main__" :
-    import numpy as np
-    import cv2
+
 
     black_image = np.zeros((512, 512, 3), np.uint8)
 
@@ -38,7 +31,11 @@ if __name__ == "__main__" :
     cv2.imshow("imag", black_image)
 
     cv2.waitKey(0)
-    function_pool()
+    centerofx,centerofy=findCenterofMass(black_image)
+
+    print(centerofx,centerofy)
+
+
 
 
 
