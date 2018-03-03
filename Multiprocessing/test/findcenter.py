@@ -70,6 +70,13 @@ if __name__ == "__main__" :
     centerofX=(sum_of_x_mass_coordinates/num_of_mass_points)
     centerofY=(sum_of_y_mass_coordinates/num_of_mass_points)
 
+    output1.close()
+    output2.close()
+    output3.close()
+
+    for p in process:
+         p.join()
+
 
 
     #sumx=findCenterofMassX(black_image)
