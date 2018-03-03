@@ -4,7 +4,7 @@
 # 하위 프로그램
 import lidar
 import sign_cam
-import lane_cam
+import lane_cam_noclass
 import path_planner
 import car_control
 import communication
