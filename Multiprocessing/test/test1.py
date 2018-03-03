@@ -11,5 +11,7 @@ cv2.ellipse(black_image,(256,256),(256,100),0,0,360,(0,255,0),1)
 
 #cv2.imshow( "image", black_image )
 
+a=black_image+black_image[0]
+print(a)
 
 cv2.waitKey(0)
