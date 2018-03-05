@@ -9,18 +9,25 @@ import math
 class Control:
 
     velocity = 1.5
-    car_front = 0.28
+    car_front = 0.28  # 수정 바람 - 차량 정지 시간
 
     def __init__(self, mission_num, first, second):
         self.gear = 0
         self.speed = 0
         self.steer = 0
+        self.brake = 0
 
         self.t1 = 0
         self.t2 = 0
 
         self.ct1 = 0
         self.ct2 = 0
+
+        self.ct3 = 0
+        self.ct4 = 0
+
+        self.ct5 = 0
+        self.ct6 = 0
 
         self.st1 = 0
         self.st2 = 0
@@ -81,6 +88,7 @@ class Control:
         self.steer = 0
         self.speed = 54
         self.gear = 0
+        self.brake = 0
 
         self.steer_past = 0
 
@@ -111,10 +119,11 @@ class Control:
 
         return self.steer, self.speed, self.gear, self.steer_past
 
-    def __obs__(self):
+    def __obs__(self):  # brake 값 집어넣어서 수정바람
         self.steer = 0
         self.speed = 54
         self.gear = 0
+        self.brake = 0
 
         self.steer_past = 0
 
@@ -147,10 +156,11 @@ class Control:
 
         return self.steer, self.speed, self.gear, self.steer_past
 
-    def __moving__(self):
+    def __moving__(self):  # brake 값 집어넣어서 수정바람
         self.steer = 0
         self.speed = 36
         self.gear = 0
+        self.brake = 0
 
         if self.obs_exist is True:
             self.speed = 0
@@ -159,10 +169,11 @@ class Control:
 
         return self.steer, self.speed, self.gear
 
-    def __cross__(self):
+    def __cross__(self):  # brake 값 집어넣어서 수정바람
         self.steer = 0
         self.speed = 36
         self.gear = 0
+        self.brake = 0
 
         if abs(self.stop_line) < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
@@ -180,6 +191,7 @@ class Control:
         self.steer = 0
         self.speed = 36
         self.gear = 0
+        self.brake = 0
 
         self.corner1 = self.corner[0]
         self.corner2 = self.corner[1]
@@ -252,6 +264,7 @@ class Control:
         self.steer = 0
         self.speed = 36
         self.gear = 0
+        self.brake = 0
 
         self.obs_y = self.obs_uturn[1] / 100
 
@@ -260,19 +273,49 @@ class Control:
 
         if abs(self.obs_y) < self.car_front:
             self.speed = 0
-            self.usit = 1
 
-            if self.usit == 1:
+            if self.usit == 0:
+                self.usit = 1
+
+        if self.usit == 1:
+            self.speed = 36
+            if self.ct1 == 0:
+                self.ct1 = ENC[0]
+            self.ct2 = ENC[0]
+
+            if (self.ct2 - self.ct1) < 100:
+                self.steer = 0
+
+            elif 100 <= (self.ct2 - self.ct1) < 574:
+                self.steer = -1970
+
+            if (self.ct2 - self.ct1) >= 574:
+                self.steer = 0
+                self.speed = 0
+                self.brake = 60
+                if self.speed_platform == 0:
+                    self.usit = 2
+
+        elif self.usit == 2:
+            if self.ct3 == 0:
+                self.ct3 = ENC[0]
+            self.ct4 = ENC[0]
+
+            if (self.ct4 - self.ct3) < 118:
                 self.speed = 36
-                if self.ct1 == 0:
-                    self.ct1 = ENC[0]
-                self.ct2 = ENC[0]
+                self.steer = 1970
+                self.brake = 0
 
-                if (self.ct2 - self.ct1) < 100:
-                    self.steer = 0
-                elif 100 <= (self.ct2 - self.ct1) < 325:
-                    self.steer = -1970
-                elif (self.ct2 - self.ct1) >= 325:
-                    self.steer = 0
+            if (self.ct4 - self.ct3) >= 118:
+                self.steer = 0
+                self.brake = 60
+                self.speed = 0
+                if self.speed_platform == 0:
+                    self.usit = 3
+
+        elif self.usit == 3:
+            self.steer = 0
+            self.speed = 36
+            self.brake = 0
 
         return self.steer, self.speed, self.gear
