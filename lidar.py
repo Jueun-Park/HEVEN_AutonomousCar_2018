@@ -66,7 +66,7 @@ class Lidar:
             # 라이다에게 데이터 요청 신호를 보냈을 때, 요청을 잘 받았다는 응답을 한 줄 받은 후에 데이터를 받기 시작함
             # 아래 줄은 그 응답 코드을 무시하고 바로 데이터를 받기 위해서 존재함
             if data.__contains__('sEA'): continue
-
+  
             self.data_list = data.split(' ')[26:567]
 
     def initiate(self):
