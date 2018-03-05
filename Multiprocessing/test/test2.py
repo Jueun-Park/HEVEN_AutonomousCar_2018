@@ -1,13 +1,11 @@
-import numpy as np
-import cv2
+import multiprocessing
+from itertools import product
 
+def merge_names(a, b):
+    return '{} & {}'.format(a, b)
 
-black_image = np.zeros((512,512,3), np.uint8 )
-
-cv2.rectangle( black_image, (0,0), (511,511),(255,0,0), 3 )
-cv2.circle(black_image,(256,256), 256,(0,0,255),1)
-cv2.ellipse(black_image,(256,256),(256,100),0,0,360,(0,255,0),1)
-
-cv2.imshow( "imag", black_image )
-
-cv2.waitKey(0)
+if __name__ == '__main__':
+    names = ['Brown', 'Wilson', 'Bartlett', 'Rivera', 'Molloy', 'Opie']
+    with multiprocessing.Pool(processes=3) as pool:
+        results = pool.starmap(merge_names, product(names,repeat=2))
+    print(results)

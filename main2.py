@@ -4,7 +4,7 @@
 # 하위 프로그램
 import lidar
 import sign_cam
-import lane_cam_noclass
+import lane_cam
 import path_planner
 import car_control
 import communication
@@ -17,22 +17,20 @@ import pycuda.driver as cuda
 from multiprocessing import pool, process
 import threading
 import time
+
 from pycuda.compiler import SourceModule
+
+
 # cpu 병렬 처리
-"""
-def getFunction(name, contents): # name은 함수의 이름, contents는 함수의 본체여야 합니다.
-    mod = SourceModule(contents) # mod에 contents를 불러옵니다.
-    return mod.get_function(name) # mod에서 이름이 name인 함수를 반환합니다.
-"""
+
+def getFunction(name, contents):  # name은 함수의 이름, contents는 함수의 본체여야 합니다.
+    mod = SourceModule(contents)  # mod에 contents를 불러옵니다.
+    return mod.get_function(name)  # mod에서 이름이 name인 함수를 반환합니다.
+
 
 def main():
-    #openCam
-    lane_detection_thread=threading.Thread(target=lane_cam.lane_Detection())
-    sign_cam_thread=threading.Thread(target=sign_cam.main())
-    read_lidar_thread=threading.Thread(target=lidar())
-
-
-
+    # openCam
+    lane_detection_thread = threading.Thread(target=lane_cam)
 
     # 센서 값 받기
 
@@ -47,19 +45,18 @@ def main():
 
     pass
 
-if __name__ == "__main__" :
 
-    start_time=0
-    end_time=0
+if __name__ == "__main__":
 
-    while True :
+    start_time = 0
+    end_time = 0
+
+    while True:
         start_time2 = time.time()
-        print(start_time,end_time)
+        print(start_time, end_time)
         end_time = time.time()
         # openCam()
         main()
-
-
 
     cv2.destroyAllWindows()
     cv2.waitKey(0)

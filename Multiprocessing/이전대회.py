@@ -454,14 +454,6 @@ def front_Detect():
 def main():
 
 
-
-
-
-
-
-
-
-
     Cam_thread = threading.Thread(target = openCam())
     Cam_thread = threading.Thread(target = openCam())
     Lidar_thread = threading.Thread(target = read_Lidar())
