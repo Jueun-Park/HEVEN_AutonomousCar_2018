@@ -9,12 +9,13 @@ import path_planner
 import car_control
 import communication
 
+
 # module
 import numpy
 import cv2
 import pycuda.autoinit
 import pycuda.driver as cuda
-from multiprocessing import pool, process
+from multiprocessing import Pool, Process
 import threading
 import time
 
@@ -30,7 +31,9 @@ def getFunction(name, contents):  # name은 함수의 이름, contents는 함수
 
 def main():
     # openCam
-    lane_detection_thread = threading.Thread(target=lane_cam)
+    lane_detection_Process= Process(target=lane_cam_noclass())
+    sign_cam_Process = Process(target=sign_cam.main())
+
 
     # 센서 값 받기
 

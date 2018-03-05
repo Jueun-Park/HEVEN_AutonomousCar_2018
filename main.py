@@ -31,24 +31,13 @@ def main():
 
     lane_detection_thread=threading.Thread(target=lane_cam_noclass)
     sign_cam_thread=threading.Thread(target=sign_cam.main())
-    read_lidar_thread=threading.Thread(target=lidar.initiate)
+    read_lidar_thread1=threading.Thread(target=lidar.current_lidar.set_ROI(80,300))#클래스로 되어있어 스레딩 처리 따로 되어있어야할듯
+    read_lidar_thread2=threading.Thread(target=lidar.current_lidar.initiate())
+    read_lidar_thread3=threading.Thread(target=lidar.current_lidar.set_mode(1))
+    read_lidar_thread4=threading.Thread(target=lidar.current_lidar.plot_data())#물어보고 진행
 
-    import threading, requests, time
 
-    class HtmlGetter(threading.Thread):
-        def __init__(self, url):
-            threading.Thread.__init__(self)
-            self.url = url
 
-        def run(self):
-            resp = requests.get(self.url)
-            time.sleep(1)
-            print(self.url, len(resp.text), ' chars')
-
-    t = HtmlGetter('http://google.com')
-    t.start()
-
-    print("### End ###")
 
 
 
@@ -103,4 +92,4 @@ if __name__ == "__main__":
     cam.release()
     cv2.destroyAllWindows()
     cv2.waitKey(0)
->>>>>>> Stashed changes
+
