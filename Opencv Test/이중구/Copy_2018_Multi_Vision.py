@@ -575,8 +575,7 @@ w = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
 h = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
 print('size = ', w, h)
 
-if (not cam.isOpened()):
-    print ("cam open failed")
+
 
 if __name__ == "__main__":
     lane_Detection(cam)
