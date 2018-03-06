@@ -7,13 +7,17 @@ import cv2
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
 #          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
-parking_cascade = cv2.CascadeClassifier('./sign_xml_files/parkingdetect.xml')  # 1. 자동 주차
-static_cascade = cv2.CascadeClassifier('./sign_xml_files/static_0514.xml')  # 2. 정적 장애물
-moving_cascade = cv2.CascadeClassifier('./sign_xml_files/moving_0510.xml')  # 3. 동적 장애물
-s_curve_cascade = cv2.CascadeClassifier('./sign_xml_files/scurve_0517.xml')  # 4. S자 주행
-narrow_cascade = cv2.CascadeClassifier('./sign_xml_files/narrowno.xml')  # 5. 협로 주행
-u_turn_cascade = cv2.CascadeClassifier('./sign_xml_files/uturndetect.xml')  # 6. 유턴
-crosswalk_cascade = cv2.CascadeClassifier('./sign_xml_files/crosswalk.xml')  # 7. 횡단보도
+try:
+    parking_cascade = cv2.CascadeClassifier('./sign_xml_files/parkingdetect.xml')  # 1. 자동 주차
+    static_cascade = cv2.CascadeClassifier('./sign_xml_files/static_0514.xml')  # 2. 정적 장애물
+    moving_cascade = cv2.CascadeClassifier('./sign_xml_files/moving_0510.xml')  # 3. 동적 장애물
+    s_curve_cascade = cv2.CascadeClassifier('./sign_xml_files/scurve_0517.xml')  # 4. S자 주행
+    narrow_cascade = cv2.CascadeClassifier('./sign_xml_files/narrowno.xml')  # 5. 협로 주행
+    u_turn_cascade = cv2.CascadeClassifier('./sign_xml_files/uturndetect.xml')  # 6. 유턴
+    crosswalk_cascade = cv2.CascadeClassifier('./sign_xml_files/crosswalk.xml')  # 7. 횡단보도
+except Exception as e:
+    print(e)
+    exit(1)
 
 
 # 웹캠인 경우: capture = cv2.VideoCapture(0), 0은 주소값
@@ -68,7 +72,7 @@ class SignDetection:
             print("Stop is ", self.stop)
 
             # 흑백 이미지에서 횡단보도_표지판_위치_리스트 추출
-            sign = self.cascade.detectMultiScale(image=gray, scaleFactor=1.1, minNeighbers=20)
+            sign = self.cascade.detectMultiScale(image=gray, scaleFactor=1.1, minNeighbors=20)
 
             for (x, y, w, h) in sign:  # 횡단보도_표지판_위치_리스트 위치 화면에 사각형으로 표시
                 cv2.rectangle(self.frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
