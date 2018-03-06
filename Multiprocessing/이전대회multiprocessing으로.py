@@ -60,9 +60,9 @@ SPEED_E = 0
 ch = 1
 
 ########################## Vision ###########################
-stop6 = 0
+u_turn_stop = 0
 stop_Line = None
-in_Mission = True
+is_in_mission = True
 
 cam = cv2.VideoCapture('/dev/video0')
 
@@ -157,7 +157,7 @@ dotted_Line = 0
 
 ########################## Funtion ###########################
 def uturn_detect():
-    global stop6, in_Mission, Mission, img
+    global u_turn_stop, is_in_mission, Mission, img
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if stop6 == 3 or (not in_Mission):
         pass
