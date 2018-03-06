@@ -13,6 +13,7 @@ import time
 modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
+
 class Lidar:
 
     # 미션별 ROI에 쓰이는 상수와 Plotting에 쓰이는 선분들
