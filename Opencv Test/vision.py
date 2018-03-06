@@ -574,7 +574,7 @@ def detect_Stop(dst, dst_canny, L_roi, R_roi):
     line_arr = cv2.HoughLinesP(img_Stop, 1, 1 *  np.pi/180, 30, np.array([]), 10, 30)
     line_arr = np.array(np.squeeze(line_arr))
     line_arr_t = line_arr.transpose()
-    if line_arr.shape != () :
+    if line_arr.shape != ():
         slope_Degree = ((np.arctan2(line_arr_t[1] - line_arr_t[3], line_arr_t[0] - line_arr_t[2]) * 180) / np.pi)
         try :
             line_arr = line_arr[np.abs(slope_Degree)>160]
@@ -640,7 +640,7 @@ def lane_Detection(img):
         R_check = copy.deepcopy(R_ransac)
     cv2.imshow('dst',dst)
     i_dst = cv2.warpPerspective(dst,i_M,(bird_height,bird_width))
-
+    cv2.imshow('i_dst', i_dst)
     start_num += 1
     frame_num += 1
     L_num += 1
