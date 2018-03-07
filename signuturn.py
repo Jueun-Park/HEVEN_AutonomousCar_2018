@@ -23,4 +23,3 @@ def sign_camstart():
     cv2.waitKey(0)
 
 
-sign_camstart()
