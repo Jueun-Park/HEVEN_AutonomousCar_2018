@@ -27,11 +27,6 @@ def main():
 
 
 
-
-
-
-
-
     lidarstart_thread.start()
     #communicationstart_thread.start()
 
