@@ -2,6 +2,7 @@
 # interpreted by python 3.6
 # 하위 프로그램
 import lidarstart
+import communicationstart
 
 
 
@@ -11,14 +12,19 @@ from pycuda.compiler import SourceModule
 #module
 import threading
 
+
 # cpu 병렬 처리
 modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
          'MOVING_OBS': 3, 'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
 
 def main():
-
+    # lane_detection_thread=threading.Thread(target=lane_cam_noclass) 미완성
     lidarstart_thread=threading.Thread(target=lidarstart.lidarstart())
+    # sign_cam_thread = threading.Thread(target=sign_cam.main())
+    communicationstart_thread=threading.Thread(target=communicationstart.communicationstart())
+
+
 
 
 
@@ -27,12 +33,15 @@ def main():
 
 
     lidarstart_thread.start()
+    communicationstart_thread.start()
 
 
 
 
-    # lane_detection_thread=threading.Thread(target=lane_cam_noclass) 미완성
-    #sign_cam_thread = threading.Thread(target=sign_cam.main())
+
+
+
+
 
 
 
