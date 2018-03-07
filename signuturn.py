@@ -21,5 +21,6 @@ def sign_camstart():
     cam.release()
     cv2.destroyAllWindows()
     cv2.waitKey(0)
+sign_camstart()
 
 

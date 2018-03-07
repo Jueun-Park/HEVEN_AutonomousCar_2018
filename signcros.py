@@ -3,7 +3,7 @@ import cv2
 
 
 def sign_camstart():
-    cam = cv2.VideoCapture('C:/Users/Administrator/Desktop/0507_one_lap_normal.mp4')
+    cam = cv2.VideoCapture('C:/Users/Administrator/Desktop/0507_one_lap_normal2.mp4')
 
     cam.set(3, 480)
     cam.set(4, 270)
@@ -21,5 +21,6 @@ def sign_camstart():
     cam.release()
     cv2.destroyAllWindows()
     cv2.waitKey(0)
+sign_camstart()
 
 
