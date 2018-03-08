@@ -15,7 +15,7 @@ def sign_camstart():
 
         sign_cam2.crosswalk_detect(img)
 
-        cv2.imshow('cam', img)
+        cv2.imshow('cam1', img)
         if cv2.waitKey(30) & 0xff == 27:
             break
     cam.release()
