@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 
 import numpy as np
 import cv2
@@ -15,3 +16,5 @@ a=black_image+black_image[0]
 print(a)
 
 cv2.waitKey(0)
+=======
+>>>>>>> Stashed changes

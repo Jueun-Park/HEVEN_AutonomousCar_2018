@@ -23,13 +23,13 @@ ret, img = cam.read()
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-stop1 = 0
-stop2 = 0
-stop3 = 0
-stop4 = 0
-stop5 = 0
-stop6 = 0
-stop7 = 0
+crosswalk_stop = 0
+narrow_stop = 0
+moving_stop = 0
+static_stop = 0
+s_curve_stop = 0
+u_turn_stop = 0
+parking_stop = 0
 detect_crsosswalk = 0
 detect_narrow = 0
 detect_moving = 0
@@ -52,7 +52,7 @@ def cam_open():
 
 
 def crosswalk_detect():
-    global stop1
+    global crosswalk_stop
     if stop1 == 3:
         return 0
     # print 't1', time.time()
@@ -70,7 +70,7 @@ def crosswalk_detect():
 
 def narrow_detect():
     # print 'a'
-    global stop2
+    global narrow_stop
     if stop2 == 3:
         return 0
     narrow = narrowcascade.detectMultiScale(gray, 1.06, 20)
@@ -86,7 +86,7 @@ def narrow_detect():
 
 def moving_detect():
     # print 'b'
-    global stop3
+    global moving_stop
     if stop3 == 3:
         return 0
     moving = movingcascade.detectMultiScale(gray, 1.02, 5)
@@ -102,7 +102,7 @@ def moving_detect():
 
 def static_detect():
     # print 'c'
-    global stop4
+    global static_stop
     if stop4 == 3:
         return 0
     static = staticcascade.detectMultiScale(gray, 1.3, 20)
@@ -117,7 +117,7 @@ def static_detect():
 
 
 def scurve_detect():
-    global stop5
+    global s_curve_stop
     if stop5 == 3:
         return 0
     scurve = scurvecascade.detectMultiScale(gray, 1.03, 20)
@@ -132,7 +132,7 @@ def scurve_detect():
 
 
 def uturn_detect():
-    global stop6
+    global u_turn_stop
     if stop6 == 3:
         return 0
     uturn = uturncascade.detectMultiScale(gray, 1.08, 5)
@@ -147,7 +147,7 @@ def uturn_detect():
 
 
 def parking_detect():
-    global stop7
+    global parking_stop
     if stop7 == 3:
         return 0
 
