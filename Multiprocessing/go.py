@@ -4,7 +4,7 @@ def GO():
     print('Hi\n')
     
 def GO2():
-    GO()
+    print('Hi2')
 if __name__=='__main__':
     pr1 = Process(target=GO)
     pr2 = Process(target=GO2)
