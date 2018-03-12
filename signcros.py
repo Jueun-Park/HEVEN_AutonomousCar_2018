@@ -1,4 +1,4 @@
-from signcampackage import sign_cam2
+import sign_cam2
 import cv2
 
 
@@ -13,15 +13,14 @@ def sign_camstart():
     while True:
         s, img = cam.read()
 
-        sign_cam2.u_turn_detect(img)
+        sign_cam2.crosswalk_detect(img)
 
-        cv2.imshow('cam2', img)
+        cv2.imshow('cam1', img)
         if cv2.waitKey(30) & 0xff == 27:
             break
     cam.release()
     cv2.destroyAllWindows()
     cv2.waitKey(0)
-
 
 
 

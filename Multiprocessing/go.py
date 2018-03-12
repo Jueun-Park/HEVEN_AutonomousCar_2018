@@ -1,10 +1,12 @@
 from multiprocessing import Process
 import os
 def GO():
-    print('Hi\n')
+    for i in range(0,55) :
+        print('Hi\n')
     
 def GO2():
-    print('Hi2')
+    for i in range(0,200) :
+        print('Hi2')
 if __name__=='__main__':
     pr1 = Process(target=GO)
     pr2 = Process(target=GO2)
