@@ -1,5 +1,6 @@
 import sign_cam2
 import cv2
+import os
 
 
 def sign_camstart():
@@ -10,12 +11,13 @@ def sign_camstart():
 
     if (not cam.isOpened()):
         print("cam open failed")
+    print(os.getpid())
     while True:
         s, img = cam.read()
 
         sign_cam2.crosswalk_detect(img)
 
-        cv2.imshow('cam1', img)
+        cv2.imshow('camcros', img)
         if cv2.waitKey(30) & 0xff == 27:
             break
     cam.release()

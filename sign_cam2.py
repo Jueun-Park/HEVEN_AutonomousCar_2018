@@ -192,7 +192,7 @@ def u_turn_detect(img):
             print("Uturn!!!! ", detect_uturn)
 
 
-
+"""
 if __name__ == "__main__":
     # open cam
     cam = cv2.VideoCapture('./Previous Code/0507_one_lap_normal.mp4')
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     while True:
         s, img = cam.read()
         u_turn_detect(img)
-        #parking_detect(img)
+        parking_detect(img)
         #s_curve_detect(img)
         static_detect(img)
         moving_detect(img)
@@ -218,3 +218,4 @@ if __name__ == "__main__":
     cam.release()
     cv2.destroyAllWindows()
     cv2.waitKey(0)
+"""
