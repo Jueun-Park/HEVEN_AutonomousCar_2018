@@ -191,42 +191,8 @@ def u_turn_detect(img):
                 print("Uturn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print("Uturn!!!! ", detect_uturn)
 
-def main() :
-    # open cam
-    cam = cv2.VideoCapture('./Previous Code/0507_one_lap_normal.mp4')
-    cam2 =cv2.VideoCapture('./Previous Code/0507_one_lap_normal.mp4')
-
-    cam.set(3, 480)
-    cam.set(4, 270)
-    cam2.set(3, 480)
-    cam2.set(4, 270)
-
-    if (not cam.isOpened()):
-        print("cam open failed")
-    while True:
-        s, img = cam.read()
-        s1, img2=cam2.read()
-
-        u_turn_detect(img)
-        # parking_detect(img)
-        # s_curve_detect(img)
-        static_detect(img2)
-        static_detect(img)
-        moving_detect(img)
-        narrow_detect(img)
-        crosswalk_detect(img)
-        cv2.imshow('cam', img)
-        cv2.imshow('cam2',img2)
-
-        if cv2.waitKey(30) & 0xff == 27:
-            break
-    cam.release()
-    cv2.destroyAllWindows()
-    cv2.waitKey(0)
-main()
 
 
-"""
 if __name__ == "__main__":
     # open cam
     cam = cv2.VideoCapture('./Previous Code/0507_one_lap_normal.mp4')
@@ -252,4 +218,3 @@ if __name__ == "__main__":
     cam.release()
     cv2.destroyAllWindows()
     cv2.waitKey(0)
-"""
