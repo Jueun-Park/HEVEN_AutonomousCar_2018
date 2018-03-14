@@ -2,6 +2,8 @@
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
+# platform에서 받는 데이터 처리(현재 주행 속도, 조향각, 엔코더 값)
+
 import time
 import math
 
@@ -16,6 +18,8 @@ class Control:
         self.speed = 0
         self.steer = 0
         self.brake = 0
+
+        self.velocity = 0
 
         self.t1 = 0
         self.t2 = 0
@@ -100,6 +104,8 @@ class Control:
         if abs(self.theta_1) < 15 and abs(self.cross_track_error) < 0.27:
             k = 0.5
 
+        self.velocity = (self.speed_platform*100)/3600
+
         self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
         self.adjust = 0.3
@@ -118,9 +124,9 @@ class Control:
             self.steer = -1970
             self.steer_past = -27.746
 
-        return self.steer, self.speed, self.gear, self.brake  # ,self.steer_past
+        return self.steer, self.speed, self.gear, self.brake, self.steer_past
 
-    def __obs__(self):  # brake 값 집어넣어서 수정바람
+    def __obs__(self):
         self.steer = 0
         self.speed = 54
         self.gear = 0
@@ -155,9 +161,9 @@ class Control:
             self.steer = -1970
             self.steer_past = -27.746
 
-        return self.steer, self.speed, self.gear, self.brake  # , self.steer_past
+        return self.steer, self.speed, self.gear, self.brake, self.steer_past
 
-    def __moving__(self):  # brake 값 집어넣어서 수정바람
+    def __moving__(self):
         self.steer = 0
         self.speed = 36
         self.gear = 0
@@ -165,12 +171,13 @@ class Control:
 
         if self.obs_exist is True:
             self.speed = 0
+            self.brake = 0
         else:
             self.speed = 36
 
         return self.steer, self.speed, self.gear
 
-    def __cross__(self):  # brake 값 집어넣어서 수정바람
+    def __cross__(self):
         self.steer = 0
         self.speed = 36
         self.gear = 0
@@ -183,6 +190,7 @@ class Control:
 
             if (self.t2 - self.t1) < 3.0:  # 3초간 정지, 실험을 통해 보정 필요
                 self.speed = 0
+                self.brake = 60
             else:
                 self.speed = 54
 
@@ -212,10 +220,10 @@ class Control:
             if (self.pt2 - self.pt1) < 100:
                 self.steer = 0
 
-            elif 100 <= (self.pt2 - self.pt1) < 249:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
+            elif 100 <= (self.pt2 - self.pt1) < 280:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
                 self.steer = 1970
 
-            if (self.pt2 - self.pt1) >= 249:
+            if (self.pt2 - self.pt1) >= 280:
                 self.steer = 0
                 self.speed = 0
                 self.brake = 60
@@ -228,12 +236,12 @@ class Control:
                 self.pt3 = self.ENC1[0]
             self.pt4 = self.ENC1[0]
 
-            if (self.pt4 - self.pt3) < 150:
+            if (self.pt4 - self.pt3) < 100:
                 self.speed = 36
                 self.steer = 0
                 self.brake = 0
 
-            if (self.pt4 - self.pt3) >= 150:
+            if (self.pt4 - self.pt3) >= 100:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0
@@ -250,12 +258,12 @@ class Control:
                 self.pt5 = self.ENC1[0]
             self.pt6 = self.ENC1[0]
 
-            if abs(self.pt6 - self.pt5) < 150:
+            if abs(self.pt6 - self.pt5) < 100:
                 self.speed = 36
                 self.steer = 0
                 self.brake = 0
 
-            if abs(self.pt6 - self.pt5) >= 150:
+            if abs(self.pt6 - self.pt5) >= 100:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0
@@ -272,12 +280,12 @@ class Control:
                 self.pt7 = self.ENC1[0]
             self.pt8 = self.ENC1[0]
 
-            if abs(self.pt8 - self.pt7) < 139:
+            if abs(self.pt8 - self.pt7) < 180:
                 self.speed = 36
                 self.steer = 1970
                 self.brake = 0
 
-            if abs(self.pt8 - self.pt7) >= 139:
+            if abs(self.pt8 - self.pt7) >= 180:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0
@@ -321,10 +329,10 @@ class Control:
             if (self.ct2 - self.ct1) < 100:
                 self.steer = 0
 
-            elif 100 <= (self.ct2 - self.ct1) < 603:
+            elif 100 <= (self.ct2 - self.ct1) < 730:
                 self.steer = -1970
 
-            if (self.ct2 - self.ct1) >= 603:
+            if (self.ct2 - self.ct1) >= 730:
                 self.steer = 0
                 self.speed = 0
                 self.brake = 60
@@ -337,12 +345,12 @@ class Control:
                 self.ct3 = self.ENC1[0]
             self.ct4 = self.ENC1[0]
 
-            if (self.ct4 - self.ct3) < 118:
+            if (self.ct4 - self.ct3) < 134:
                 self.speed = 36
                 self.steer = 1970
                 self.brake = 0
 
-            if (self.ct4 - self.ct3) >= 118:
+            if (self.ct4 - self.ct3) >= 134:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0

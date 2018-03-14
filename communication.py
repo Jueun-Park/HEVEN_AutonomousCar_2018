@@ -33,7 +33,7 @@ class PlatformSerial:
         self.speed_for_write = 0
         self.steer_for_write = 0
         self.brake_for_write = 0
-        self.gear_for_write = 0  # 0: 전진, 1: 후진, 2: 중립
+        self.gear_for_write = 0  # 0: 전진, 1: 중립(full_brake), 2: 후진
         self.check = 0
         self.present_time = 0
         self.past_time = 0
