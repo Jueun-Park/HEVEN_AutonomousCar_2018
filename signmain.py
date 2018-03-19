@@ -9,6 +9,7 @@ from multiprocessing import Process
 from Multiprocessing import go
 import sign_cam2
 import threading
+import hogbinvision
 
 
 def main() :
@@ -20,6 +21,7 @@ def main() :
     Park_Process=Process(target=signpark.sign_camstart)
     static_Process=Process(target=signstatic.sign_camstart)
     narrow_Process=Process(target=signnarrow.sign_camstart)
+    lane_detect_process = Process(target=hogbinvision.vision)
 
     U_Process.start()
     Cros_Process.start()
@@ -27,6 +29,7 @@ def main() :
     Park_Process.start()
     static_Process.start()
     narrow_Process.start()
+    lane_detect_process.start()
 
 
 
