@@ -166,7 +166,8 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = '/dev/ttyUSB0'
+    # port = '/dev/ttyUSB0'
+    port = 'COM3'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
 
