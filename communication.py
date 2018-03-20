@@ -155,9 +155,9 @@ class PlatformSerial:
             self.present_time = time.time()
 
     def test_communication_main(self):
-        read_thread = threading.Thread(target=self._read())
-        write_thread = threading.Thread(target=self._write())
-        test_write_thread = threading.Thread(target=self.test_write_to_platform())
+        read_thread = threading.Thread(target=self._read)
+        write_thread = threading.Thread(target=self._write)
+        test_write_thread = threading.Thread(target=self.test_write_to_platform)
 
         read_thread.start()
         write_thread.start()
@@ -165,7 +165,7 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = 'COM5'
+    port = '/dev/ttyUSB0'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
 
