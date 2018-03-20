@@ -7,6 +7,7 @@
 import lidarstart
 import threading
 from multiprocessing import Process
+import lane_cam
 
 
 # cpu 병렬 처리
@@ -14,13 +15,16 @@ from multiprocessing import Process
 def main():
 
     #lane_detection_thread=threading.Thread(target=lane_cam_noclass) 미완성
-    lidarstart_thread=Process(target=lidarstart.lidarstart())
+    lidarstart_thread=Process(target=lidarstart.lidarstart)
+    lane_cam_Process=Process(target=lane_cam)
 
     #sign_cam=threading.Thread(target=signmain.main())
     #sign_cam_cros=threading.Thread(target=sign_cam2.crosswalk_detect())
     #sign_cam_thread = threading.Thread(target=sign_cam.main())
     #communicationstart_thread=threading.Thread(target=communicationstart.communicationstart())
     lidarstart_thread.start()
+    lane_cam_Process.start()
+
     #sign_cam.start()
 
     #sign_cam_cros.start()

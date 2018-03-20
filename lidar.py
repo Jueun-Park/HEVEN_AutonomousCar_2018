@@ -70,6 +70,7 @@ class Lidar:
         self.sock_lidar.send(str.encode(self.MESG))
 
         while True:
+            t1 = time.time()
             data = str(self.sock_lidar.recv(self.BUFF))
             # 라이다에게 데이터 요청 신호를 보냈을 때, 요청을 잘 받았다는 응답을 한 줄 받은 후에 데이터를 받기 시작함
             # 아래 줄은 그 응답 코드을 무시하고 바로 데이터를 받기 위해서 존재함
@@ -136,6 +137,8 @@ class Lidar:
                             if -self.NARROW_WIDTH <= x <= self.NARROW_WIDTH and y < self.NARROW_HEIGHT * 3:
                                 self.parsed_data[int(y / self.NARROW_HEIGHT)].append((x, y))
                 except: pass
+            t2 = time.time()
+            print(t2 - t1)
 
     def initiate(self):
         receiving_thread = threading.Thread(target = self.loop)
@@ -197,5 +200,5 @@ if __name__ == "__main__":
     current_lidar.set_mode(modes['NARROW'])
 
     while True:
-        print(current_lidar.get_data())
-        #current_lidar.plot_data()
+        #print(current_lidar.get_data())
+        current_lidar.plot_data()
