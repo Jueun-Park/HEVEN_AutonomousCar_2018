@@ -3,125 +3,38 @@
 #        2. numpy array (from lane_cam)
 # output: 차선 center 위치, 기울기, 곡률이 담긴 numpy array
 
-from parabola import Parabola
-import threading
+import numpy as np
+import cv2
+import time
 
-modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
-         'MOVING_OBS': 3, 'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
+np.set_printoptions(linewidth=10000)
 
-LEFT_BOUNDARY = -25
-RIGHT_BOUNDARY = 25
-TOP_BOUNDARY = 200
+canvas = np.zeros((400, 400), np.uint8)
+data = np.zeros((2, 19), np.int)
 
-class MotionPlanner:
+cv2.circle(canvas, (300, 150), 70, 255, -1)
 
-    def __init__(self, lidar_instance, lanecam_instance, signcam_instance):
-        self.lidar = lidar_instance
-        self.lanecam = lanecam_instance
-        self.signcam = signcam_instance
+for r in range(0, 600):
+    for theta in range(0, 91, 5):
+        x = int(r * np.cos(np.radians(theta)))
+        y = int(r * np.sin(np.radians(theta)))
 
-        self.mode = modes['DEFAULT']
+        if x >= 400 or y >= 400: continue
 
-        # motion_plan: [mission_num, required information]
-        self.motion_plan = []
+        if data[0][int(theta / 5)] == 0:
+            data[1][int(theta / 5)] = r
 
-    def get_path(self):
-        self.lanecam.set_mode(0)
-        lane_status = self.lanecam.get_data()
+        if canvas[y][x] != 0:
+            data[0][int(theta / 5)] = 1
 
-        path = Parabola((lane_status[0][0] + lane_status[1][0]) / 2,
-                        (lane_status[0][1] + lane_status[1][1]) / 2, (lane_status[0][2] + lane_status[1][2]) / 2)
+print(data)
 
-        return path
+for i in range(0, 19):
+    x = int(data[1][i] * np.cos(np.radians(i * 5)))
+    y = int(data[1][i] * np.sin(np.radians(i * 5)))
+    cv2.line(canvas, (0, 0), (x, y), 255)
 
-    def get_obs_status(self, total_point_list, top_boundary):
+while True:
+    cv2.imshow('canvas', canvas)
 
-        is_empty = True
-
-        for area in total_point_list:
-            if area:
-                is_empty = False
-
-                left_dist = min(area)[0] - LEFT_BOUNDARY
-                right_dist = RIGHT_BOUNDARY - max(area)[0]
-
-                if left_dist > right_dist:
-                    steer_direction = -1
-                    depth = RIGHT_BOUNDARY - min(area)[0]
-                    y = min(area)[1]
-
-                elif left_dist == right_dist:
-                    steer_direction = 0
-                    depth = 0
-                    y = min(area)[1]
-
-                else:
-                    steer_direction = 1
-                    depth = max(area)[0] - LEFT_BOUNDARY
-                    y = max(area)[1]
-
-                return (steer_direction * depth, y)
-
-        if is_empty: return (0, top_boundary)
-
-    def loop(self):
-        measure_point = -25
-
-        while True:
-            temp = self.signcam.read()
-
-            if temp:
-                self.mode = temp
-                self.lanecam.set_mode(temp)
-                self.lidar.set_mode(temp)
-
-            if self.mode == modes['DEFAULT']:
-                path = self.get_path()
-                self.motion_plan = [modes['DEFAULT'], path.get_value(measure_point), path.get_derivative(measure_point)]
-
-            elif self.mode == modes['PARKING']:
-                # self.motion_plan = [1, undetermined]
-                pass
-
-            elif self.mode == modes['STATIC_OBS']:
-                lane_points = self.lanecam.get_data()
-                obs_points = self.lidar.get_data()
-
-                total_points = [lane_points[0] + obs_points[0],
-                                lane_points[1] + obs_points[1], lane_points[2] + obs_points[2]]
-
-                self.motion_plan = [modes['STATIC_OBS'], self.get_obs_status(total_points, 200)]
-
-            elif self.mode == modes['MOVING_OBS']:
-                obs_points = self.lidar.get_data()
-
-                if obs_points: obs_exist = True
-                else: obs_exist = False
-
-                self.motion_plan = [modes['MOVING_OBS'], obs_exist]
-
-            elif self.mode == modes['S_CURVE']:
-                obs_points = self.lidar.get_data()
-                self.motion_plan = [modes['S_CURVE'], self.get_obs_status(obs_points, 30)]
-
-            elif self.mode == modes['NARROW']:
-                obs_points = self.lidar.get_data()
-                self.motion_plan = [modes['NARROW'], self.get_obs_status(obs_points, 200)]
-
-            elif self.mode == modes['UTURN']:
-                # self.motion_plan = [6, value]
-                pass
-
-            elif self.mode == modes['CROSS_WALK']:
-                # self.motion_plan = [7, value]
-                pass
-
-    def initiate(self):
-        t = threading.Thread(target = self.loop)
-        t.start()
-
-    def get_motion(self):
-        return self.motion_plan
-
-left_coeffs = [60, -0.05, 0.0005]
-right_coeffs = [-60, -0.025, 0.00075]
+    if cv2.waitKey(1) & 0xFF == ord('q'): break
