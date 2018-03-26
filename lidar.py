@@ -13,7 +13,7 @@ modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
 class Lidar:
-    
+
     def __init__(self):
         self.HOST = '169.254.248.220'
         self.PORT = 2111
@@ -62,7 +62,7 @@ class Lidar:
                     points[i][1] = -100000
 
             for point in points:
-                cv2.circle(canvas, tuple(point), 60, (0, 0, 255), -1)
+                cv2.circle(canvas, tuple(point), 2, (0, 0, 255), -1)
 
             cv2.imshow('lidar', canvas)
 
