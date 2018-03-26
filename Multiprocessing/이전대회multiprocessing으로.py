@@ -464,7 +464,7 @@ def front_Detect():
 
 
 def main():
-    Cam_process=Process(target=openCam())
+
     Lidar_process = Process(target=read_Lidar())
     Matrix_process = Process(target=matrix_Comb())
     AS_process = Process(target=astar_Comb())

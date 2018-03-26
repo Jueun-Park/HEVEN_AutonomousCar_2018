@@ -8,6 +8,7 @@
 import cv2
 import threading
 import numpy as np
+import time
 
 crosswalk_stop = 0
 narrow_stop = 0
@@ -41,6 +42,13 @@ except Exception as e:
     exit(1)
 
 
+def give_delay_for_test():
+    global is_in_mission, Mission
+    time.sleep(3)
+    is_in_mission = False
+    Mission = 0
+
+
 ########################## Machine ###########################
 def crosswalk_detect():  # 05016 am09  yoon test : 1.07/20 good
     global crosswalk_stop, is_in_mission, Mission, img
@@ -57,9 +65,10 @@ def crosswalk_detect():  # 05016 am09  yoon test : 1.07/20 good
         if np.sum(rec1) >= 1:
             detect_crosswalk = 1
             crosswalk_stop += 1
-            if crosswalk_stop == 3:
+            if crosswalk_stop == 3:  # 세 프레임 이상 인식하면 미션 시작으로 인식
                 Mission = 3
                 is_in_mission = True
+                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
             print("CrossWalk!!! ", detect_crosswalk)
 
 
@@ -102,6 +111,7 @@ def moving_detect():
             if moving_stop == 3:
                 Mission = 1
                 is_in_mission = True
+                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
             print("Moving!!!! ", detect_moving)
 
 
@@ -165,6 +175,7 @@ def parking_detect():
             if parking_stop == 3:
                 Mission = 7
                 is_in_mission = True
+                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
             print("Parking!!!!! ", detect_parking)
 
 
@@ -187,6 +198,7 @@ def u_turn_detect():
                 Mission = 5
                 is_in_mission = True
                 print("Uturn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
             print("Uturn!!!! ", detect_uturn)
 
 

@@ -197,5 +197,5 @@ if __name__ == "__main__":
     current_lidar.set_mode(modes['NARROW'])
 
     while True:
-        #print(current_lidar.get_data())
-        current_lidar.plot_data()
+        print(current_lidar.get_data())
+        #current_lidar.plot_data()
