@@ -14,7 +14,7 @@ modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
 
 
 class Lidar:
-    RADIUS = 300  # 원일 경우 지름, 사각형일 경우 한 변
+    RADIUS = 500  # 원일 경우 지름, 사각형일 경우 한 변
 
     def __init__(self):
         self.HOST = '169.254.248.220'
@@ -22,9 +22,9 @@ class Lidar:
         self.BUFF = 57600
         self.MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
-        self.mode = modes['STATIC_OBS']
-
         self.data_list = []  # 데이터가 16진수 통으로 들어갈 것이다
+
+        self.frame = None
 
     def loop(self):  # 데이터 받아서 저장하는 메서드
         self.sock_lidar = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,14 +41,15 @@ class Lidar:
 
     def animation_loop(self):  # 저장한 데이터 그림 그려주는 메서드
         while True:
-            canvas = np.full((self.RADIUS * 2, self.RADIUS, 3), 255, np.uint8)  # 내가 곧 그림을 그릴 곳 (넘파이어레이)
+            canvas = np.zeros((self.RADIUS, self.RADIUS * 2), np.uint8)  # 내가 곧 그림을 그릴 곳 (넘파이어레이)
+            cv2.circle(canvas, (self.RADIUS, self.RADIUS), self.RADIUS, 255, 2)
 
             points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
             for angle in range(0, 361):
                 r = int(self.data_list[angle], 16) / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
-                if 1.0 <= r <= self.RADIUS:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+                if 2 <= r <= self.RADIUS:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                     # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
                     x = r * math.cos(math.radians(0.5 * angle))
@@ -59,9 +60,11 @@ class Lidar:
                     points[angle][1] = self.RADIUS - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(canvas, tuple(point), 2, (0, 0, 255), -1)  # 캔버스에 점 찍기
+                cv2.circle(canvas, tuple(point), 60, 255, -1) # 캔버스에 점 찍기
 
-            cv2.imshow('lidar', canvas)  # 창 띄워서 확인
+            self.frame = canvas
+
+            #cv2.imshow('lidar', canvas)  # 창 띄워서 확인
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
