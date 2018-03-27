@@ -17,6 +17,7 @@ class MotionPlanner():
         self.lidar = lidar_instance
 
     def loop(self):
+        Rad=current_lidar.RADIUS
         while True:
             t1 = time.time()
             data = np.zeros((2, 37), np.int)
@@ -24,10 +25,11 @@ class MotionPlanner():
 
             if current_frame is not None:
 
-                for r in range(0, current_lidar.RADIUS):
+
+                for r in range(0, Rad):
                     for theta in range(0, 181, 5):
-                        x = current_lidar.RADIUS + int(round(r * np.cos(np.radians(theta)))) - 1
-                        y = current_lidar.RADIUS - int(round(r * np.sin(np.radians(theta)))) - 1
+                        x = Rad + int(round(r * np.cos(np.radians(theta)))) - 1
+                        y = Rad - int(round(r * np.sin(np.radians(theta)))) - 1
 
                         if data[0][int(theta / 5)] == 0:
                             data[1][int(theta / 5)] = r
@@ -36,9 +38,9 @@ class MotionPlanner():
                             data[0][int(theta / 5)] = 1
 
                 for i in range(0, 37):
-                    x = current_lidar.RADIUS + int(round(data[1][i] * np.cos(np.radians(i * 5)))) - 1
-                    y = current_lidar.RADIUS - int(round(data[1][i] * np.sin(np.radians(i * 5)))) - 1
-                    cv2.line(current_frame, (current_lidar.RADIUS, current_lidar.RADIUS), (x, y), 255)
+                    x = Rad + int(round(data[1][i] * np.cos(np.radians(i * 5)))) - 1
+                    y = Rad - int(round(data[1][i] * np.sin(np.radians(i * 5)))) - 1
+                    cv2.line(current_frame, (Rad, Rad), (x, y), 255)
 
                 cv2.imshow('lidar', current_frame)
                 t2 = time.time()
@@ -49,6 +51,8 @@ class MotionPlanner():
     def initiate(self):
         thread = threading.Thread(target=self.loop)
         thread.start()
+
+
 
 current_lidar = Lidar()
 current_lidar.initiate()
