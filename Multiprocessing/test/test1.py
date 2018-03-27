@@ -1,20 +1,21 @@
-<<<<<<< Updated upstream
+import os
+from multiprocessing import Process, current_process
+def doubler(number):
+    result = number * 2
+    proc_name = current_process().name
+    print('{0} doubled to {1} by: {2}'.format( number, result, proc_name))
+if __name__ == '__main__':
+    numbers = [5, 10, 15, 20, 25]
+    procs = []
+    proc = Process(target=doubler, args=(5,))
+    for index, number in enumerate(numbers):
+        proc = Process(target=doubler, args=(number,))
+        procs.append(proc)
+        proc.start()
+    proc = Process(target=doubler, name='Test', args=(2,))
+    proc.start()
+    procs.append(proc)
 
-import numpy as np
-import cv2
+    for proc in procs:
+        proc.join()
 
-
-black_image = np.zeros((512,512,3), np.uint8 )
-
-cv2.rectangle( black_image, (0,0), (511,511),(255,0,0), 3 )
-cv2.circle(black_image,(256,256), 256,(0,0,255),1)
-cv2.ellipse(black_image,(256,256),(256,100),0,0,360,(0,255,0),1)
-
-#cv2.imshow( "image", black_image )
-
-a=black_image+black_image[0]
-print(a)
-
-cv2.waitKey(0)
-=======
->>>>>>> Stashed changes
