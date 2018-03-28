@@ -24,6 +24,7 @@ class PlatformSerial:
         try:
             self.ser = serial.Serial(self.platform, 115200)  # Baud rate such as 9600 or 115200 etc.
         except Exception as e:
+            print('serial error ')
             print(e)
 
         self.reading_data = bytearray([0 for i in range(14)])
@@ -167,9 +168,13 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = 'COM5'
+    # port = '/dev/ttyUSB0'
+    port = 'COM3'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
 
     while True:
+        t1 = time.time()
         platform.test_communication_main()
+        t2 = time.time()
+        print('time ', t2 - t1)
