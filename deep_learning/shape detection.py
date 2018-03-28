@@ -12,12 +12,6 @@ if cap.read():
         count_2 +=1
         ret, img = cap.read()
         #       frame = cv2.resize(frame, (640,480))
-        if ret:
-            cv2.imshow('image', img)
-        #       img = cv2.imread('sky.jpg')
-        else:
-            print("no frame")
-            break
         if img is None:
             print("image is none")
         else:
@@ -35,22 +29,13 @@ if cap.read():
                 le = max(w,h)
 
                 if w>60 and h>60:
-
-#                stand = [64, 128, 192, 256, 320, 384, 448]
-
-#                for i in stand:
-#                    if i<le<i+64:
-#                        x_1 = int (x+(w-i)/2)q
-#                        x_2 = int (x+(w+i)/2)
-#                        y_1 = int (y+(h-i)/2)
-#                        y_2 = int (y+(h+i)/2)
                     x_1 = int (x+(w-le)/2)
                     x_2 = int (x+(w+le)/2)
                     y_1 = int (y+(h-le)/2)
                     y_2 = int (y+(h+le)/2)
 
                     img_trim = img[y_1 : y_2 , x_1 :x_2]
-#                        image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
+#                    image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
                     height, width = img_trim.shape[:2]
 
                     if -5< (height - width) <5:
