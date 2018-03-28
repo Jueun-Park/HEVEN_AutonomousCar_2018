@@ -12,7 +12,7 @@ if cap.read():
         time.sleep(0.3)
         count_2 +=1
         ret, img = cap.read()
-        #       frame = cv2.resize(frame, (640,480))
+
         if img is None:
             print("image is none")
         else:
