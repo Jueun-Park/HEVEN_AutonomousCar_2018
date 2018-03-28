@@ -34,9 +34,9 @@ if cap.read():
                 cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
                 le = max(w,h)
 
-                stand = [64, 128, 192, 256, 320, 384, 448]
+                stad = [64, 128, 192, 256, 320, 384, 448]
 
-                for i in stand:
+                for i in stad:
                     if i-64<le<i:
                         x_1 = int (x+(w-i)/2)
                         x_2 = int (x+(w+i)/2)
