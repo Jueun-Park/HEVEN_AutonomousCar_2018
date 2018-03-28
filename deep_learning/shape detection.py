@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 if not cap.read():
     print("none")
 
@@ -44,7 +44,9 @@ if cap.read():
                         y_2 = int (y+(h+i)/2)
 
                         img_trim = img[y_1 : y_2,x_1 :x_2]
-                        image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
+
+                        height, width = img_trim.shape[:2]
+                        image = cv2.resize(img_trim, (width*32/i,height*32/i),interpolation=cv2.INTER_AREA)
 
                 cv2.imwrite(name,image)
 
