@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import time
+
 cap = cv2.VideoCapture(1)
 if not cap.read():
     print("none")
@@ -9,10 +9,9 @@ if not cap.read():
 if cap.read():
     count_2 = 0
     while True:
-        # time.sleep(0.3)
         count_2 +=1
         ret, img = cap.read()
-
+        # frame = cv2.resize(frame, (640,480))
         if img is None:
             print("image is none")
         else:
@@ -36,10 +35,11 @@ if cap.read():
                     y_2 = int (y+(h+le)/2)
 
                     img_trim = img[y_1 : y_2 , x_1 :x_2]
+                    # image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
                     height, width = img_trim.shape[:2]
 
                     if -5< (height - width) <5:
-                        img_trim = cv2.resize(img_trim,(32,32))
+                        img_trim = cv2.resize(img_trim, (32,32))
                         cv2.imwrite(name,img_trim)
 
                 count += 1
