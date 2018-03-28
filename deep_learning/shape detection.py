@@ -11,7 +11,7 @@ if cap.read():
     while True:
         count_2 +=1
         ret, img = cap.read()
-        #       frame = cv2.resize(frame, (640,480))
+        # frame = cv2.resize(frame, (640,480))
         if img is None:
             print("image is none")
         else:
@@ -35,10 +35,11 @@ if cap.read():
                     y_2 = int (y+(h+le)/2)
 
                     img_trim = img[y_1 : y_2 , x_1 :x_2]
-#                    image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
+                    # image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
                     height, width = img_trim.shape[:2]
 
                     if -5< (height - width) <5:
+                        img_trim = cv2.resize(img_trim, (32,32))
                         cv2.imwrite(name,img_trim)
 
                 count += 1
