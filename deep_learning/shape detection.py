@@ -34,7 +34,7 @@ if cap.read():
                 cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
                 le = max(w,h)
 
-                if w>75 and h>75:
+                if w>60 and h>60:
 
 #                stand = [64, 128, 192, 256, 320, 384, 448]
 
@@ -53,7 +53,7 @@ if cap.read():
 #                        image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
                     height, width = img_trim.shape[:2]
 
-                    if height > 75 and width> 75:
+                    if -5< (height - width) <5:
                         cv2.imwrite(name,img_trim)
 
                 count += 1
