@@ -9,7 +9,7 @@ if not cap.read():
 if cap.read():
     count_2 = 0
     while True:
-        time.sleep(0.3)
+        # time.sleep(0.3)
         count_2 +=1
         ret, img = cap.read()
 
