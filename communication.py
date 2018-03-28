@@ -76,6 +76,8 @@ class PlatformSerial:
 
             self.ENC_with_time = (ENC, time_encoder)
 
+            self.speed_platform = SPEED
+
         except:
             pass
 
