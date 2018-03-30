@@ -2,6 +2,7 @@
 # interpreted by python 3.6
 # 하위 프로그램
 import lidarstart
+import hogbinvision
 
 from pycuda.compiler import SourceModule
 # module
@@ -13,13 +14,15 @@ from multiprocessing import Process
 
 def main():
     # lane_detection_thread=threading.Thread(target=lane_cam_noclass) 미완성
-    lidarstart_process = Process(target=lidarstart.lidarstart())
+    #lidarstart_process = Process(target=lidarstart.lidarstart)
+    lane_detect_process=Process(target=hogbinvision.vision)
 
 
     # sign_cam_thread = threading.Thread(target=sign_cam.main())
     # communicationstart_thread=threading.Thread(target=communicationstart.communicationstart())
 
-    lidarstart_process.start()
+    #lidarstart_process.start()
+    lane_detect_process.start()
 
 
 
