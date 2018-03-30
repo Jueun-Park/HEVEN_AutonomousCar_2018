@@ -29,14 +29,14 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기
-        self.video_left = cv2.VideoCapture(1)
-        self.video_right = cv2.VideoCapture(0)
+        self.video_left = cv2.VideoCapture('right.avi')
+        self.video_right = cv2.VideoCapture('right.avi')
 
         # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left.set(3, 800)
-        self.video_left.set(4, 448)
-        self.video_right.set(3, 800)
-        self.video_right.set(4, 448)
+        #self.video_left.set(3, 800)
+        #self.video_left.set(4, 448)
+        #self.video_right.set(3, 800)
+        #self.video_right.set(4, 448)
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -51,7 +51,8 @@ class LaneCam:
         self.right_current_points = np.array([0] * 10)
 
         # 차선과 닮은 이차함수의 계수 세 개를 담음
-        self.coefficients = None
+        self.left_coefficients = None
+        self.right_coefficients = None
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -80,26 +81,24 @@ class LaneCam:
 
         return dst
 
-
     def left_camera_loop(self):
-
         while True:
             ret, frame = self.video_left.read()
-            dst = self.pretreatment(frame, self.camera_matrix_L,
-                                    self.distortion_coefficients_L, self.Bird_view_matrix_L, (563, 511))
+            #dst = self.pretreatment(frame, self.camera_matrix_R,
+            #                        self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
 
-            cropped = dst[210:510, 262:562]
+            #cropped = dst[151:451, 0:300]
+            cropped = frame[151:451, 0:300]
+            transposed = cv2.flip(cv2.transpose(cropped), 0)
 
-            #transposed = cv2.flip(cv2.transpose(dst), 0)
-            self.left_frame = cropped
+            self.left_frame = transposed
 
-            '''
             black_filtered = cv2.inRange(transposed, self.lower_black, self.upper_black)
             grey_filtered = cv2.inRange(transposed, self.lower_grey, self.upper_grey)
             filtered = cv2.bitwise_not(black_filtered + grey_filtered)
 
             if self.left_previous_points is None:
-                row_sum = np.sum(filtered[0:300, 270:300], axis=1)[100:200]
+                row_sum = np.sum(filtered[100:200, 270:300], axis=1)
                 start_point = np.argmax(row_sum) + 100
                 self.left_current_points[0] = start_point
 
@@ -124,30 +123,44 @@ class LaneCam:
 
                     self.left_current_points[i] = reference_ + self.findCenterofMass(small_box_)
 
-            self.left_previous_points = self.left_current_points'''
+            self.left_previous_points = self.left_current_points
 
+            xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
+            ys = - self.left_current_points
+
+            coefficients = np.polyfit(xs, ys, 2)
+            print('left: ', coefficients)
+
+            xs_plot = np.array([1 * i for i in range(301, 0, -1)]) - 300
+            ys_plot = np.array([coefficients[2] + coefficients[1] * v + coefficients[0] * v ** 2 for v in xs_plot])
+
+            transformed_x = xs_plot + 300
+            transformed_y = - ys_plot
+
+            for i in range(0, 301):
+                cv2.circle(transposed, (int(transformed_x[i]), int(transformed_y[i])), 2, (0, 0, 200), -1)
+
+            cv2.imshow('left', transposed)
+            if cv2.waitKey(1) & 0xFF == ord('q'): break
 
     def right_camera_loop(self):
-
         while True:
-
             ret, frame = self.video_right.read()
-            dst = self.pretreatment(frame, self.camera_matrix_R,
-                                    self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
+            #dst = self.pretreatment(frame, self.camera_matrix_R,
+            #                        self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
 
-            #transposed = cv2.flip(cv2.transpose(dst), 0)
-            cropped = dst[151:451, 0:300]
+            #cropped = dst[151:451, 0:300]
+            cropped = frame[151:451, 0:300]
+            transposed = cv2.flip(cv2.transpose(cropped), 0)
 
-            self.right_frame = cropped
+            self.right_frame = transposed
 
-
-            '''
             black_filtered = cv2.inRange(transposed, self.lower_black, self.upper_black)
             grey_filtered = cv2.inRange(transposed, self.lower_grey, self.upper_grey)
             filtered = cv2.bitwise_not(black_filtered + grey_filtered)
 
             if self.right_previous_points is None:
-                row_sum = np.sum(filtered[0:300, 270:300], axis=1)[100:200]
+                row_sum = np.sum(filtered[100:200, 270:300], axis=1)
                 start_point = np.argmax(row_sum) + 100
                 self.right_current_points[0] = start_point
 
@@ -172,12 +185,30 @@ class LaneCam:
 
                     self.right_current_points[i] = reference_ + self.findCenterofMass(small_box_)
 
-            self.left_previous_points = self.left_current_points'''
+            self.right_previous_points = self.right_current_points
+
+            xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
+            ys = 300 - self.right_current_points
+
+            coefficients = np.polyfit(xs, ys, 2)
+            print('right: ', coefficients)
+
+            xs_plot = np.array([1 * i for i in range(301, 0, -1)]) - 300
+            ys_plot = np.array([coefficients[2] + coefficients[1] * v + coefficients[0] * v ** 2 for v in xs_plot])
+
+            transformed_x = xs_plot + 300
+            transformed_y = 300 - ys_plot
+
+            for i in range(0, 301):
+                cv2.circle(transposed, (int(transformed_x[i]), int(transformed_y[i])), 2, (0, 0, 200), -1)
+
+            cv2.imshow('right', transposed)
+            if cv2.waitKey(1) & 0xFF == ord('q'): break
 
     def show_loop(self):
         while True:
             if self.left_frame is not None and self.right_frame is not None:
-                both = np.hstack((self.left_frame, self.right_frame))
+                both = np.vstack((self.right_frame, self.left_frame))
                 cv2.imshow('both', both)
 
             else: print("카메라가 연결되지 않았거나, 아직 준비중입니다.")
@@ -195,46 +226,13 @@ class LaneCam:
         showing_thread.start()
 
 
-'''
-    xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
-    ys = 300 - current_points
-
-    coefficients = np.polyfit(xs, ys, 2)
-    print(coefficients)
-
-    xs_plot = np.array([1 * i for i in range(301, 0, -1)]) - 300
-    ys_plot = np.array([coefficients[2] + coefficients[1] * v + coefficients[0] * v**2 for v in xs_plot])
-
-    transformed_x = xs_plot + 300
-    transformed_y = 300 - ys_plot
-
-    for i in range(0, 301):
-        cv2.circle(right_transposed, (int(transformed_x[i]), int(transformed_y[i])), 2, (0, 0, 200), -1)
-
-    #for i in range(0, 10):
-        #cv2.line(right_filtered, (300 - 30 * i, current_points[i] - 20), (300 - 30 * i, current_points[i] + 20), 140)
-
-    cv2.imshow('right', right_transposed)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'): break
-
-video_left.release()
-video_right.release()
-cv2.destroyAllWindows()
-
-lanecam = LaneCam()
-lanecam.initiate()
-'''
 if __name__=="__main__" :
     lanecam=LaneCam()
 
-    t1=threading.Thread(target=lanecam.initiateleft)
+    t1 = threading.Thread(target=lanecam.initiateleft)
     t2 = threading.Thread(target=lanecam.initiateright)
-    t3 = threading.Thread(target=lanecam.initiateshow)
+    #t3 = threading.Thread(target=lanecam.initiateshow)
 
     t1.start()
     t2.start()
-    t3.start()
-
-
-
+    #t3.start()
