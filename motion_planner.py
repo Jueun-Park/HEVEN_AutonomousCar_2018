@@ -16,6 +16,8 @@ class MotionPlanner():
     def __init__(self, lidar_instance):
         self.lidar = lidar_instance
 
+
+
     def loop(self):
         Rad=current_lidar.RADIUS
         while True:
@@ -36,12 +38,6 @@ class MotionPlanner():
 
                         if current_frame[y][x] != 0:
                             data[0][int(theta / 5)] = 1
-
-
-
-
-
-
                 for i in range(0, 37):
                     x = Rad + int(round(data[1][i] * np.cos(np.radians(i * 5)))) - 1
                     y = Rad - int(round(data[1][i] * np.sin(np.radians(i * 5)))) - 1
@@ -52,6 +48,7 @@ class MotionPlanner():
                 print(t2 - t1)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
+
 
     def initiate(self):
         thread = threading.Thread(target=self.loop)
