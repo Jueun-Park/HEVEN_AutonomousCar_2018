@@ -1,0 +1,3 @@
+{
+  "cudathread.py::test_kernel": true
+}
