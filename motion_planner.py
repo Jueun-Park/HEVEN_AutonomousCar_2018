@@ -17,7 +17,6 @@ class MotionPlanner():
         self.lidar = lidar_instance
 
 
-
     def loop(self):
         Rad=current_lidar.RADIUS
         while True:
