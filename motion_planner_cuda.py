@@ -2,7 +2,6 @@
 # input: 1. numpy array (from lidar)
 #        2. numpy array (from lane_cam)
 # output: 차선 center 위치, 기울기, 곡률이 담긴 numpy array
-import pycuda.autoinit
 import pycuda.driver as drv
 import numpy as np
 from pycuda.compiler import SourceModule
@@ -14,35 +13,41 @@ import time
 
 np.set_printoptions(linewidth=1000)
 
-mod = SourceModule(r"""
-    #include <stdio.h>
-    #include <math.h>
-
-    #define PI 3.14159265
-    __global__ void detect(int data[][2], int *rad, unsigned char frame[][1000])
-    {
-            for(int r = 0; r < rad[0]; r++) {
-                const int thetaIdx = threadIdx.x;
-                const int theta = thetaIdx * 5;
-                int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
-                int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
-
-                if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
-                if (frame[y][x] != 0) data[thetaIdx][0] = 1;
-            }
-    } 
-    """)
-
-path = mod.get_function("detect")
-
 class MotionPlanner():
-
     def __init__(self, lidar_instance):
         self.lidar = lidar_instance
 
     def loop(self):
-        Rad=np.int32(current_lidar.RADIUS)
+#pycuda alloc
+        drv.init()
+        global context
+        from pycuda.tools import make_default_context
+        context = make_default_context()
+
+        mod = SourceModule(r"""
+            #include <stdio.h>
+            #include <math.h>
+
+            #define PI 3.14159265
+            __global__ void detect(int data[][2], int *rad, unsigned char frame[][1000])
+            {
+                    for(int r = 0; r < rad[0]; r++) {
+                        const int thetaIdx = threadIdx.x;
+                        const int theta = thetaIdx * 5;
+                        int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
+                        int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
+
+                        if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
+                        if (frame[y][x] != 0) data[thetaIdx][0] = 1;
+                    }
+            } 
+            """)
+        path = mod.get_function("detect")
+#pycuda alloc end
+
+        Rad = np.int32(current_lidar.RADIUS)
         while True:
+            t1 = time.time()
             data = np.zeros((37, 2), np.int)
             current_frame = self.lidar.frame
 
@@ -55,9 +60,16 @@ class MotionPlanner():
                     cv2.line(current_frame, (Rad, Rad), (x, y), 255)
 
                 cv2.imshow('lidar', current_frame)
-                print(data)
+                #print(data)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+#pycuda dealloc
+        context.pop()
+        context = None
+        from pycuda.tools import clear_context_caches
+        clear_context_caches()
+#pycuda dealloc end
 
 
     def initiate(self):
@@ -70,7 +82,7 @@ current_lidar = Lidar()
 current_lidar.initiate()
 
 motion_plan = MotionPlanner(current_lidar)
-motion_plan.loop()
+motion_plan.initiate()
 
 '''
 canvas = np.zeros((400, 400), np.uint8)
