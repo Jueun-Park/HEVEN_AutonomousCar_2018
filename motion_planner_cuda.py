@@ -32,6 +32,7 @@ mod = SourceModule(r"""
             }
     } 
     """)
+
 path = mod.get_function("detect")
 
 class MotionPlanner():
@@ -42,13 +43,11 @@ class MotionPlanner():
     def loop(self):
         Rad=np.int32(current_lidar.RADIUS)
         while True:
-            t1 = time.time()
             data = np.zeros((37, 2), np.int)
             current_frame = self.lidar.frame
 
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(Rad), drv.In(current_frame),
-                    block=(37,1,1))
+                path(drv.InOut(data), drv.In(Rad), drv.In(current_frame), block=(37,1,1))
 
                 for i in range(0, 37):
                     x = Rad + int(round(data[i][1] * np.cos(np.radians(i * 5)))) - 1
@@ -56,8 +55,7 @@ class MotionPlanner():
                     cv2.line(current_frame, (Rad, Rad), (x, y), 255)
 
                 cv2.imshow('lidar', current_frame)
-                t2 = time.time()
-                print(t2 - t1)
+                print(data)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
