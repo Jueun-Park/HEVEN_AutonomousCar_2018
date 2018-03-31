@@ -46,11 +46,11 @@ class Control:
         self.usit = 0
         self.psit = 0
 
-        ######################################
-        ## communication.py에서 데이터 받아오기
-        self.speed_platform = 0
-        self.ENC1 = [0, 0]
-        ######################################
+        #######################################
+        # communication.py 에서 데이터 받아오기#
+        self.speed_platform = 0  #
+        self.ENC1 = [0, 0]  #
+        #######################################
 
         self.mission_num = mission_num
 
@@ -114,7 +114,7 @@ class Control:
 
         self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.3
+        self.adjust = 0.1
 
         steer_now = (self.theta_1 + self.theta_2)
         steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)
