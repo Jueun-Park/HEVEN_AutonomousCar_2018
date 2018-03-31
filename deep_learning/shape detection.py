@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import time
 
 cap = cv2.VideoCapture(1)
 if not cap.read():
@@ -9,9 +10,10 @@ if not cap.read():
 if cap.read():
     count_2 = 0
     while True:
+        time.sleep(0.3)
         count_2 +=1
         ret, img = cap.read()
-        # frame = cv2.resize(frame, (640,480))
+
         if img is None:
             print("image is none")
         else:
