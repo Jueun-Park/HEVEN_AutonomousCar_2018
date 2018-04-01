@@ -14,7 +14,7 @@ img_hsv2 = cv2.cvtColor(img,cv2.COLOR_BGR2HSV) # img_hsv와 같지만, 이 이�
 height, width, channel = img.shape
 #print (height, width, channel)
 
-
+#for i in range(0,100):
 for i in range(0,5):
     for y in range(0, height):
         for x in range(0, width):
@@ -22,6 +22,7 @@ for i in range(0,5):
             # s = img_hsv.item(y,x,1)
             v = img_hsv.item(y, x, 2) # HSV format에서 v 부분을 가져옴. (명도)
             img_hsv2.itemset((y, x, 2), max(0, min(v - 100 + 50*i, 255))) # 원래 사진의 v 부분에 대하여 밝기를 조정함. (0,255)
+            #img_hsv2.itemset((y, x, 2), max(0, min(v - 100 + 2*i, 255))) # 원래 사진의 v 부분에 대하여 밝기를 조정함. (0,255)
 
     img_final = cv2.cvtColor(img_hsv2, cv2.COLOR_HSV2BGR) # HSV format을 다시 BGR format으로 변환함.
     # cv2.imshow('final', img_hsv)
