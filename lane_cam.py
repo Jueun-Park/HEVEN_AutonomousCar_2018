@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import threading
 import time
+np.set_printoptions(linewidth=100000)
 
 
 class LaneCam:
@@ -22,21 +23,25 @@ class LaneCam:
 
     # BGR 을 이용한 차선 추출에 필요한 값들
     lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 180, 180])
+    upper_black = np.array([180, 180, 230])
 
     lower_grey = np.array([150, 150, 150])
     upper_grey = np.array([210, 210, 210])
 
+    BOX_WIDTH = 20
+
     def __init__(self):
         # 웹캠 2대 열기
-        self.video_left = cv2.VideoCapture(1)
-        self.video_right = cv2.VideoCapture(0)
+        self.video_left = cv2.VideoCapture('output_L_0.avi')
+        self.video_right = cv2.VideoCapture('output_R_0.avi')
 
         # 양쪽 웹캠의 해상도를 800x448로 설정
+        '''
         self.video_left.set(3, 800)
         self.video_left.set(4, 448)
         self.video_right.set(3, 800)
         self.video_right.set(4, 448)
+        '''
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -51,7 +56,8 @@ class LaneCam:
         self.right_current_points = np.array([0] * 10)
 
         # 차선과 닮은 이차함수의 계수 세 개를 담음
-        self.coefficients = None
+        self.left_coefficients = None
+        self.right_coefficients = None
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -80,161 +86,145 @@ class LaneCam:
 
         return dst
 
-
     def left_camera_loop(self):
-
         while True:
-            ret, frame = self.video_left.read()
-            dst = self.pretreatment(frame, self.camera_matrix_L,
+            ret_L, frame_L = self.video_left.read()
+
+            dst_L = self.pretreatment(frame_L, self.camera_matrix_L,
                                     self.distortion_coefficients_L, self.Bird_view_matrix_L, (563, 511))
+            cropped_L = dst_L[210:510, 262:562]
+            transposed_L = cv2.flip(cv2.transpose(cropped_L), 0)
 
-            cropped = dst[210:510, 262:562]
+            self.left_frame = transposed_L
 
-            #transposed = cv2.flip(cv2.transpose(dst), 0)
-            self.left_frame = cropped
+    def right_camera_loop(self):
+        while True:
+            ret_R, frame_R = self.video_right.read()
 
-            '''
-            black_filtered = cv2.inRange(transposed, self.lower_black, self.upper_black)
-            grey_filtered = cv2.inRange(transposed, self.lower_grey, self.upper_grey)
-            filtered = cv2.bitwise_not(black_filtered + grey_filtered)
+            dst_R = self.pretreatment(frame_R, self.camera_matrix_R,
+                                      self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
+
+            cropped_R = dst_R[151:451, 0:300]
+
+            transposed_R = cv2.flip(cv2.transpose(cropped_R), 0)
+
+            self.right_frame = transposed_R
+
+    def show_loop(self):
+        time.sleep(3)
+        while True:
+            left_frame, right_frame = self.left_frame, self.right_frame
+            both = np.vstack((right_frame, left_frame))
+
+            black_filtered_L = cv2.inRange(left_frame, self.lower_black, self.upper_black)
+            black_filtered_R = cv2.inRange(right_frame, self.lower_black, self.upper_black)
+
+            grey_filtered_L = cv2.inRange(left_frame, self.lower_grey, self.upper_grey)
+            grey_filtered_R = cv2.inRange(right_frame, self.lower_grey, self.upper_grey)
+
+            filtered_L = cv2.bitwise_not(cv2.bitwise_or(black_filtered_L, grey_filtered_L))
+            filtered_R = cv2.bitwise_not(cv2.bitwise_or(black_filtered_R, grey_filtered_R))
+
+            both_filtered = np.vstack((filtered_R, filtered_L))
+            cv2.imshow('1', cv2.flip(cv2.transpose(both_filtered), 1))
+            if cv2.waitKey(1) & 0xFF == ord('q'): break
 
             if self.left_previous_points is None:
-                row_sum = np.sum(filtered[0:300, 270:300], axis=1)[100:200]
-                start_point = np.argmax(row_sum) + 100
+                row_sum = np.sum(filtered_L, axis=1)
+                start_point = np.argmax(row_sum)
                 self.left_current_points[0] = start_point
 
                 for i in range(1, 10):
-                    reference = self.left_current_points[i - 1] - 20
+                    reference = self.left_current_points[i - 1] - self.BOX_WIDTH
 
                     x1, x2 = 300 - 30 * i, 330 - 30 * i
-                    y1, y2 = self.left_current_points[i - 1] - 20, self.left_current_points[i - 1] + 20
+                    y1, y2 = self.left_current_points[i - 1] - self.BOX_WIDTH, self.left_current_points[i - 1] + self.BOX_WIDTH
 
-                    small_box = filtered[y1:y2, x1:x2]
+                    small_box = filtered_L[y1:y2, x1:x2]
 
                     self.left_current_points[i] = reference + self.findCenterofMass(small_box)
 
             else:
                 for i in range(0, 10):
-                    reference_ = self.left_previous_points[i] - 20
+                    reference = self.left_previous_points[i] - self.BOX_WIDTH
 
-                    x1_, x2_ = 270 - 30* i, 300 - 30 * i
-                    y1_, y2_ = self.left_previous_points[i] - 20, self.left_previous_points[i] + 20
+                    x1, x2 = 270 - 30 * i, 300 - 30 * i
+                    y1, y2 = self.left_previous_points[i] - self.BOX_WIDTH, self.left_previous_points[i] + self.BOX_WIDTH
 
-                    small_box_ = filtered[y1_:y2_, x1_:x2_]
+                    small_box = filtered_L[y1:y2, x1:x2]
 
-                    self.left_current_points[i] = reference_ + self.findCenterofMass(small_box_)
+                    self.left_current_points[i] = reference + self.findCenterofMass(small_box)
 
-            self.left_previous_points = self.left_current_points'''
-
-
-    def right_camera_loop(self):
-
-        while True:
-
-            ret, frame = self.video_right.read()
-            dst = self.pretreatment(frame, self.camera_matrix_R,
-                                    self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
-
-            #transposed = cv2.flip(cv2.transpose(dst), 0)
-            cropped = dst[151:451, 0:300]
-
-            self.right_frame = cropped
-
-
-            '''
-            black_filtered = cv2.inRange(transposed, self.lower_black, self.upper_black)
-            grey_filtered = cv2.inRange(transposed, self.lower_grey, self.upper_grey)
-            filtered = cv2.bitwise_not(black_filtered + grey_filtered)
+            self.left_previous_points = self.left_current_points
 
             if self.right_previous_points is None:
-                row_sum = np.sum(filtered[0:300, 270:300], axis=1)[100:200]
-                start_point = np.argmax(row_sum) + 100
+                row_sum = np.sum(filtered_R, axis=1)
+                start_point = np.argmax(row_sum)
                 self.right_current_points[0] = start_point
 
                 for i in range(1, 10):
-                    reference = self.right_current_points[i - 1] - 20
+                    reference = self.right_current_points[i - 1] - self.BOX_WIDTH
 
                     x1, x2 = 300 - 30 * i, 330 - 30 * i
-                    y1, y2 = self.right_current_points[i - 1] - 20, self.right_current_points[i - 1] + 20
+                    y1, y2 = self.right_current_points[i - 1] - self.BOX_WIDTH, self.right_current_points[i - 1] + self.BOX_WIDTH
 
-                    small_box = filtered[y1:y2, x1:x2]
+                    small_box = filtered_R[y1:y2, x1:x2]
 
                     self.right_current_points[i] = reference + self.findCenterofMass(small_box)
 
             else:
                 for i in range(0, 10):
-                    reference_ = self.right_previous_points[i] - 20
+                    reference = self.right_previous_points[i] - self.BOX_WIDTH
 
-                    x1_, x2_ = 270 - 30* i, 300 - 30 * i
-                    y1_, y2_ = self.right_previous_points[i] - 20, self.right_previous_points[i] + 20
+                    x1, x2 = 270 - 30 * i, 300 - 30 * i
+                    y1, y2 = self.right_previous_points[i] - self.BOX_WIDTH, self.right_previous_points[i] + self.BOX_WIDTH
 
-                    small_box_ = filtered[y1_:y2_, x1_:x2_]
+                    small_box = filtered_R[y1:y2, x1:x2]
 
-                    self.right_current_points[i] = reference_ + self.findCenterofMass(small_box_)
+                    self.right_current_points[i] = reference + self.findCenterofMass(small_box)
 
-            self.left_previous_points = self.left_current_points'''
+            self.right_previous_points = self.right_current_points
 
-    def show_loop(self):
-        while True:
-            if self.left_frame is not None and self.right_frame is not None:
-                both = np.hstack((self.left_frame, self.right_frame))
-                cv2.imshow('both', both)
+            for i in range(0, 10):
+                cv2.line(filtered_L, (300 - 30 * i, self.left_current_points[i] - self.BOX_WIDTH), (300 - 30 * i, self.left_current_points[i] + self.BOX_WIDTH), 150)
+                cv2.line(filtered_R, (300 - 30 * i, self.right_current_points[i] - self.BOX_WIDTH), (300 - 30 * i, self.right_current_points[i] + self.BOX_WIDTH), 150)
 
-            else: print("카메라가 연결되지 않았거나, 아직 준비중입니다.")
+            xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
+            ys_L = 0 - self.left_current_points
+            ys_R = 300 - self.right_current_points
 
+            coefficients_L = np.polyfit(xs, ys_L, 2)
+            coefficients_R = np.polyfit(xs, ys_R, 2)
+
+            self.left_coefficients = coefficients_L
+            self.right_coefficients = coefficients_R
+
+            xs_plot = np.array([1 * i for i in range(-299, 1)])
+            ys_plot_L = np.array([coefficients_L[2] + coefficients_L[1] * v + coefficients_L[0] * v ** 2 for v in xs_plot])
+            ys_plot_R = np.array([coefficients_R[2] + coefficients_R[1] * v + coefficients_R[0] * v ** 2 for v in xs_plot])
+
+            transformed_x = xs_plot + 299
+            transformed_y_L =  0 - ys_plot_L
+            transformed_y_R = 299 - ys_plot_R
+
+            for i in range(0, 300):
+                cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
+                cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
+
+            cv2.imshow('left', filtered_L)
+            cv2.imshow('right', filtered_R)
+            cv2.imshow('2', cv2.flip(cv2.transpose(both), 1))
+            #time.sleep(0.2)
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
-    def initiateleft(self):
-        left_thread = threading.Thread(target=self.left_camera_loop)
-        left_thread.start()
-    def initiateright(self):
-        right_thread = threading.Thread(target=self.right_camera_loop)
-        right_thread.start()
-    def initiateshow(self):
-        showing_thread = threading.Thread(target=self.show_loop)
-        showing_thread.start()
 
+if __name__ == "__main__":
+    lane_cam = LaneCam()
 
-'''
-    xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
-    ys = 300 - current_points
-
-    coefficients = np.polyfit(xs, ys, 2)
-    print(coefficients)
-
-    xs_plot = np.array([1 * i for i in range(301, 0, -1)]) - 300
-    ys_plot = np.array([coefficients[2] + coefficients[1] * v + coefficients[0] * v**2 for v in xs_plot])
-
-    transformed_x = xs_plot + 300
-    transformed_y = 300 - ys_plot
-
-    for i in range(0, 301):
-        cv2.circle(right_transposed, (int(transformed_x[i]), int(transformed_y[i])), 2, (0, 0, 200), -1)
-
-    #for i in range(0, 10):
-        #cv2.line(right_filtered, (300 - 30 * i, current_points[i] - 20), (300 - 30 * i, current_points[i] + 20), 140)
-
-    cv2.imshow('right', right_transposed)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'): break
-
-video_left.release()
-video_right.release()
-cv2.destroyAllWindows()
-
-lanecam = LaneCam()
-lanecam.initiate()
-'''
-if __name__=="__main__" :
-    lanecam=LaneCam()
-
-    t1=threading.Thread(target=lanecam.initiateleft)
-    t2 = threading.Thread(target=lanecam.initiateright)
-    t3 = threading.Thread(target=lanecam.initiateshow)
+    t1 = threading.Thread(target=lane_cam.left_camera_loop)
+    t2 = threading.Thread(target=lane_cam.right_camera_loop)
+    t3 = threading.Thread(target=lane_cam.show_loop)
 
     t1.start()
     t2.start()
     t3.start()
-
-
-
