@@ -38,14 +38,14 @@ class SerialPacket(object):
         if attr == 'end_bytes': super().__setattr__(attr, np.array(v, np.uint8)); return
         super().__setattr__(attr, v)
 
-    def print_attr(self):
-        print(self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes)
+    def get_attr(self):
+        return (self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes)
 
     def read_bytes(self, b):
         try:
             u = struct.unpack('!3sBBBHhBiB2s', b)
         except:
-            print(b)
+            print('ERROR:', b)
             u = [b'STX', 0, 0, 0, 0, 0, 1, 0, 0, b'\r\n']
 
         self.start_bytes = bytearray(u[0])
@@ -58,7 +58,6 @@ class SerialPacket(object):
         self.enc = u[7]
         self.alive = u[8]
         self.end_bytes = bytearray(u[9])
-        print(u)
 
     def write_bytes(self):
         b = struct.pack('!3sBBBHhBiB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, bytes(self.end_bytes))

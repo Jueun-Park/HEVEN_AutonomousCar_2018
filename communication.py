@@ -141,6 +141,8 @@ class PlatformSerial:
         self.ser.close()
 
     def test_write_to_platform(self):
+        pass
+        '''
         self.speed_for_write = 0
         self.brake_for_write = 0
 
@@ -158,20 +160,23 @@ class PlatformSerial:
             self.present_time = time.time()
         else:
             self.present_time = time.time()
+        '''
 
     def test_communication_main(self):
-        read_thread = threading.Thread(target=self._read)
-        write_thread = threading.Thread(target=self._write)
-        test_write_thread = threading.Thread(target=self.test_write_to_platform)
+        #read_thread = threading.Thread(target=self._read())
+        self._read()
+        self._write()
+        #write_thread = threading.Thread(target=self._write())
+        #test_write_thread = threading.Thread(target=self.test_write_to_platform())
 
-        read_thread.start()
-        write_thread.start()
-        test_write_thread.start()
+        #read_thread.start()
+        #write_thread.start()
+        #test_write_thread.start()
 
 
 if __name__ == '__main__':
     # port = '/dev/ttyUSB0'
-    port = 'COM3'
+    port = 'COM7'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
 
@@ -180,3 +185,4 @@ if __name__ == '__main__':
         platform.test_communication_main()
         t2 = time.time()
         print('time ', t2 - t1)
+        #time.sleep(0.2)

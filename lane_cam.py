@@ -23,25 +23,25 @@ class LaneCam:
 
     # BGR 을 이용한 차선 추출에 필요한 값들
     lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 180, 230])
+    upper_black = np.array([180, 180, 220])
 
     lower_grey = np.array([150, 150, 150])
     upper_grey = np.array([210, 210, 210])
 
-    BOX_WIDTH = 20
+    BOX_WIDTH = 10
 
     def __init__(self):
         # 웹캠 2대 열기
-        self.video_left = cv2.VideoCapture('output_L_0.avi')
-        self.video_right = cv2.VideoCapture('output_R_0.avi')
+        self.video_left = cv2.VideoCapture(1)
+        self.video_right = cv2.VideoCapture(0)
 
         # 양쪽 웹캠의 해상도를 800x448로 설정
-        '''
+
         self.video_left.set(3, 800)
         self.video_left.set(4, 448)
         self.video_right.set(3, 800)
         self.video_right.set(4, 448)
-        '''
+
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -71,7 +71,7 @@ class LaneCam:
                     num_of_mass_points += 1
 
         if num_of_mass_points == 0:
-            center_of_mass_y = int(round(len(src) / 2))
+            center_of_mass_y = -1
 
         else:
             center_of_mass_y = int(round(sum_of_y_mass_coordinates / num_of_mass_points))
@@ -94,7 +94,6 @@ class LaneCam:
                                     self.distortion_coefficients_L, self.Bird_view_matrix_L, (563, 511))
             cropped_L = dst_L[210:510, 262:562]
             transposed_L = cv2.flip(cv2.transpose(cropped_L), 0)
-
             self.left_frame = transposed_L
 
     def right_camera_loop(self):
@@ -105,9 +104,7 @@ class LaneCam:
                                       self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
 
             cropped_R = dst_R[151:451, 0:300]
-
             transposed_R = cv2.flip(cv2.transpose(cropped_R), 0)
-
             self.right_frame = transposed_R
 
     def show_loop(self):
@@ -130,7 +127,7 @@ class LaneCam:
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
             if self.left_previous_points is None:
-                row_sum = np.sum(filtered_L, axis=1)
+                row_sum = np.sum(filtered_L[0:300, 200:300], axis=1)
                 start_point = np.argmax(row_sum)
                 self.left_current_points[0] = start_point
 
@@ -158,7 +155,7 @@ class LaneCam:
             self.left_previous_points = self.left_current_points
 
             if self.right_previous_points is None:
-                row_sum = np.sum(filtered_R, axis=1)
+                row_sum = np.sum(filtered_R[0:300, 200:300], axis=1)
                 start_point = np.argmax(row_sum)
                 self.right_current_points[0] = start_point
 
@@ -214,7 +211,6 @@ class LaneCam:
             cv2.imshow('left', filtered_L)
             cv2.imshow('right', filtered_R)
             cv2.imshow('2', cv2.flip(cv2.transpose(both), 1))
-            #time.sleep(0.2)
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
 
