@@ -42,7 +42,12 @@ class SerialPacket(object):
         print(self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes)
 
     def read_bytes(self, b):
-        u = struct.unpack('!3sBBBHhBiB2s', b)
+        try:
+            u = struct.unpack('!3sBBBHhBiB2s', b)
+        except:
+            print(b)
+            u = [b'STX', 0, 0, 0, 0, 0, 1, 0, 0, b'\r\n']
+
         self.start_bytes = bytearray(u[0])
         self.aorm = u[1]
         self.estop = u[2]
@@ -53,6 +58,7 @@ class SerialPacket(object):
         self.enc = u[7]
         self.alive = u[8]
         self.end_bytes = bytearray(u[9])
+        print(u)
 
     def write_bytes(self):
         b = struct.pack('!3sBBBHhBiB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, bytes(self.end_bytes))
@@ -61,5 +67,6 @@ class SerialPacket(object):
 
 if __name__ == '__main__':
     a = SerialPacket(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0A"))
+    a.read_bytes(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0AFF"))
     print(a.start_bytes, a.end_bytes)
     print(str(a.write_bytes()))
