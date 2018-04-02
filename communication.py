@@ -124,6 +124,7 @@ class PlatformSerial:
             self.writing_data[13] = self.reading_data[17]
 
             self.ser.write(bytearray(self.writing_data))  # 플랫폼에 시리얼 데이터 패킷 전송
+            print(bytes(self.writing_data))
 
         except Exception as e:
             print(e)

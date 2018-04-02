@@ -41,7 +41,7 @@ class PlatformSerial:
     def send(self):
         self.write_packet.alive = self.read_packet.alive
         self._write(self.write_packet, self.ser)
-        print('write:', self.write_packet.get_attr())
+        print(self.write_packet.write_bytes())
 
     def recv(self):
         self._read(self.read_packet, self.ser)
@@ -52,6 +52,9 @@ if __name__ == '__main__':
     port = 'COM7'
     platform = PlatformSerial(port)
     while True:
+        t1=time.time()
         platform.recv()
+        platform.write_packet = SerialPacket()
         platform.send()
-        print()
+        t2=time.time()
+        print(t2-t1)

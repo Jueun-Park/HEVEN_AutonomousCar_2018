@@ -45,7 +45,7 @@ class MotionPlanner():
         path = mod.get_function("detect")
 #pycuda alloc end
 
-        Rad = np.int32(current_lidar.RADIUS)
+        Rad = np.int32(self.lidar.RADIUS)
         while True:
             t1 = time.time()
             data = np.zeros((37, 2), np.int)
@@ -64,11 +64,15 @@ class MotionPlanner():
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
+            t2 = time.time()
+            print('motion: ', t2 - t1)
+
 #pycuda dealloc
         context.pop()
         context = None
         from pycuda.tools import clear_context_caches
         clear_context_caches()
+
 #pycuda dealloc end
 
 
@@ -77,12 +81,12 @@ class MotionPlanner():
         thread.start()
 
 
+if __name__=="__main__" :
+    current_lidar = Lidar()
+    current_lidar.initiate()
 
-current_lidar = Lidar()
-current_lidar.initiate()
-
-motion_plan = MotionPlanner(current_lidar)
-motion_plan.initiate()
+    motion_plan = MotionPlanner(current_lidar)
+    motion_plan.initiate()
 
 '''
 canvas = np.zeros((400, 400), np.uint8)

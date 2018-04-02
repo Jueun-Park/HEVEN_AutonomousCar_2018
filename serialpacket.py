@@ -9,7 +9,7 @@ class SerialPacket(object):
     BRAKE_NOBRAKE = 1; BRAKE_FULLBRAKE = 33
 
     def __init__(self, data=None, start_bytes=[0x53, 0x54, 0x58],
-                 aorm=AORM_MANUAL, estop=ESTOP_OFF, gear=GEAR_FORWARD,
+                 aorm=AORM_AUTO, estop=ESTOP_OFF, gear=GEAR_FORWARD,
                  speed=0, steer=0, brake=BRAKE_NOBRAKE,
                  enc=0, alive=0,
                  end_bytes=[0x0D, 0x0A]):
@@ -60,7 +60,7 @@ class SerialPacket(object):
         self.end_bytes = bytearray(u[9])
 
     def write_bytes(self):
-        b = struct.pack('!3sBBBHhBiB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, bytes(self.end_bytes))
+        b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
         return b
 
 

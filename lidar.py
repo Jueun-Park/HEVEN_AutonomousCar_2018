@@ -64,7 +64,7 @@ class Lidar:
 
             self.frame = canvas
 
-            cv2.imshow('lidar', canvas)  # 창 띄워서 확인
+            #cv2.imshow('lidar', canvas)  # 창 띄워서 확인
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
