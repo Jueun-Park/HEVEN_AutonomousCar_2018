@@ -10,6 +10,8 @@ import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
 
+from serialpacket import SerialPacket
+
 # CONSTANTS for _read(), related with encoder
 DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
@@ -18,11 +20,11 @@ DISTANCE_PER_PULSE = DISTANCE_PER_ROTATION / PULSE_PER_ROTATION  # Distance per 
 
 class PlatformSerial:
     def __init__(self, platform_port):
-        self.platform = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
+        self.port = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
 
         # 포트 오픈, 115200 사용. OS 내에서 시리얼 포트도 맞춰줄 것
         try:
-            self.ser = serial.Serial(self.platform, 115200)  # Baud rate such as 9600 or 115200 etc.
+            self.ser = serial.Serial(self.port, 115200)  # Baud rate such as 9600 or 115200 etc.
         except Exception as e:
             print('serial error ')
             print(e)
@@ -158,9 +160,9 @@ class PlatformSerial:
             self.present_time = time.time()
 
     def test_communication_main(self):
-        read_thread = threading.Thread(target=self._read())
-        write_thread = threading.Thread(target=self._write())
-        test_write_thread = threading.Thread(target=self.test_write_to_platform())
+        read_thread = threading.Thread(target=self._read)
+        write_thread = threading.Thread(target=self._write)
+        test_write_thread = threading.Thread(target=self.test_write_to_platform)
 
         read_thread.start()
         write_thread.start()
