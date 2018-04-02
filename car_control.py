@@ -61,7 +61,8 @@ class Control:
             self.__default__()
 
         elif self.mission_num == 2:
-            self.obs_pos = first
+            self.obs_r = first[0]
+            self.obs_theta = first[1]
 
             self.__obs__()
 
@@ -138,36 +139,32 @@ class Control:
         self.gear = 0
         self.brake = 0
 
+        cal_theta = abs(self.obs_theta)
+        x_position = (self.rad + 2.08 * math.cos(cal_theta)) / (2 * math.sin(cal_theta))
+
+        # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
+
+        self.theta_obs = math.degrees(math.atan(1.04 / (x_position + 0.4925))) * 1.387
+
+        self.adjust = 0.1
+
+        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs)
+
+        if self.obs_theta < 0:
+            steer_final = steer_final * (-1)
+
+        self.steer = steer_final * 71
+
+        self.steer_past = steer_final
+
+        if self.steer > 1970:
+            self.steer = 1970
+            self.steer_past = 27.746
+        elif self.steer < -1970:
+            self.steer = -1970
+            self.steer_past = -27.746
+
         return self.steer, self.speed, self.gear, self.brake, self.steer_past
-
-       # self.steer_past = 0
-
-       # self.dis = self.obs_pos[0]
-       # self.y = self.obs_pos[1]
-
-       # self.tan_value = (abs(self.dis) / self.y)
-       # self.theta_3 = math.degrees(math.atan(self.tan_value))
-
-       # if self.dis < 0:
-       #     self.theta_3 = self.theta_3 * (-1)
-       # else:
-       #     self.theta_3 = self.theta_3
-
-       # self.adjust = 0.1
-
-       # steer_now = self.theta_3
-       # steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)
-
-       # self.steer = steer_final * 71
-
-       # self.steer_past = steer_final
-
-       # if self.steer > 1970:
-       #     self.steer = 1970
-       #     self.steer_past = 27.746
-       # elif self.steer < -1970:
-       #     self.steer = -1970
-       #     self.steer_past = -27.746
 
     def __moving__(self):
         self.steer = 0

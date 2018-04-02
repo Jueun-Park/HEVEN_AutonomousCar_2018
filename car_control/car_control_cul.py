@@ -45,14 +45,17 @@ class Control:
         self.gear = 0
         self.brake = 0
 
-        self.tan_value_1 = self.linear * (-1)
+        self.tan_value_1 = abs(self.linear)
         self.theta_1 = math.atan(self.tan_value_1)
 
         self.son = self.cul*math.sin(self.theta_1) - self.default_y_dis
         self.mother = self.cul*math.cos(self.theta_1) + self.cross_track_error + 0.4925
 
         self.tan_value_2 = abs(self.son / self.mother)
-        self.theta_line = math.atan(self.tan_value_2)
+        self.theta_line = math.degrees(math.atan(self.tan_value_2))
+
+        if self.linear > 0:
+            self.theta_line = self.tan_value_2 * (-1)
 
         k = 1
 
