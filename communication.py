@@ -18,11 +18,11 @@ DISTANCE_PER_PULSE = DISTANCE_PER_ROTATION / PULSE_PER_ROTATION  # Distance per 
 
 class PlatformSerial:
     def __init__(self, platform_port):
-        self.platform = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
+        self.port = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
 
         # 포트 오픈, 115200 사용. OS 내에서 시리얼 포트도 맞춰줄 것
         try:
-            self.ser = serial.Serial(self.platform, 115200)  # Baud rate such as 9600 or 115200 etc.
+            self.ser = serial.Serial(self.port, 115200)  # Baud rate such as 9600 or 115200 etc.
         except Exception as e:
             print('serial error ')
             print(e)
