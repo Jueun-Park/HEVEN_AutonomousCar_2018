@@ -10,6 +10,8 @@ import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
 
+from serialpacket import SerialPacket
+
 # CONSTANTS for _read(), related with encoder
 DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
@@ -158,9 +160,9 @@ class PlatformSerial:
             self.present_time = time.time()
 
     def test_communication_main(self):
-        read_thread = threading.Thread(target=self._read())
-        write_thread = threading.Thread(target=self._write())
-        test_write_thread = threading.Thread(target=self.test_write_to_platform())
+        read_thread = threading.Thread(target=self._read)
+        write_thread = threading.Thread(target=self._write)
+        test_write_thread = threading.Thread(target=self.test_write_to_platform)
 
         read_thread.start()
         write_thread.start()
