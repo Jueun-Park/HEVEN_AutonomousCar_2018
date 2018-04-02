@@ -48,8 +48,8 @@ class Control:
 
         #######################################
         # communication.py 에서 데이터 받아오기#
-        self.speed_platform = 0  #
-        self.ENC1 = [0, 0]  #
+        self.speed_platform = platform.speed_platform
+        self.ENC1 = platform.ENC_with_time
         #######################################
 
         self.mission_num = mission_num

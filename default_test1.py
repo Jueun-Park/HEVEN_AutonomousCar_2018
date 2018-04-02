@@ -69,3 +69,8 @@ class Control:
             self.steer_past = -27.746
 
         return self.steer, self.speed, self.gear, self.brake, self.steer_past
+
+
+# control = Control(0, 0, 1)
+# a = control.steer
+# print(a)
