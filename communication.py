@@ -46,8 +46,8 @@ class PlatformSerial:
         self.write_packet.brake = brake
 
     def print_status(self):
-        speed = self.read_packet.speed * 10
-        steer = self.read_packet.steer * 71
+        speed = self.read_packet.speed / 10
+        steer = self.read_packet.steer / 71
         brake = (self.read_packet.brake - SerialPacket.BRAKE_NOBRAKE) / \
                 (SerialPacket.BRAKE_FULLBRAKE - SerialPacket.BRAKE_NOBRAKE)
 
