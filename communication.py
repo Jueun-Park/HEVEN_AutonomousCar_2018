@@ -8,30 +8,31 @@ class PlatformSerial:
         try:
             self.ser = serial.Serial(self.port, 115200)
         except Exception as e:
-            print('[PlatformSerial| SERIAL ERROR: ', e, ']')
+            print('[PlatformSerial| INIT ERROR: ', e, ']')
         self.read_packet = SerialPacket()
         self.write_packet = SerialPacket()
 
-    @staticmethod
-    def _read(packet=SerialPacket(), ser=serial.Serial()):
-        packet.read_bytes(ser.readline())
-
-    @staticmethod
-    def _write(packet=SerialPacket(), ser=serial.Serial()):
+    def _read(self, packet=SerialPacket()):
         try:
-            ser.write(packet.write_bytes())
+            b = self.ser.readline()
         except Exception as e:
-            print(e)
-            print('auto error')
-            ser.write(bytearray(packet.write_bytes()))
+            print('[PlatformSerial| READ ERROR', e, ']')
+            return
+        packet.read_bytes(b)
+
+    def _write(self, packet=SerialPacket()):
+        try:
+            self.ser.write(packet.write_bytes())
+        except Exception as e:
+            print('[PlatformSerial| WRITE ERROR', e, ']')
 
     def send(self):
         self.write_packet.alive = self.read_packet.alive
-        PlatformSerial._write(self.write_packet, self.ser)
+        self._write(self.write_packet)
         print(self.write_packet.write_bytes())
 
     def recv(self):
-        PlatformSerial._read(self.read_packet, self.ser)
+        self._read(self.read_packet)
         print('read:', self.read_packet.get_attr())
 
 import time
