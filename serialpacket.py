@@ -3,14 +3,14 @@ import struct
 
 
 class SerialPacket(object):
-    AORM_MANUAL = 0x00; AORM_AUTO = 0x01
-    ESTOP_OFF = 0x00; ESTOP_ON = 0x01
-    GEAR_FORWARD = 0x00; GEAR_NEUTRAL = 0x01; GEAR_BACKWARD = 0x02
-    BRAKE_NOBRAKE = 1; BRAKE_FULLBRAKE = 33
+    AORM_MANUAL = 0x00; AORM_AUTO = 0x01; AORM_DEFAULT = AORM_AUTO
+    ESTOP_OFF = 0x00; ESTOP_ON = 0x01; ESTOP_DEFAULT = ESTOP_OFF
+    GEAR_FORWARD = 0x00; GEAR_NEUTRAL = 0x01; GEAR_BACKWARD = 0x02; GEAR_DEFAULT = GEAR_FORWARD
+    BRAKE_NOBRAKE = 1; BRAKE_FULLBRAKE = 33; BRAKE_DEFAULT = BRAKE_NOBRAKE
 
     def __init__(self, data=None, start_bytes=[0x53, 0x54, 0x58],
-                 aorm=AORM_AUTO, estop=ESTOP_OFF, gear=GEAR_FORWARD,
-                 speed=0, steer=0, brake=BRAKE_NOBRAKE,
+                 aorm=AORM_DEFAULT, estop=ESTOP_DEFAULT, gear=GEAR_DEFAULT,
+                 speed=0, steer=0, brake=BRAKE_DEFAULT,
                  enc=0, alive=0,
                  end_bytes=[0x0D, 0x0A]):
         if data is not None: self.read_bytes(data); return
@@ -38,15 +38,32 @@ class SerialPacket(object):
         if attr == 'end_bytes': super().__setattr__(attr, np.array(v, np.uint8)); return
         super().__setattr__(attr, v)
 
+    def _default(self):
+        self.start_bytes = [0x53, 0x54, 0x58]
+        self.aorm = SerialPacket.AORM_DEFAULT
+        self.estop = SerialPacket.ESTOP_DEFAULT
+        self.gear = SerialPacket.GEAR_DEFAULT
+        self.speed = 0
+        self.steer = 0
+        self.brake = SerialPacket.BRAKE_DEFAULT
+        self.enc = 0
+        self.alive = 0
+        self.end_bytes = [0x0D, 0x0A]
+
+    def default(self):
+        self._default()
+
     def get_attr(self):
-        return (self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes)
+        return self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes
 
     def read_bytes(self, b):
         try:
             u = struct.unpack('!3sBBBHhBiB2s', b)
         except:
-            print('ERROR:', b)
-            u = [b'STX', 0, 0, 0, 0, 0, 1, 0, 0, b'\r\n']
+            print('[Serial Packet| READ ERROR:', b)
+            print('-Set to default value]')
+            self._default()
+            return
 
         self.start_bytes = bytearray(u[0])
         self.aorm = u[1]
@@ -60,12 +77,19 @@ class SerialPacket(object):
         self.end_bytes = bytearray(u[9])
 
     def write_bytes(self):
-        b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
+        try:
+            b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
+        except:
+            print('[Serial Packet| WRITE ERROR]')
+            print('-Set to default value]')
+            self._default()
+            b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
         return b
 
 
 if __name__ == '__main__':
     a = SerialPacket(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0A"))
-    a.read_bytes(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0AFF"))
+    a.read_bytes(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0A"))
+    a.default()
     print(a.start_bytes, a.end_bytes)
     print(str(a.write_bytes()))
