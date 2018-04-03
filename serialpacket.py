@@ -60,7 +60,7 @@ class SerialPacket(object):
         try:
             u = struct.unpack('!3sBBBHhBiB2s', b)
         except:
-            print('[Serial Packet| READ ERROR:', b)
+            print('[SerialPacket| READ ERROR:', b)
             print('-Set to default value]')
             self._default()
             return
@@ -80,7 +80,7 @@ class SerialPacket(object):
         try:
             b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
         except:
-            print('[Serial Packet| WRITE ERROR]')
+            print('[SerialPacket| WRITE ERROR]')
             print('-Set to default value]')
             self._default()
             b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
