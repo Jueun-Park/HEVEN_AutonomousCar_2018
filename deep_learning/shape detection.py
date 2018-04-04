@@ -17,22 +17,22 @@ if cap.read():
         if img is None:
             print("image is none")
         else:
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            blur = cv2.GaussianBlur(gray, (7, 7), 0)
-            thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 115, 1)
+            # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # blur = cv2.GaussianBlur(gray, (7, 7), 0)
+            # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 115, 1)
 
             # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY, 11, 2)
             # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C,1,11,2)
             # ret, thresh = cv2.threshold(blur, 127, 255, 1)
 
-            image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             # img5 = cv2.GaussianBlur(img, (5, 5), 0)
-            # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            # img6 = cv2.GaussianBlur(gray, (5, 5), 0)
-            # edges = cv2.Canny(img6, 50, 150, apertureSize=3)
-            # ret, thresh = cv2.threshold(edges, 127, 255, 0)
-            # image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img6 = cv2.GaussianBlur(gray, (5, 5), 0)
+            edges = cv2.Canny(img6, 100, 180, apertureSize=3)
+            ret, thresh = cv2.threshold(edges, 127, 255, 0)
+            image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             count = 0
             for cnt in contours:
@@ -40,8 +40,8 @@ if cap.read():
 
                 (x, y, w, h) = cv2.boundingRect(cnt)
 
-                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-                le = max(w,h)
+#                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+                le = max(w,h)+10
 
                 if w>120 and h>120:
                     x_1 = int (x+(w-le)/2)
@@ -50,7 +50,6 @@ if cap.read():
                     y_2 = int (y+(h+le)/2)
 
                     img_trim = img[y_1 : y_2 , x_1 :x_2]
-                    # image = cv2.resize(img_trim,(32,32),interpolation=cv2.INTER_AREA)
                     height, width = img_trim.shape[:2]
 
                     if -5< (height - width) <5:
