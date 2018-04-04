@@ -15,6 +15,11 @@ class PlatformSerial:
     def _read(self, packet=SerialPacket()):
         try:
             b = self.ser.readline()
+            b_extra = bytes()
+            b_len = len(b)
+            if (b_len != 18):
+                b_extra = self.ser.read(18-b_len)
+            b += b_extra
         except Exception as e:
             print('[PlatformSerial| READ ERROR', e, ']')
             return
@@ -49,16 +54,41 @@ class PlatformSerial:
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = (self.read_packet.brake - SerialPacket.BRAKE_NOBRAKE) / \
-                (SerialPacket.BRAKE_FULLBRAKE - SerialPacket.BRAKE_NOBRAKE)
-
-        print(str(speed) + 'kph', str(steer) + 'deg', str(brake))
+                (SerialPacket.BRAKE_MAXBRAKE - SerialPacket.BRAKE_NOBRAKE)
+        print(self.read_packet.get_attr())
+        print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
+        print()
 
 import time
+def test_move(timeout=2):
+    t1 = time.time()
+    while time.time() - t1 < timeout:
+        platform.recv()
+        platform.print_status()
+        platform.write(SerialPacket.GEAR_FORWARD, 40, 0, SerialPacket.BRAKE_NOBRAKE)
+        platform.send()
+
+def test_back(timeout=2):
+    t1 = time.time()
+    while time.time() - t1 < timeout:
+        platform.recv()
+        platform.print_status()
+        platform.write(SerialPacket.GEAR_BACKWARD, 60, 0, SerialPacket.BRAKE_NOBRAKE)
+        platform.send()
+
+def test_stop(timeout=2):
+    t1 = time.time()
+    while time.time() - t1 < timeout:
+        platform.recv()
+        platform.print_status()
+        platform.write(SerialPacket.GEAR_NEUTRAL, 0, 0, 50)
+        platform.send()
+
 if __name__ == '__main__':
     port = 'COM7'
     platform = PlatformSerial(port)
     while True:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_FORWARD, 1, 2, SerialPacket.BRAKE_NOBRAKE)
-        platform.send()
+        test_move()
+        test_stop()
+        test_back()
+        test_stop()
