@@ -7,6 +7,8 @@ class SerialPacket(object):
     AORM_MANUAL = 0x00; AORM_AUTO = 0x01; AORM_DEFAULT = AORM_AUTO
     ESTOP_OFF = 0x00; ESTOP_ON = 0x01; ESTOP_DEFAULT = ESTOP_OFF
     GEAR_FORWARD = 0x00; GEAR_NEUTRAL = 0x01; GEAR_BACKWARD = 0x02; GEAR_DEFAULT = GEAR_FORWARD
+    SPEED_MIN = 0
+    STEER_MAXLEFT = -2000; STEER_STRAIGHT = 0; STEER_MAXRIGHT = 2000
     BRAKE_NOBRAKE = 1; BRAKE_FULLBRAKE = 33; BRAKE_DEFAULT = BRAKE_NOBRAKE; BRAKE_MAXBRAKE = 200
 
     def __init__(self, data=None, start_bytes=START_BYTES,
@@ -93,12 +95,6 @@ class SerialPacket(object):
         if (self.start_bytes != SerialPacket.START_BYTES).any(): return False
         if (self.end_bytes != SerialPacket.END_BYTES).any(): return False
         return True
-
-
-a = SerialPacket()
-print(a.start_bytes)
-a.start_bytes[0]=b'1'
-print((a.start_bytes == SerialPacket.START_BYTES).all())
 
 '''
 if __name__ == '__main__':
