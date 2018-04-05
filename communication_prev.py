@@ -10,6 +10,8 @@ import time
 import math
 import threading  # for test, main 코드에서는 멀티 프로세싱 사용하는 게 목표야.
 
+from serialpacket import SerialPacket
+
 # CONSTANTS for _read(), related with encoder
 DISTANCE_PER_ROTATION = 54.02 * math.pi  # Distance per Rotation [cm]
 PULSE_PER_ROTATION = 100.  # Pulse per Rotation
@@ -18,27 +20,26 @@ DISTANCE_PER_PULSE = DISTANCE_PER_ROTATION / PULSE_PER_ROTATION  # Distance per 
 
 class PlatformSerial:
     def __init__(self, platform_port):
-        self.platform = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
+        self.port = platform_port  # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
 
         # 포트 오픈, 115200 사용. OS 내에서 시리얼 포트도 맞춰줄 것
         try:
-            self.ser = serial.Serial(self.platform, 115200)  # Baud rate such as 9600 or 115200 etc.
+            self.ser = serial.Serial(self.port, 115200)  # Baud rate such as 9600 or 115200 etc.
         except Exception as e:
+            print('serial error ')
             print(e)
 
         self.reading_data = bytearray([0 for i in range(14)])
+
         # 쓰기 데이터 셋
         self.writing_data = bytearray.fromhex("5354580000000000000001000D0A")
         self.speed_for_write = 0
         self.steer_for_write = 0
         self.brake_for_write = 0
+        self.gear_for_write = 0  # 0: 전진, 1: 중립(full_brake), 2: 후진
         self.check = 0
         self.present_time = 0
         self.past_time = 0
-
-        self.ct1 = 0
-        self.ct2 = 0
-        self.sit = 0
 
     def _read(self):  # read data from platform
         reading_data = bytearray(self.ser.readline())  # byte array 로 읽어옴
@@ -61,15 +62,16 @@ class PlatformSerial:
             BRAKE = reading_data[10]
             time_encoder = time.time()
 
-            # ENC0, ENC1, ENC2, ENC3
+            # ENC0, ENC_with_time, ENC2, ENC3
             ENC = reading_data[11] + reading_data[12] * 256 + reading_data[13] * 65536 + reading_data[14] * 16777216
             if ENC >= 2147483648:
                 ENC = ENC - 4294967296
 
-            ALIVE = reading_data[15]
+            ALIVE = reading_data[15]  # 플랫폼 통신 주기 체크
 
             try:
-                speed_from_encoder = (ENC - self.ENC1[0]) * DISTANCE_PER_PULSE / (time_encoder - self.ENC1[1]) * 0.036
+                speed_from_encoder = (ENC - self.ENC_with_time[0]) * DISTANCE_PER_PULSE / (
+                    time_encoder - self.ENC_with_time[1]) * 0.036
                 print('STEER = ', STEER, ' SPEED_ENC = ', speed_from_encoder)
             except Exception as e:
                 print(e)
@@ -77,17 +79,18 @@ class PlatformSerial:
 
             self.ENC_with_time = (ENC, time_encoder)
 
+            self.speed_platform = SPEED
+
         except:
             pass
 
-    def _write(self, speed_for_write=0, steer_for_write=0, brake_for_write=0):  # write data to platform
-        dummy_data = bytearray([0 for i in range(14)])
-        if not speed_for_write == 0:
+    def _write(self, speed_for_write=None, steer_for_write=None, gear_for_write=None):  # write data to platform
+        if speed_for_write is not None:
             self.speed_for_write = speed_for_write
-        if not steer_for_write == 0:
+        if steer_for_write is not None:
             self.steer_for_write = steer_for_write
-        if not brake_for_write == 0:
-            self.brake_for_write = brake_for_write
+        if gear_for_write is not None:
+            self.gear_for_write = gear_for_write
 
         try:
             self.steer_for_write = int(self.steer_for_write * 1.015)
@@ -96,26 +99,23 @@ class PlatformSerial:
                 self.steer_for_write = self.steer_for_write + 65536
 
             print("steer_for_write = ", self.steer_for_write, "/ speed_for_write = ", self.speed_for_write,
-                  "/ BRAKE = ",
-                  self.brake_for_write)
-
-            # speed 입력
-            dummy_data[6] = 0
-            dummy_data[7] = self.speed_for_write
-
-            # steer 입력, 16진법 두 칸 전송
-            dummy_data[8] = int(self.steer_for_write / 256)
-            dummy_data[9] = self.steer_for_write % 256
+                  "/ BRAKE = ", self.brake_for_write, "/ GEAR =", self.gear_for_write)
 
             self.writing_data[3] = 1  # AorM
             self.writing_data[4] = 0  # E stop
-            self.writing_data[5] = 0  # GEAR
 
-            # 임시 데이터를 최종 데이터에 입력
-            self.writing_data[6] = dummy_data[6]
-            self.writing_data[7] = dummy_data[7]
-            self.writing_data[8] = dummy_data[8]
-            self.writing_data[9] = dummy_data[9]
+            # gear 입력
+            self.writing_data[5] = self.gear_for_write  # GEAR
+
+            # speed 입력
+            self.writing_data[6] = 0
+            self.writing_data[7] = self.speed_for_write
+
+            # steer 입력, 16진법 두 칸 전송
+            self.writing_data[8] = int(self.steer_for_write / 256)
+            self.writing_data[9] = self.steer_for_write % 256
+
+            # brake 입력
             self.writing_data[10] = self.brake_for_write
 
             # 받은 데이터와 똑같이 전송, 플랫폼 자체적으로 데이터 수신 간격을 알기 위함
@@ -123,7 +123,8 @@ class PlatformSerial:
             self.writing_data[12] = self.reading_data[16]
             self.writing_data[13] = self.reading_data[17]
 
-            self.ser.write(bytearray(self.writing_data))
+            self.ser.write(bytearray(self.writing_data))  # 플랫폼에 시리얼 데이터 패킷 전송
+            print(bytes(self.writing_data))
 
         except Exception as e:
             print(e)
@@ -141,60 +142,48 @@ class PlatformSerial:
         self.ser.close()
 
     def test_write_to_platform(self):
-
+        pass
+        '''
         self.speed_for_write = 0
-        self.steer_for_write = 0
         self.brake_for_write = 0
 
-        if self.sit == 0:
+        if self.check % 3 == 0:
+            self.steer_for_write = -1900
+        elif self.check % 3 == 1:
             self.steer_for_write = 0
-            self.speed_for_write = 36
+        else:
+            self.steer_for_write = 1900
 
-            if self.ct1 == 0:
-                self.ct1 = self.ENC1[0]
-            self.ct2 = self.ENC1[0]
-
-            if (self.ct2 - self.ct1) < 100:
-                self.steer_for_write = 0
-                self.speed_for_write = 36
-
-            elif 100 <= (self.ct2 - self.ct1) < 325:
-                self.steer_for_write = -1970
-                self.speed_for_write = 36
-
-            elif 325 <= (self.ct2 - self.ct1) < 425:
-                self.steer_for_write = 0
-                self.speed_for_write = 36
-
-            else:
-                self.steer_for_write = 0
-                self.speed_for_write = 0
-
-            print(self.ct1)
-            print("****")
-            print(self.ct2)
-            print("****")
-            print(self.ENC1[0])
-            print("****")
-            print(self.ENC1[1])
-            print("****")
-
+        # 1초마다 steer 값 변경해서 테스트
+        if self.present_time - self.past_time > 1:
+            self.check += 1
+            self.past_time = time.time()
+            self.present_time = time.time()
+        else:
+            self.present_time = time.time()
+        '''
 
     def test_communication_main(self):
-        read_thread = threading.Thread(target=self._read())
-        write_thread = threading.Thread(target=self._write())
-        test_write_thread = threading.Thread(target=self.test_write_to_platform())
+        #read_thread = threading.Thread(target=self._read())
+        self._read()
+        self._write()
+        #write_thread = threading.Thread(target=self._write())
+        #test_write_thread = threading.Thread(target=self.test_write_to_platform())
 
-        read_thread.start()
-        write_thread.start()
-        test_write_thread.start()
+        #read_thread.start()
+        #write_thread.start()
+        #test_write_thread.start()
 
 
 if __name__ == '__main__':
+    # port = '/dev/ttyUSB0'
     port = 'COM7'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
-    print('CONNECTED')
 
     while True:
+        t1 = time.time()
         platform.test_communication_main()
+        t2 = time.time()
+        print('time ', t2 - t1)
+        #time.sleep(0.2)

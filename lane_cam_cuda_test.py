@@ -3,8 +3,10 @@ import numpy as np
 import threading
 import time
 
-np.set_printoptions(linewidth=100000)
+import pycuda.driver as drv
+from pycuda.compiler import SourceModule
 
+np.set_printoptions(linewidth=100000)
 
 class LaneCam:
     # 웹캠 왜곡 보정에 필요한 값들
@@ -30,7 +32,6 @@ class LaneCam:
     upper_grey = np.array([210, 210, 210])
 
     BOX_WIDTH = 10
-
     def __init__(self):
         # 웹캠 2대 열기
         self.video_left = cv2.VideoCapture(1)
@@ -60,16 +61,23 @@ class LaneCam:
         self.left_coefficients = None
         self.right_coefficients = None
 
-    # 질량중심 찾기 함수, 차선 검출에서 사용됌
-    def findCenterofMass(self, src):
-        sum_of_y_mass_coordinates = 0
-        num_of_mass_points = 0
+    def findCenterOfMass(self, src):
+        src_row = len(src)
+        src_col = len(src[0])
+        src_rowa = np.array(src_row, np.int32)
+        src_cola = np.array(src_col, np.int32)
 
-        for y in range(0, len(src)):
-            for x in range(0, len(src[0])):
-                if src[y][x] == 255:
-                    sum_of_y_mass_coordinates += y
-                    num_of_mass_points += 1
+        sum_of_y_mass_coordinates = np.zeros(src_row, np.int32)
+        num_of_mass_points = np.zeros(src_row, np.int32)
+
+        self.path(drv.Out(sum_of_y_mass_coordinates),
+                  drv.Out(num_of_mass_points),
+                  drv.In(src),
+                  drv.In(src_cola),
+                  block=(src_row, 1, 1))
+
+        sum_of_y_mass_coordinates = int(sum_of_y_mass_coordinates.sum())
+        num_of_mass_points = int(num_of_mass_points.sum())
 
         if num_of_mass_points == 0:
             center_of_mass_y = int(len(src) / 2)
@@ -79,7 +87,6 @@ class LaneCam:
 
         return center_of_mass_y
 
-    # 이미지 전처리 함수: 왜곡 보정, 시점 변환을 수행함
     def pretreatment(self, src, camera_matrix, distortion_matrix, transform_matrix, output_size):
 
         undistorted = cv2.undistort(src, camera_matrix, distortion_matrix, None, None)[10:438, 10:790]
@@ -110,6 +117,30 @@ class LaneCam:
 
     def show_loop(self):
         time.sleep(3)
+#pycuda alloc
+        drv.init()
+        global context
+        from pycuda.tools import make_default_context
+        context = make_default_context()
+
+        mod = SourceModule(r"""
+            #include <stdio.h>
+            
+            __global__ void hi(int psum[], int pnum[], 
+                                unsigned char *data, int *size)
+            {
+                int y = threadIdx.x;
+                unsigned char *ptarget = (data + y * *size);
+                for (int x = 0; x < *size; x++)
+                    if (ptarget[x] == (unsigned char) 255) {
+                        psum[y] += y;
+                        pnum[y] += 1;
+                    }
+            }
+            """)
+        self.path = mod.get_function("hi")
+#pycuda alloc end
+        data = np.full((20, 30), 0, np.uint8)
         while True:
             left_frame, right_frame = self.left_frame, self.right_frame
             both = np.vstack((right_frame, left_frame))
@@ -139,80 +170,15 @@ class LaneCam:
                     y1, y2 = self.left_current_points[i - 1] - self.BOX_WIDTH, self.left_current_points[i - 1] + self.BOX_WIDTH
 
                     small_box = filtered_L[y1:y2, x1:x2]
+                    small_box = np.ascontiguousarray(small_box)
+                    self.left_current_points[i] = reference + self.findCenterOfMass(small_box)
 
-                    self.left_current_points[i] = reference + self.findCenterofMass(small_box)
-
-            else:
-                for i in range(0, 10):
-                    reference = self.left_previous_points[i] - self.BOX_WIDTH
-
-                    x1, x2 = 270 - 30 * i, 300 - 30 * i
-                    y1, y2 = self.left_previous_points[i] - self.BOX_WIDTH, self.left_previous_points[i] + self.BOX_WIDTH
-
-                    small_box = filtered_L[y1:y2, x1:x2]
-
-                    self.left_current_points[i] = reference + self.findCenterofMass(small_box)
-
-            self.left_previous_points = self.left_current_points
-
-            if self.right_previous_points is None:
-                row_sum = np.sum(filtered_R[0:300, 200:300], axis=1)
-                start_point = np.argmax(row_sum)
-                self.right_current_points[0] = start_point
-
-                for i in range(1, 10):
-                    reference = self.right_current_points[i - 1] - self.BOX_WIDTH
-
-                    x1, x2 = 300 - 30 * i, 330 - 30 * i
-                    y1, y2 = self.right_current_points[i - 1] - self.BOX_WIDTH, self.right_current_points[i - 1] + self.BOX_WIDTH
-
-                    small_box = filtered_R[y1:y2, x1:x2]
-
-                    self.right_current_points[i] = reference + self.findCenterofMass(small_box)
-
-            else:
-                for i in range(0, 10):
-                    reference = self.right_previous_points[i] - self.BOX_WIDTH
-
-                    x1, x2 = 270 - 30 * i, 300 - 30 * i
-                    y1, y2 = self.right_previous_points[i] - self.BOX_WIDTH, self.right_previous_points[i] + self.BOX_WIDTH
-
-                    small_box = filtered_R[y1:y2, x1:x2]
-
-                    self.right_current_points[i] = reference + self.findCenterofMass(small_box)
-
-            self.right_previous_points = self.right_current_points
-
-            for i in range(0, 10):
-                cv2.line(filtered_L, (300 - 30 * i, self.left_current_points[i] - self.BOX_WIDTH), (300 - 30 * i, self.left_current_points[i] + self.BOX_WIDTH), 150)
-                cv2.line(filtered_R, (300 - 30 * i, self.right_current_points[i] - self.BOX_WIDTH), (300 - 30 * i, self.right_current_points[i] + self.BOX_WIDTH), 150)
-
-            xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
-            ys_L = 0 - self.left_current_points
-            ys_R = 300 - self.right_current_points
-
-            coefficients_L = np.polyfit(xs, ys_L, 2)
-            coefficients_R = np.polyfit(xs, ys_R, 2)
-
-            self.left_coefficients = coefficients_L
-            self.right_coefficients = coefficients_R
-
-            xs_plot = np.array([1 * i for i in range(-299, 1)])
-            ys_plot_L = np.array([coefficients_L[2] + coefficients_L[1] * v + coefficients_L[0] * v ** 2 for v in xs_plot])
-            ys_plot_R = np.array([coefficients_R[2] + coefficients_R[1] * v + coefficients_R[0] * v ** 2 for v in xs_plot])
-
-            transformed_x = xs_plot + 299
-            transformed_y_L =  0 - ys_plot_L
-            transformed_y_R = 299 - ys_plot_R
-
-            for i in range(0, 300):
-                cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
-                cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
-
-            cv2.imshow('left', filtered_L)
-            cv2.imshow('right', filtered_R)
-            cv2.imshow('2', cv2.flip(cv2.transpose(both), 1))
-            if cv2.waitKey(1) & 0xFF == ord('q'): break
+#pycuda dealloc
+        context.pop()
+        context = None
+        from pycuda.tools import clear_context_caches
+        clear_context_caches()
+#pycuda dealloc end
 
 
 if __name__ == "__main__":

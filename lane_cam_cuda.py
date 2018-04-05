@@ -3,6 +3,9 @@ import numpy as np
 import threading
 import time
 
+import pycuda.driver as drv
+from pycuda.compiler import SourceModule
+
 np.set_printoptions(linewidth=100000)
 
 
@@ -61,15 +64,34 @@ class LaneCam:
         self.right_coefficients = None
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
-    def findCenterofMass(self, src):
-        sum_of_y_mass_coordinates = 0
-        num_of_mass_points = 0
+    def findCenterOfMass(self, src):
+        src_row = len(src)
+        src_col = len(src[0])
+        src_rowa = np.array(src_row, np.int32)
+        src_cola = np.array(src_col, np.int32)
 
+        sum_of_y_mass_coordinates = np.zeros(src_row, np.int32)
+        num_of_mass_points = np.zeros(src_row, np.int32)
+
+        self.path(drv.Out(sum_of_y_mass_coordinates),
+                  drv.Out(num_of_mass_points),
+                  drv.In(src),
+                  drv.In(src_cola),
+                  block=(src_row, 1, 1))
+
+        sum_of_y_mass_coordinates = int(sum_of_y_mass_coordinates.sum())
+        num_of_mass_points = int(num_of_mass_points.sum())
+
+        '''
         for y in range(0, len(src)):
             for x in range(0, len(src[0])):
                 if src[y][x] == 255:
                     sum_of_y_mass_coordinates += y
                     num_of_mass_points += 1
+
+        sum_of_y_mass_coordinates = int(sum_of_y_mass_coordinates.sum())
+        num_of_mass_points = int(num_of_mass_points.sum())
+        '''
 
         if num_of_mass_points == 0:
             center_of_mass_y = int(len(src) / 2)
@@ -110,6 +132,31 @@ class LaneCam:
 
     def show_loop(self):
         time.sleep(3)
+
+#pycuda alloc
+        drv.init()
+        global context
+        from pycuda.tools import make_default_context
+        context = make_default_context()
+
+        mod = SourceModule(r"""
+            #include <stdio.h>
+
+            __global__ void hi(int psum[], int pnum[], 
+                                unsigned char *data, int *size)
+            {
+                int y = threadIdx.x;
+                unsigned char *ptarget = (data + y * *size);
+                for (int x = 0; x < *size; x++)
+                    if (ptarget[x] == (unsigned char) 255) {
+                        psum[y] += y;
+                        pnum[y] += 1;
+                    }
+            }
+            """)
+        self.path = mod.get_function("hi")
+#pycuda alloc end
+
         while True:
             left_frame, right_frame = self.left_frame, self.right_frame
             both = np.vstack((right_frame, left_frame))
@@ -139,8 +186,8 @@ class LaneCam:
                     y1, y2 = self.left_current_points[i - 1] - self.BOX_WIDTH, self.left_current_points[i - 1] + self.BOX_WIDTH
 
                     small_box = filtered_L[y1:y2, x1:x2]
-
-                    self.left_current_points[i] = reference + self.findCenterofMass(small_box)
+                    small_box = np.ascontiguousarray(small_box)
+                    self.left_current_points[i] = reference + self.findCenterOfMass(small_box)
 
             else:
                 for i in range(0, 10):
@@ -150,8 +197,8 @@ class LaneCam:
                     y1, y2 = self.left_previous_points[i] - self.BOX_WIDTH, self.left_previous_points[i] + self.BOX_WIDTH
 
                     small_box = filtered_L[y1:y2, x1:x2]
-
-                    self.left_current_points[i] = reference + self.findCenterofMass(small_box)
+                    small_box = np.ascontiguousarray(small_box)
+                    self.left_current_points[i] = reference + self.findCenterOfMass(small_box)
 
             self.left_previous_points = self.left_current_points
 
@@ -167,8 +214,8 @@ class LaneCam:
                     y1, y2 = self.right_current_points[i - 1] - self.BOX_WIDTH, self.right_current_points[i - 1] + self.BOX_WIDTH
 
                     small_box = filtered_R[y1:y2, x1:x2]
-
-                    self.right_current_points[i] = reference + self.findCenterofMass(small_box)
+                    small_box = np.ascontiguousarray(small_box)
+                    self.right_current_points[i] = reference + self.findCenterOfMass(small_box)
 
             else:
                 for i in range(0, 10):
@@ -178,8 +225,8 @@ class LaneCam:
                     y1, y2 = self.right_previous_points[i] - self.BOX_WIDTH, self.right_previous_points[i] + self.BOX_WIDTH
 
                     small_box = filtered_R[y1:y2, x1:x2]
-
-                    self.right_current_points[i] = reference + self.findCenterofMass(small_box)
+                    small_box = np.ascontiguousarray(small_box)
+                    self.right_current_points[i] = reference + self.findCenterOfMass(small_box)
 
             self.right_previous_points = self.right_current_points
 
@@ -213,6 +260,14 @@ class LaneCam:
             cv2.imshow('right', filtered_R)
             cv2.imshow('2', cv2.flip(cv2.transpose(both), 1))
             if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+#pycuda dealloc
+        context.pop()
+        context = None
+        from pycuda.tools import clear_context_caches
+        clear_context_caches()
+#pycuda dealloc end
+
 
 
 if __name__ == "__main__":

@@ -22,38 +22,40 @@ class Control:
         self.velocity = 0
         self.steer_past = 0
 
-        self.default_y_dis = 1  # (임의의 값 / 1m)
+        self.mission_num = mission_num
 
         #######################################
         # communication.py 에서 데이터 받아오기#
-        self.speed_platform = 0               #
-        self.ENC1 = [0, 0]                    #
+        self.speed_platform = 54  #
+        self.ENC1 = [0, 0]  #
         #######################################
 
-        self.mission_num = mission_num
+        self.cross_track_error = first/100
+        self.linear = second
 
-        if self.mission_num == 0:
-            self.cross_track_error = first/100
-            self.linear = second[0]
-            self.cul = second[1]
-
-            self.__default__()
+        self.__default__()
 
     def __default__(self):
         self.steer = 0
-        self.speed = 54
+        self.speed = 20
         self.gear = 0
         self.brake = 0
 
-        self.tan_value_1 = abs(self.linear)
-        self.theta_1 = math.atan(self.tan_value_1)
+        self.tan_value = self.linear * (-1)
+        self.theta_1 = math.degrees(math.atan(self.tan_value))
 
-        if self.linear > 0:
-            self.theta_line = self.theta_line * (-1)
+        k = 1
+        if abs(self.theta_1) < 15 and abs(self.cross_track_error) < 0.27:
+            k = 0.5
+
+        self.velocity = (self.speed_platform*100)/3600
+
+        self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
         self.adjust = 0.1
 
-        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_line) * 1.387
+        steer_now = (self.theta_1 + self.theta_2)
+        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)
 
         self.steer = steer_final * 71
 
@@ -67,3 +69,8 @@ class Control:
             self.steer_past = -27.746
 
         return self.steer, self.speed, self.gear, self.brake, self.steer_past
+
+
+# control = Control(0, 0, 1)
+# a = control.steer
+# print(a)

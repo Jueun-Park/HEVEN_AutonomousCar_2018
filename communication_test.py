@@ -30,22 +30,31 @@ class PlatformSerial:
 
         #self.ENC_with_time = (self.reading_data.enc, time_encoder)
 
-    @staticmethod
-    def _write(packet=SerialPacket(), ser=serial.Serial()):
-        ser.write(packet.write_bytes())
+    def _write(self, packet=SerialPacket(), ser=serial.Serial()):
+        try:
+            ser.write(packet.write_bytes())
+        except Exception as e:
+            print(e)
+            print(' auto error')
+            ser.write(bytearray(packet.write_bytes()))
 
     def send(self):
         self.write_packet.alive = self.read_packet.alive
         self._write(self.write_packet, self.ser)
-        print(self.write_packet.print_attr())
+        print(self.write_packet.write_bytes())
 
     def recv(self):
         self._read(self.read_packet, self.ser)
-        print(self.read_packet.print_attr())
+        print('read:', self.read_packet.get_attr())
 
+import time
 if __name__ == '__main__':
-    port = 'COM3'
+    port = 'COM7'
     platform = PlatformSerial(port)
     while True:
-        platform.send()
+        t1=time.time()
         platform.recv()
+        platform.write_packet = SerialPacket()
+        platform.send()
+        t2=time.time()
+        print(t2-t1)
