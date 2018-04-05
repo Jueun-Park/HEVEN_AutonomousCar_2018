@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import threading
 import time
+
 np.set_printoptions(linewidth=100000)
 
 
@@ -23,7 +24,7 @@ class LaneCam:
 
     # BGR 을 이용한 차선 추출에 필요한 값들
     lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 180, 220])
+    upper_black = np.array([180, 180, 230])
 
     lower_grey = np.array([150, 150, 150])
     upper_grey = np.array([210, 210, 210])
@@ -71,7 +72,7 @@ class LaneCam:
                     num_of_mass_points += 1
 
         if num_of_mass_points == 0:
-            center_of_mass_y = -1
+            center_of_mass_y = int(len(src) / 2)
 
         else:
             center_of_mass_y = int(round(sum_of_y_mass_coordinates / num_of_mass_points))

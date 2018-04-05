@@ -1,25 +1,84 @@
-import pycuda.driver as drv
+import cv2
 import numpy as np
+import threading
+import time
+
+import pycuda.driver as drv
 from pycuda.compiler import SourceModule
 
-import threading
+np.set_printoptions(linewidth=100000)
 
 class LaneCam:
+    # 웹캠 왜곡 보정에 필요한 값들
+    camera_matrix_L = np.array([[474.383699, 0, 404.369647], [0, 478.128447, 212.932297], [0, 0, 1]])
+    camera_matrix_R = np.array([[473.334870, 0, 386.312394], [0, 476.881433, 201.662339], [0, 0, 1]])
+    distortion_coefficients_L = np.array([0.164159, -0.193892, -0.002730, -0.001859])
+    distortion_coefficients_R = np.array([0.116554, -0.155379, -0.001045, -0.001512])
+
+    # Bird eye view 에 필요한 값들
+    pts1_L = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
+    pts2_L = np.float32([[0, 399], [440, 535], [527, 0], [560, 441]])
+    pts1_R = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
+    pts2_R = np.float32([[5, 0], [-2, 384], [503, 324], [119, 471]])
+
+    Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
+    Bird_view_matrix_R = cv2.getPerspectiveTransform(pts1_R, pts2_R)
+
+    # BGR 을 이용한 차선 추출에 필요한 값들
+    lower_black = np.array([0, 0, 0])
+    upper_black = np.array([180, 180, 230])
+
+    lower_grey = np.array([150, 150, 150])
+    upper_grey = np.array([210, 210, 210])
+
+    BOX_WIDTH = 10
     def __init__(self):
-        pass
+        # 웹캠 2대 열기
+        self.video_left = cv2.VideoCapture(1)
+        self.video_right = cv2.VideoCapture(0)
+
+        # 양쪽 웹캠의 해상도를 800x448로 설정
+
+        self.video_left.set(3, 800)
+        self.video_left.set(4, 448)
+        self.video_right.set(3, 800)
+        self.video_right.set(4, 448)
+
+
+        # 현재 읽어온 프레임이 실시간으로 업데이트됌
+        self.left_frame = None
+        self.right_frame = None
+
+        # 이전 프레임의 ROI 위치를 저장함
+        self.left_previous_points = None
+        self.right_previous_points = None
+
+        # 현재 프레임의 ROI 위치를 저장함
+        self.left_current_points = np.array([0] * 10)
+        self.right_current_points = np.array([0] * 10)
+
+        # 차선과 닮은 이차함수의 계수 세 개를 담음
+        self.left_coefficients = None
+        self.right_coefficients = None
 
     def findCenterOfMass(self, src):
-        sum_of_y_mass_coordinates = np.array(0, np.int32)
-        num_of_mass_points = np.array(0, np.int32)
-        src_row = np.array(len(src))
-        src_col = np.array(len(src[0]))
+        src_row = len(src)
+        src_col = len(src[0])
+        src_rowa = np.array(src_row, np.int32)
+        src_cola = np.array(src_col, np.int32)
+
+        sum_of_y_mass_coordinates = np.zeros(src_row, np.int32)
+        num_of_mass_points = np.zeros(src_row, np.int32)
+
         self.path(drv.Out(sum_of_y_mass_coordinates),
                   drv.Out(num_of_mass_points),
                   drv.In(src),
-                  drv.In(src_row),
-                  block=(len(src), 1, 1))
-        sum_of_y_mass_coordinates = int(sum_of_y_mass_coordinates)
-        num_of_mass_points = int(num_of_mass_points)
+                  drv.In(src_cola),
+                  block=(src_row, 1, 1))
+
+        sum_of_y_mass_coordinates = int(sum_of_y_mass_coordinates.sum())
+        num_of_mass_points = int(num_of_mass_points.sum())
+
         if num_of_mass_points == 0:
             center_of_mass_y = int(len(src) / 2)
 
@@ -28,7 +87,36 @@ class LaneCam:
 
         return center_of_mass_y
 
+    def pretreatment(self, src, camera_matrix, distortion_matrix, transform_matrix, output_size):
+
+        undistorted = cv2.undistort(src, camera_matrix, distortion_matrix, None, None)[10:438, 10:790]
+        dst = cv2.warpPerspective(undistorted, transform_matrix, output_size)
+
+        return dst
+
+    def left_camera_loop(self):
+        while True:
+            ret_L, frame_L = self.video_left.read()
+
+            dst_L = self.pretreatment(frame_L, self.camera_matrix_L,
+                                    self.distortion_coefficients_L, self.Bird_view_matrix_L, (563, 511))
+            cropped_L = dst_L[210:510, 262:562]
+            transposed_L = cv2.flip(cv2.transpose(cropped_L), 0)
+            self.left_frame = transposed_L
+
+    def right_camera_loop(self):
+        while True:
+            ret_R, frame_R = self.video_right.read()
+
+            dst_R = self.pretreatment(frame_R, self.camera_matrix_R,
+                                      self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
+
+            cropped_R = dst_R[151:451, 0:300]
+            transposed_R = cv2.flip(cv2.transpose(cropped_R), 0)
+            self.right_frame = transposed_R
+
     def show_loop(self):
+        time.sleep(3)
 #pycuda alloc
         drv.init()
         global context
@@ -38,26 +126,52 @@ class LaneCam:
         mod = SourceModule(r"""
             #include <stdio.h>
             
-            __global__ void hi(int *psum, int *pnum, 
-                                unsigned int *data, int *size)
+            __global__ void hi(int psum[], int pnum[], 
+                                unsigned char *data, int *size)
             {
                 int y = threadIdx.x;
+                unsigned char *ptarget = (data + y * *size);
                 for (int x = 0; x < *size; x++)
-                    if ((data + y * *size)[x] == 255) {
-                        *psum += y;
-                        *pnum += 1;
+                    if (ptarget[x] == (unsigned char) 255) {
+                        psum[y] += y;
+                        pnum[y] += 1;
                     }
-                
-                printf("%d\n", threadIdx.x);
             }
             """)
         self.path = mod.get_function("hi")
 #pycuda alloc end
-
-        data = np.zeros((500, 1000), np.uint8)
+        data = np.full((20, 30), 0, np.uint8)
         while True:
-            self.findCenterOfMass(data)
-            break
+            left_frame, right_frame = self.left_frame, self.right_frame
+            both = np.vstack((right_frame, left_frame))
+
+            black_filtered_L = cv2.inRange(left_frame, self.lower_black, self.upper_black)
+            black_filtered_R = cv2.inRange(right_frame, self.lower_black, self.upper_black)
+
+            grey_filtered_L = cv2.inRange(left_frame, self.lower_grey, self.upper_grey)
+            grey_filtered_R = cv2.inRange(right_frame, self.lower_grey, self.upper_grey)
+
+            filtered_L = cv2.bitwise_not(cv2.bitwise_or(black_filtered_L, grey_filtered_L))
+            filtered_R = cv2.bitwise_not(cv2.bitwise_or(black_filtered_R, grey_filtered_R))
+
+            both_filtered = np.vstack((filtered_R, filtered_L))
+            cv2.imshow('1', cv2.flip(cv2.transpose(both_filtered), 1))
+            if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+            if self.left_previous_points is None:
+                row_sum = np.sum(filtered_L[0:300, 200:300], axis=1)
+                start_point = np.argmax(row_sum)
+                self.left_current_points[0] = start_point
+
+                for i in range(1, 10):
+                    reference = self.left_current_points[i - 1] - self.BOX_WIDTH
+
+                    x1, x2 = 300 - 30 * i, 330 - 30 * i
+                    y1, y2 = self.left_current_points[i - 1] - self.BOX_WIDTH, self.left_current_points[i - 1] + self.BOX_WIDTH
+
+                    small_box = filtered_L[y1:y2, x1:x2]
+                    small_box = np.ascontiguousarray(small_box)
+                    self.left_current_points[i] = reference + self.findCenterOfMass(small_box)
 
 #pycuda dealloc
         context.pop()
@@ -69,5 +183,11 @@ class LaneCam:
 
 if __name__ == "__main__":
     lane_cam = LaneCam()
-    t1 = threading.Thread(target=lane_cam.show_loop)
+
+    t1 = threading.Thread(target=lane_cam.left_camera_loop)
+    t2 = threading.Thread(target=lane_cam.right_camera_loop)
+    t3 = threading.Thread(target=lane_cam.show_loop)
+
     t1.start()
+    t2.start()
+    t3.start()
