@@ -129,4 +129,27 @@ n_batch = 64
 n_iter = 1000000
 n_prt = 240
 
+train_batch, train_label, train_file = read_data_batch("C:/Users/dfsfs/Desktop/", batch_size= n_batch)
+test_batch, test_label, test_file = read_data_batch("C:/Users/sdfsd/Desktop", batch_size= n_batch)
+
+saver = tf.train.Saver()
+
+with tf.Session() as sess:
+    init_op = tf.global_variables_initializer()
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+
+    sess.run(init_op)
+    writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
+    merged_summary_op = tf.summary.merge_all()
+
+    for epoch in range(n_iter):
+        train_images_, train_labels_ = sess.run([train_batch, train_label])
+        test_images_, test_labels_ = sess.run([test_batch, test_label])
+        sess.run(optimizer, feed_dict={x: train_images_, y: train_labels_})
+
+        if epoch % n_prt == 0:
+            c = sess.run(loss, feed_dict={x : train_images_, y: train_labels_})
+            print("Iter : {}".format(epoch/n_prt), ", Cost : {}".format(c))
+
 
