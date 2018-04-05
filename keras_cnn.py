@@ -12,6 +12,8 @@ In our setup, we:
 - put the parking pictures index 13500-13900 in data/validation/parking
 So that we have 1000 training examples for each class, and 400 validation examples for each class.
 In summary, this is our directory structure:
+
+
 ```
 data/
     train/
