@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import threading
 import time
+
 np.set_printoptions(linewidth=100000)
 
 
@@ -23,7 +24,7 @@ class LaneCam:
 
     # BGR 을 이용한 차선 추출에 필요한 값들
     lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 180, 220])
+    upper_black = np.array([180, 65, 255])
 
     lower_grey = np.array([150, 150, 150])
     upper_grey = np.array([210, 210, 210])
@@ -32,16 +33,16 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기
-        self.video_left = cv2.VideoCapture(1)
-        self.video_right = cv2.VideoCapture(0)
+        self.video_left = cv2.VideoCapture('output_L_1.avi')
+        self.video_right = cv2.VideoCapture('output_R_1.avi')
 
         # 양쪽 웹캠의 해상도를 800x448로 설정
-
+        '''
         self.video_left.set(3, 800)
         self.video_left.set(4, 448)
         self.video_right.set(3, 800)
         self.video_right.set(4, 448)
-
+        '''
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -71,7 +72,7 @@ class LaneCam:
                     num_of_mass_points += 1
 
         if num_of_mass_points == 0:
-            center_of_mass_y = -1
+            center_of_mass_y = int(len(src) / 2)
 
         else:
             center_of_mass_y = int(round(sum_of_y_mass_coordinates / num_of_mass_points))
@@ -108,19 +109,14 @@ class LaneCam:
             self.right_frame = transposed_R
 
     def show_loop(self):
-        time.sleep(3)
+        time.sleep(1)
         while True:
             left_frame, right_frame = self.left_frame, self.right_frame
-            both = np.vstack((right_frame, left_frame))
+            left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
+            right_hsv = cv2.cvtColor(right_frame, cv2.COLOR_BGR2HSV)
 
-            black_filtered_L = cv2.inRange(left_frame, self.lower_black, self.upper_black)
-            black_filtered_R = cv2.inRange(right_frame, self.lower_black, self.upper_black)
-
-            grey_filtered_L = cv2.inRange(left_frame, self.lower_grey, self.upper_grey)
-            grey_filtered_R = cv2.inRange(right_frame, self.lower_grey, self.upper_grey)
-
-            filtered_L = cv2.bitwise_not(cv2.bitwise_or(black_filtered_L, grey_filtered_L))
-            filtered_R = cv2.bitwise_not(cv2.bitwise_or(black_filtered_R, grey_filtered_R))
+            filtered_L = cv2.bitwise_not(cv2.inRange(left_hsv, self.lower_black, self.upper_black))
+            filtered_R = cv2.bitwise_not(cv2.inRange(right_hsv, self.lower_black, self.upper_black))
 
             both_filtered = np.vstack((filtered_R, filtered_L))
             cv2.imshow('1', cv2.flip(cv2.transpose(both_filtered), 1))
@@ -135,7 +131,8 @@ class LaneCam:
                     reference = self.left_current_points[i - 1] - self.BOX_WIDTH
 
                     x1, x2 = 300 - 30 * i, 330 - 30 * i
-                    y1, y2 = self.left_current_points[i - 1] - self.BOX_WIDTH, self.left_current_points[i - 1] + self.BOX_WIDTH
+                    y1 = self.left_current_points[i - 1] - self.BOX_WIDTH
+                    y2 = self.left_current_points[i - 1] + self.BOX_WIDTH
 
                     small_box = filtered_L[y1:y2, x1:x2]
 
@@ -183,8 +180,10 @@ class LaneCam:
             self.right_previous_points = self.right_current_points
 
             for i in range(0, 10):
-                cv2.line(filtered_L, (300 - 30 * i, self.left_current_points[i] - self.BOX_WIDTH), (300 - 30 * i, self.left_current_points[i] + self.BOX_WIDTH), 150)
-                cv2.line(filtered_R, (300 - 30 * i, self.right_current_points[i] - self.BOX_WIDTH), (300 - 30 * i, self.right_current_points[i] + self.BOX_WIDTH), 150)
+                cv2.line(filtered_L, (300 - 30 * i, self.left_current_points[i] - self.BOX_WIDTH),
+                                        (300 - 30 * i, self.left_current_points[i] + self.BOX_WIDTH), 150)
+                cv2.line(filtered_R, (300 - 30 * i, self.right_current_points[i] - self.BOX_WIDTH),
+                                        (300 - 30 * i, self.right_current_points[i] + self.BOX_WIDTH), 150)
 
             xs = np.array([30 * i for i in range(10, 0, -1)]) - 300
             ys_L = 0 - self.left_current_points
@@ -210,7 +209,7 @@ class LaneCam:
 
             cv2.imshow('left', filtered_L)
             cv2.imshow('right', filtered_R)
-            cv2.imshow('2', cv2.flip(cv2.transpose(both), 1))
+
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
 
