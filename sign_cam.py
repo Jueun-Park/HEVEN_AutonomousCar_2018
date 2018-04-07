@@ -6,7 +6,6 @@
 #          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
 import cv2
-import numpy as np
 import time
 
 # Sign Boards
@@ -23,39 +22,56 @@ except Exception as e:
     exit(1)
 
 
-def u_turn_detect(image):
-    # gray 이미지 변환
-    gray_img = get_gray_img(image)
-    u_turn = u_turn_cascade.detectMultiScale(gray_img, 1.06, 5)
-    for (x, y, w, h) in u_turn:
-        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+class SignDetector:
+    def __init__(self, cascade, scale_factor, min_neighbors):
+        self.cascade = cascade
+        self.scale_factor = scale_factor
+        self.min_neighbors = min_neighbors
 
-    print(np.matrix(u_turn))
-    return image
-
-
-def parking_detect(image):
-    # gray 이미지 변환
-    gray_img = get_gray_img(image)
-    parking = parking_cascade.detectMultiScale(gray_img, 1.05, 5)
-    for (x, y, w, h) in parking:
-        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-    print(np.matrix(parking))
-    return image
+    def detect(self, image):
+        gray_image = get_gray_img(image)
+        detected_array = self.cascade.detectMultiScale(gray_image, self.scale_factor, self.min_neighbors)
+        return detected_array
 
 
 def get_gray_img(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
+def draw_square_on_image(image, square_array):
+    for (x, y, w, h) in square_array:
+        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+    return image
+
+
 if __name__ == "__main__":
     # 이미지 읽어오기
     cam = cv2.VideoCapture("./20170507_one_lap_normal_Moment_Parking.jpg")
+    t1 = time.time()
     get_ok, image = cam.read()
+
+    # 그래픽카드로 돌려보자? 쿠다 깔려 있어야 하는 듯?
+    # image = cv2.UMat(image)
+
+    # 표지판 감지기 인스턴스들 생성
+    parking_detector = SignDetector(parking_cascade, 1.05, 5)
+    u_turn_detector = SignDetector(u_turn_cascade, 1.06, 5)
+
     # 이미지 중 표지판이 있는 곳 확인
-    # 표지판 종류 인식 결과 확인
-    cv2.imshow('test', parking_detect(image))
+
+    # 표지판을 인식해라 감지기들이여.
+    parking_detected_array = parking_detector.detect(image)
+    u_turn_detected_array = u_turn_detector.detect(image)
+
+    detected_image = draw_square_on_image(image, parking_detected_array)
+    detected_image = draw_square_on_image(detected_image, u_turn_detected_array)
+    t2 = time.time()
+
+    # 인식 된 곳에 네모 그려둔 것 표시
+    cv2.imshow('test', detected_image)
+
+    print(t2 - t1)
+
     if cv2.waitKey(0) & 0xff == 27:
         cam.release()
         cv2.destroyAllWindows()
