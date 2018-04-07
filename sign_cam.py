@@ -2,10 +2,9 @@
 # input: sign_cam
 # output: 표지판 종류 (to car_control)
 
-# modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
-#          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
 import cv2
+import numpy as np
 import time
 
 # Sign Boards
@@ -39,39 +38,112 @@ def get_gray_img(image):
 
 
 def draw_square_on_image(image, square_array):
-    for (x, y, w, h) in square_array:
-        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    return image
+    try:
+        for (x, y, w, h) in square_array:
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        return image
+    except Exception:
+        return image
 
 
-if __name__ == "__main__":
-    # 이미지 읽어오기
-    cam = cv2.VideoCapture("./20170507_one_lap_normal_Moment_Parking.jpg")
-    t1 = time.time()
-    get_ok, image = cam.read()
+def is_in_this_mission(ndarray):
+    try:
+        if np.sum(ndarray) >= 1:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
+def process_one_frame_sign(cam, is_in_mission):
+    if is_in_mission:
+        pass
+
+    t1 = time.time()  # 프레임 시작 시간 측정
+    frame_okay, frame = cam.read()  # 한 프레임을 가져오자.
 
     # 그래픽카드로 돌려보자? 쿠다 깔려 있어야 하는 듯?
-    # image = cv2.UMat(image)
-
-    # 표지판 감지기 인스턴스들 생성
-    parking_detector = SignDetector(parking_cascade, 1.05, 5)
-    u_turn_detector = SignDetector(u_turn_cascade, 1.06, 5)
+    # frame = cv2.UMat(frame)
 
     # 이미지 중 표지판이 있는 곳 확인
+    # 아직 구현 안 됨
 
-    # 표지판을 인식해라 감지기들이여.
-    parking_detected_array = parking_detector.detect(image)
-    u_turn_detected_array = u_turn_detector.detect(image)
+    for mode_no in detector_dic:  # 표지판을 인식해라 감지기들이여.
+        if detector_dic[mode_no]:
+            # 각 미션에 해당하는 표지판 감지기가 위치 어레이를 반환하면 data dictionary 에 담는다.
+            signboard_location_data[mode_no] = detector_dic[mode_no].detect(frame)
+        else:
+            continue
 
-    detected_image = draw_square_on_image(image, parking_detected_array)
-    detected_image = draw_square_on_image(detected_image, u_turn_detected_array)
-    t2 = time.time()
+    now_mode_no = 0
+    for mode_no in signboard_location_data:  # 데이터 가지고
+        # 어떤 표지판 인식했는지 확인
+        if is_in_this_mission(signboard_location_data[mode_no]):
+            now_mode_no = mode_no
+        frame = draw_square_on_image(frame, signboard_location_data[mode_no])  # 인식한 자리에 네모 표시
 
-    # 인식 된 곳에 네모 그려둔 것 표시
-    cv2.imshow('test', detected_image)
+    # <여기서 수정할 내용>
+    # 1. 정확도 문제 때문에, 연속으로 세 프레임 이상 감지해야 실제로 미션에 진입했다고 표시해 주는 기능 필요
+    # 2. 이미 지나친 미션에 대해서는 디텍터 인스턴스를 삭제해 버려서 다시 검사 안 하도록 하면 연산 속도 늘릴 수 있을 듯
+    # 3. 미션에 진입한 이후에는 is_in_mission 리턴값 참조하여 그 동안에는 메서드 실행 안 하도록 해 줘야 한다. (병렬 처리?)
 
-    print(t2 - t1)
+    if now_mode_no > 0:  # 감지 여부 출력
+        print(now_mode_no, mission_name_dic[now_mode_no], ": DETECT!")
+        is_in_mission = True
+    else:
+        print("defalt mode", now_mode_no)
 
-    if cv2.waitKey(0) & 0xff == 27:
-        cam.release()
-        cv2.destroyAllWindows()
+    cv2.imshow('test', frame)  # 인식 된 곳에 네모 그려둔 것 표시
+    t2 = time.time()  # 프레임 종료 시간 측정
+    print("time per frame:", t2 - t1)
+    return now_mode_no, is_in_mission
+
+
+# TEST CODE
+if __name__ == "__main__":
+    # mode dictionary (mission_name: mode_no)
+    modes = {'DEFAULT': 0,
+             'PARKING': 1,
+             'STATIC_OBS': 2,
+             'MOVING_OBS': 3,
+             'S_CURVE': 4,
+             'NARROW': 5,
+             'U_TURN': 6,
+             'CROSS_WALK': 7, }
+
+    # mission name dictionary (mode_no: mission_name)
+    mission_name_dic = {0: 'DEFAULT',
+                        1: 'PARKING',
+                        2: 'STATIC_OBS',
+                        3: 'MOVING_OBS',
+                        4: 'S_CURVE',
+                        5: 'NARROW',
+                        6: 'U_TURN',
+                        7: 'CROSS_WALK', }
+
+    # 표지판 감지기 인스턴스들 생성 (mode_no: sign_detector)
+    detector_dic = {0: None,
+                    1: SignDetector(parking_cascade, 1.3, 5),
+                    2: None,
+                    3: SignDetector(moving_cascade, 1.03, 5),
+                    4: None,
+                    5: None,
+                    6: SignDetector(u_turn_cascade, 1.06, 5),
+                    7: None, }
+
+    # 표지판 감지한 위치 담는 딕셔너리 (mode_no: location_data_array)
+    signboard_location_data = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+
+    # 웹캠 읽어오기
+    cam = cv2.VideoCapture(0)
+    time.sleep(2)
+
+    is_in_mission = False
+    # 영상 처리
+    while (True):
+        process_one_frame_sign(cam, is_in_mission)
+
+        if cv2.waitKey(1) & 0xff == ord('q'):
+            cam.release()
+            cv2.destroyAllWindows()
