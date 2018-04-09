@@ -29,16 +29,14 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기
-        self.video_left = cv2.VideoCapture('output_L_0.avi')
-        self.video_right = cv2.VideoCapture('output_R_0.avi')
+        self.video_left = cv2.VideoCapture(1)
+        self.video_right = cv2.VideoCapture(0)
 
         # 양쪽 웹캠의 해상도를 800x448로 설정
-        '''
         self.video_left.set(3, 800)
         self.video_left.set(4, 448)
         self.video_right.set(3, 800)
         self.video_right.set(4, 448)
-        '''
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -335,6 +333,8 @@ class LaneCam:
                 for i in range(0, 300):
                     cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
 
+            else: self.left_coefficients = None
+
             if self.right_current_points is not None:
                 xs_valid = []
                 ys_R_valid = []
@@ -358,8 +358,12 @@ class LaneCam:
                 for i in range(0, 300):
                     cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
 
-            cv2.imshow('left', filtered_L)
-            cv2.imshow('right', filtered_R)
+            else: self.right_coefficients = None
+
+            print('left: ', self.left_coefficients, '   right: ', self.right_coefficients)
+
+            filtered_both = np.vstack((filtered_R, filtered_L))
+            cv2.imshow('2', cv2.flip(cv2.transpose(filtered_both), 1))
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
