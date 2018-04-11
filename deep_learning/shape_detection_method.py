@@ -2,7 +2,12 @@ import numpy as np
 import cv2
 import time
 
+
 def shape_detect(img):
+    """
+    웹캠 비디오 프레임(img)을 받아서
+    프로세싱 완료한 32*32 이미지를 리스트(sign) 형식으로 반환하는 함수이다.
+    """
     sign = []
 
     if img is None:
@@ -18,7 +23,7 @@ def shape_detect(img):
 
             (x, y, w, h) = cv2.boundingRect(cnt)
 
-            # cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+            # cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)    #화면에서 관심 영역에 녹색 테두리를 출력함. 저장되는 이미지에서 보이지 않도록 주석처리
             le = max(w, h) + 10
 
             if w > 60 and h > 60:
@@ -30,15 +35,15 @@ def shape_detect(img):
                 img_trim = img[y_1: y_2, x_1:x_2]
                 height, width = img_trim.shape[:2]
 
-                if -5 < (height - width) < 5:
-                    img_trim_resize = cv2.resize(img_trim, (32, 32),interpolation=cv2.INTER_AREA)
+                if -5 < (height - width) < 5 and x_1>0 and y_1>0:
+                    img_trim_resize = cv2.resize(img_trim,(32,32))
                     sign.append(img_trim_resize)
     return sign
 
 
+
 def main():
     Shape_detection = shape_detect(img)
-    print(Shape_detection)
 
 if __name__ == "__main__":
     # open cam
