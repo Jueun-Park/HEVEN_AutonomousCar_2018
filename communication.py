@@ -65,7 +65,7 @@ def test_move(timeout=2):
     while time.time() - t1 < timeout:
         platform.recv()
         platform.print_status()
-        platform.write(SerialPacket.GEAR_FORWARD, 40, 0, SerialPacket.BRAKE_NOBRAKE)
+        platform.write(SerialPacket.GEAR_FORWARD, 50, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
         platform.send()
 
 def test_back(timeout=2):
@@ -73,7 +73,7 @@ def test_back(timeout=2):
     while time.time() - t1 < timeout:
         platform.recv()
         platform.print_status()
-        platform.write(SerialPacket.GEAR_BACKWARD, 60, 0, SerialPacket.BRAKE_NOBRAKE)
+        platform.write(SerialPacket.GEAR_BACKWARD, 60, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
         platform.send()
 
 def test_stop(timeout=2):
@@ -81,7 +81,31 @@ def test_stop(timeout=2):
     while time.time() - t1 < timeout:
         platform.recv()
         platform.print_status()
-        platform.write(SerialPacket.GEAR_NEUTRAL, 0, 0, 50)
+        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 33)
+        platform.send()
+
+def test_neutral(timeout=2):
+    t1 = time.time()
+    while time.time() - t1 < timeout:
+        platform.recv()
+        platform.print_status()
+        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
+        platform.send()
+
+def test_left(timeout=2):
+    t1 = time.time()
+    while time.time() - t1 < timeout:
+        platform.recv()
+        platform.print_status()
+        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXLEFT, SerialPacket.BRAKE_NOBRAKE)
+        platform.send()
+
+def test_right(timeout=2):
+    t1 = time.time()
+    while time.time() - t1 < timeout:
+        platform.recv()
+        platform.print_status()
+        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
         platform.send()
 
 if __name__ == '__main__':
@@ -89,6 +113,4 @@ if __name__ == '__main__':
     platform = PlatformSerial(port)
     while True:
         test_move()
-        test_stop()
-        test_back()
         test_stop()
