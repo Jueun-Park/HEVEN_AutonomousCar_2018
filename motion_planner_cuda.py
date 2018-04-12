@@ -14,8 +14,9 @@ import time
 np.set_printoptions(linewidth=1000)
 
 class MotionPlanner():
-    def __init__(self, lidar_instance):
-        self.lidar = lidar_instance
+    def __init__(self):
+        self.lidar = Lidar()
+        self.lidar.initiate()
 
     def loop(self):
 #pycuda alloc
@@ -82,10 +83,7 @@ class MotionPlanner():
 
 
 if __name__=="__main__" :
-    current_lidar = Lidar()
-    current_lidar.initiate()
-
-    motion_plan = MotionPlanner(current_lidar)
+    motion_plan = MotionPlanner()
     motion_plan.initiate()
 
 '''
