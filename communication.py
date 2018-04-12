@@ -14,12 +14,7 @@ class PlatformSerial:
 
     def _read(self, packet=SerialPacket()):
         try:
-            b = self.ser.readline()
-            b_extra = bytes()
-            b_len = len(b)
-            if (b_len != 18):
-                b_extra = self.ser.read(18-b_len)
-            b += b_extra
+            b = self.ser.read(18)
         except Exception as e:
             print('[PlatformSerial| READ ERROR', e, ']')
             return
@@ -43,6 +38,9 @@ class PlatformSerial:
 
     def set_manualmode(self):
         self.write_packet.aorm = SerialPacket.AORM_MANUAL
+
+    def read(self):
+        return self.read_packet.speed, self.read_packet.enc
 
     def write(self, gear, speed, steer, brake):
         self.write_packet.gear = gear
