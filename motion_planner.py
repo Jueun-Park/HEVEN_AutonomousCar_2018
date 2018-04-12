@@ -13,8 +13,9 @@ np.set_printoptions(linewidth=1000)
 
 class MotionPlanner():
 
-    def __init__(self, lidar_instance):
-        self.lidar = lidar_instance
+    def __init__(self):
+        self.lidar = Lidar()
+        self.lidar.initiate()
 
 
     def loop(self):
@@ -53,13 +54,8 @@ class MotionPlanner():
         thread = threading.Thread(target=self.loop)
         thread.start()
 
-
-
-current_lidar = Lidar()
-current_lidar.initiate()
-
-motion_plan = MotionPlanner(current_lidar)
-motion_plan.initiate()
+#motion_plan = MotionPlanner()
+#motion_plan.initiate()
 
 '''
 canvas = np.zeros((400, 400), np.uint8)
