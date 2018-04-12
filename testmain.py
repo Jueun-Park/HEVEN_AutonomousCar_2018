@@ -7,14 +7,15 @@ port = 'COM7'
 # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
 platform = PlatformSerial(port)
 
-motion_plan = MotionPlanner()
-motion_plan.initiate()
+motion = MotionPlanner()
+motion.initiate()
 
 control = Control()
 
 while True:
     platform.recv()
     control.read(*platform.read())
-    platform.write()
+    control.mission(...)
+    platform.write(*control.get_control())
     platform.send()
 
