@@ -1,3 +1,0 @@
-import hogbinvision
-
-def hongbinvisionstart() :
