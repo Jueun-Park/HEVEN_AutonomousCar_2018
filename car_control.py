@@ -13,7 +13,7 @@ class Control:
     velocity = 1.5
     car_front = 0.28  # 수정 바람 - 차량 정지 시간
 
-    def __init__(self, mission_num, first, second):
+    def __init__(self):
         self.gear = 0
         self.speed = 0
         self.steer = 0
@@ -46,14 +46,23 @@ class Control:
         self.usit = 0
         self.psit = 0
 
+        self.mission_num = 0
+
+    def read(self, speed, enc):
         #######################################
         # communication.py 에서 데이터 받아오기#
-        self.speed_platform = platform.speed_platform
-        self.ENC1 = platform.ENC_with_time
+        self.speed_platform = speed
+        self.ENC1 = enc
         #######################################
 
+    def mission(self, mission_num, first, second):
+        self.set_mission(mission_num)
+        self.do_mission(first, second)
+
+    def set_mission(self, mission_num):
         self.mission_num = mission_num
 
+    def do_mission(self, first, second):
         if self.mission_num == 0:
             self.cross_track_error = first/100
             self.linear = second
@@ -98,6 +107,9 @@ class Control:
 
             self.__cross__()
 
+    def get_control(self):
+        return self.gear, self.speed, self.steer, self.brake
+
     def __default__(self):
         self.steer = 0
         self.speed = 54
@@ -131,8 +143,6 @@ class Control:
             self.steer = -1970
             self.steer_past = -27.746
 
-        return self.steer, self.speed, self.gear, self.brake, self.steer_past
-
     def __obs__(self):
         self.steer = 0
         self.speed = 54
@@ -164,8 +174,6 @@ class Control:
             self.steer = -1970
             self.steer_past = -27.746
 
-        return self.steer, self.speed, self.gear, self.brake, self.steer_past
-
     def __moving__(self):
         self.steer = 0
         self.speed = 36
@@ -177,8 +185,6 @@ class Control:
             self.brake = 60
         else:
             self.speed = 36
-
-        return self.steer, self.speed, self.gear
 
     def __cross__(self):
         self.steer = 0
@@ -196,8 +202,6 @@ class Control:
                 self.brake = 60
             else:
                 self.speed = 54
-
-        return self.steer, self.speed, self.gear, self.brake
 
     def __parking__(self):
         self.steer = 0
@@ -317,8 +321,6 @@ class Control:
             self.steer = 0
             self.brake = 0
 
-        return self.steer, self.speed, self.gear, self.brake
-
     # 후에 대화를 통해서 보강
 
     def __uturn__(self):
@@ -380,5 +382,3 @@ class Control:
             self.steer = 0
             self.speed = 36
             self.brake = 0
-
-        return self.steer, self.speed, self.gear, self.brake
