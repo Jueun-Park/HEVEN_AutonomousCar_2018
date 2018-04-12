@@ -19,7 +19,7 @@ class MotionPlanner():
 
 
     def loop(self):
-        Rad=current_lidar.RADIUS
+        Rad=self.lidar.RADIUS
         while True:
             t1 = time.time()
             data = np.zeros((2, 37), np.int)
