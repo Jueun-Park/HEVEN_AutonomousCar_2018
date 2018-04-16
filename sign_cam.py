@@ -56,12 +56,11 @@ def is_in_this_mission(ndarray):
         return False
 
 
-def process_one_frame_sign(cam, is_in_mission):
+def process_one_frame_sign(frame, is_in_mission):
     if is_in_mission:
         pass
 
     t1 = time.time()  # 프레임 시작 시간 측정
-    frame_okay, frame = cam.read()  # 한 프레임을 가져오자.
 
     # 그래픽카드로 돌려보자? 쿠다 깔려 있어야 하는 듯?
     # frame = cv2.UMat(frame)
@@ -85,6 +84,7 @@ def process_one_frame_sign(cam, is_in_mission):
 
     # <여기서 수정할 내용>
     # 1. 정확도 문제 때문에, 연속으로 세 프레임 이상 감지해야 실제로 미션에 진입했다고 표시해 주는 기능 필요
+    # - 딕셔너리에 기록하고 인풋 받고 다시 리턴하고를 반복하자.?
     # 2. 이미 지나친 미션에 대해서는 디텍터 인스턴스를 삭제해 버려서 다시 검사 안 하도록 하면 연산 속도 늘릴 수 있을 듯
     # 3. 미션에 진입한 이후에는 is_in_mission 리턴값 참조하여 그 동안에는 메서드 실행 안 하도록 해 줘야 한다. (병렬 처리?)
 
@@ -142,7 +142,8 @@ if __name__ == "__main__":
     is_in_mission = False
     # 영상 처리
     while (True):
-        process_one_frame_sign(cam, is_in_mission)
+        frame_okay, frame = cam.read()  # 한 프레임을 가져오자.
+        process_one_frame_sign(frame, is_in_mission)
 
         if cv2.waitKey(1) & 0xff == ord('q'):
             cam.release()
