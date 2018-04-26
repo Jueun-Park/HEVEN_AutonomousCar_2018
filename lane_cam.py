@@ -37,8 +37,8 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left = videostream.WebcamVideoStream(1, 800, 448, self.frm_pretreatment)
-        self.video_right = videostream.WebcamVideoStream(0, 800, 448, self.frm_pretreatment)
+        self.video_left = videostream.WebcamVideoStream(1, 800, 448, f=self.frm_pretreatment)
+        self.video_right = videostream.WebcamVideoStream(0, 800, 448, f=self.frm_pretreatment)
 
         self.lane_cam_frame = videostream.VideoStream()
 
@@ -94,8 +94,8 @@ class LaneCam:
 
         while True:
             # 프레임 읽어들여서 HSV 색공간으로 변환하기
-            left_frame = self.video_left.xread(*LaneCam.xreadParam_L)
-            right_frame = self.video_right.xread(*LaneCam.xreadParam_R)
+            ret, left_frame = self.video_left.xread(*LaneCam.xreadParam_L)
+            ret, right_frame = self.video_right.xread(*LaneCam.xreadParam_R)
             left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
             right_hsv = cv2.cvtColor(right_frame, cv2.COLOR_BGR2HSV)
 
@@ -351,11 +351,13 @@ class LaneCam:
             print('left: ', self.left_coefficients, '   right: ', self.right_coefficients)
 
             filtered_both = np.vstack((filtered_R, filtered_L))
-            final = cv2.flip(cv2.transpose(filtered_both))
+            final = cv2.flip(cv2.transpose(filtered_both), 1)
             self.lane_cam_frame.write(final)
-            cv2.imshow('2', cv2.flip(cv2.transpose(final), 1))
+            cv2.imshow('2', final)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
+        self.video_left.stop()
+        self.video_right.stop()
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
 
 
 class Lidar:
-    RADIUS = 500  # 원일 경우 지름, 사각형일 경우 한 변
+    RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
 
     def __init__(self):
         self.HOST = '169.254.248.220'
@@ -52,7 +52,7 @@ class Lidar:
                 if 2 <= r <= self.RADIUS:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                     # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
-                    x = r * math.cos(math.radians(0.5 * angle))
+                    x = -r * math.cos(math.radians(0.5 * angle))
                     y = r * math.sin(math.radians(0.5 * angle))
 
                     # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
@@ -60,11 +60,11 @@ class Lidar:
                     points[angle][1] = self.RADIUS - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(canvas, tuple(point), 60, 255, -1) # 캔버스에 점 찍기
+                cv2.circle(canvas, tuple(point), 2, 255, -1) # 캔버스에 점 찍기
 
             self.frame = canvas
 
-            #cv2.imshow('lidar', canvas)  # 창 띄워서 확인
+            cv2.imshow('lidar', canvas)  # 창 띄워서 확인
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
