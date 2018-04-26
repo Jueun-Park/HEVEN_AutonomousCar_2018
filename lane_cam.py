@@ -29,8 +29,11 @@ class LaneCam:
     xreadParam_R = crop_R, camera_matrix_R, distortion_coefficients_R, Bird_view_matrix_R, output_R
 
     # HSV 을 이용한 차선 추출에 필요한 값들
-    lower_black = np.array([0, 0, 0])
-    upper_black = np.array([180, 65, 255])
+    lower_yellow = np.array([18, 70, 120], dtype=np.uint8)
+    upper_yellow = np.array([24, 255, 255], dtype=np.uint8)
+
+    lower_white = np.array([202, 208, 202], dtype=np.uint8)
+    upper_white = np.array([255, 255, 255], dtype=np.uint8)
 
     # 질량 중심 찾기 박스 너비
     BOX_WIDTH = 10
@@ -93,15 +96,14 @@ class LaneCam:
         time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
 
         while True:
-            # 프레임 읽어들여서 HSV 색공간으로 변환하기
+            # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
             ret, left_frame = self.video_left.xread(*LaneCam.xreadParam_L)
             ret, right_frame = self.video_right.xread(*LaneCam.xreadParam_R)
             left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
-            right_hsv = cv2.cvtColor(right_frame, cv2.COLOR_BGR2HSV)
 
-            # HSV 필터링으로 영상을 이진화 함
-            filtered_L = cv2.bitwise_not(cv2.inRange(left_hsv, self.lower_black, self.upper_black))
-            filtered_R = cv2.bitwise_not(cv2.inRange(right_hsv, self.lower_black, self.upper_black))
+            # HSV, RGB 필터링으로 영상을 이진화 함
+            filtered_L = cv2.inRange(left_hsv, self.lower_yellow, self.upper_yellow)
+            filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
 
             # 좌, 우 영상을 붙임. 모니터링을 위한 부분.
             both = np.vstack((right_frame, left_frame))
@@ -352,7 +354,7 @@ class LaneCam:
 
             filtered_both = np.vstack((filtered_R, filtered_L))
             final = cv2.flip(cv2.transpose(filtered_both), 1)
-            self.lane_cam_frame.write(final)
+
             cv2.imshow('2', final)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
