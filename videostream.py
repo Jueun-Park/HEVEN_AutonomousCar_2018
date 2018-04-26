@@ -70,8 +70,8 @@ class WebcamVideoStream:
             self._stop()
             print("[WebcamVideoStream] restart...")
         self.stream = cv2.VideoCapture(self.src)
-        self.stream.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.width)
-        self.stream.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.height)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self.ret, self.frame = self.stream.read()
         self.started = True
         if self.writing: self.thread = threading.Thread(target=self._write, daemon=True)
