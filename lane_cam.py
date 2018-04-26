@@ -351,8 +351,9 @@ class LaneCam:
             print('left: ', self.left_coefficients, '   right: ', self.right_coefficients)
 
             filtered_both = np.vstack((filtered_R, filtered_L))
-            self.lane_cam_frame.write(filtered_both)
-            cv2.imshow('2', cv2.flip(cv2.transpose(filtered_both), 1))
+            final = cv2.flip(cv2.transpose(filtered_both))
+            self.lane_cam_frame.write(final)
+            cv2.imshow('2', cv2.flip(cv2.transpose(final), 1))
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
