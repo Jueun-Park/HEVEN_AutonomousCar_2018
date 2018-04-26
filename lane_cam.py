@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import threading
 import time
+import videostream
 
 
 class LaneCam:
@@ -20,6 +21,13 @@ class LaneCam:
     Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
     Bird_view_matrix_R = cv2.getPerspectiveTransform(pts1_R, pts2_R)
 
+    crop_L = [[210, 510], [262, 562]]
+    crop_R = [[151, 451], [0, 300]]
+    output_L = (563, 511)
+    output_R = (503, 452)
+    xreadParam_L = crop_L, camera_matrix_L, distortion_coefficients_L, Bird_view_matrix_L, output_L
+    xreadParam_R = crop_R, camera_matrix_R, distortion_coefficients_R, Bird_view_matrix_R, output_R
+
     # HSV 을 이용한 차선 추출에 필요한 값들
     lower_black = np.array([0, 0, 0])
     upper_black = np.array([180, 65, 255])
@@ -28,15 +36,11 @@ class LaneCam:
     BOX_WIDTH = 10
 
     def __init__(self):
-        # 웹캠 2대 열기
-        self.video_left = cv2.VideoCapture(1)
-        self.video_right = cv2.VideoCapture(0)
+        # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
+        self.video_left = videostream.WebcamVideoStream(1, 800, 448, self.frm_pretreatment)
+        self.video_right = videostream.WebcamVideoStream(0, 800, 448, self.frm_pretreatment)
 
-        # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left.set(3, 800)
-        self.video_left.set(4, 448)
-        self.video_right.set(3, 800)
-        self.video_right.set(4, 448)
+        self.lane_cam_frame = videostream.VideoStream()
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -75,39 +79,23 @@ class LaneCam:
 
     # 이미지 전처리 함수: 왜곡 보정, 시점 변환을 수행함
     def pretreatment(self, src, camera_matrix, distortion_matrix, transform_matrix, output_size):
-
         undistorted = cv2.undistort(src, camera_matrix, distortion_matrix, None, None)[10:438, 10:790]
         dst = cv2.warpPerspective(undistorted, transform_matrix, output_size)
-
         return dst
 
-    def left_camera_loop(self):
-        while True:
-            ret_L, frame_L = self.video_left.read()
-
-            dst_L = self.pretreatment(frame_L, self.camera_matrix_L,
-                                    self.distortion_coefficients_L, self.Bird_view_matrix_L, (563, 511))
-            cropped_L = dst_L[210:510, 262:562]
-            transposed_L = cv2.flip(cv2.transpose(cropped_L), 0)
-            self.left_frame = transposed_L
-
-    def right_camera_loop(self):
-        while True:
-            ret_R, frame_R = self.video_right.read()
-
-            dst_R = self.pretreatment(frame_R, self.camera_matrix_R,
-                                      self.distortion_coefficients_R, self.Bird_view_matrix_R, (503, 452))
-
-            cropped_R = dst_R[151:451, 0:300]
-            transposed_R = cv2.flip(cv2.transpose(cropped_R), 0)
-            self.right_frame = transposed_R
+    def frm_pretreatment(self, ret, frame, crop, *preParam):
+        dst = self.pretreatment(frame, *preParam)
+        cropped = dst[crop[0][0]:crop[0][1], crop[1][0]:crop[1][1]]
+        transposed = cv2.flip(cv2.transpose(cropped), 0)
+        return transposed
 
     def data_loop(self):
         time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
 
         while True:
             # 프레임 읽어들여서 HSV 색공간으로 변환하기
-            left_frame, right_frame = self.left_frame, self.right_frame
+            left_frame = self.video_left.xread(*LaneCam.xreadParam_L)
+            right_frame = self.video_right.xread(*LaneCam.xreadParam_R)
             left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
             right_hsv = cv2.cvtColor(right_frame, cv2.COLOR_BGR2HSV)
 
@@ -363,6 +351,7 @@ class LaneCam:
             print('left: ', self.left_coefficients, '   right: ', self.right_coefficients)
 
             filtered_both = np.vstack((filtered_R, filtered_L))
+            self.lane_cam_frame.write(filtered_both)
             cv2.imshow('2', cv2.flip(cv2.transpose(filtered_both), 1))
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
@@ -370,11 +359,5 @@ class LaneCam:
 
 if __name__ == "__main__":
     lane_cam = LaneCam()
-
-    t1 = threading.Thread(target=lane_cam.left_camera_loop)
-    t2 = threading.Thread(target=lane_cam.right_camera_loop)
-    t3 = threading.Thread(target=lane_cam.data_loop)
-
-    t1.start()
-    t2.start()
-    t3.start()
+    thr = threading.Thread(target=lane_cam.data_loop)
+    thr.start()

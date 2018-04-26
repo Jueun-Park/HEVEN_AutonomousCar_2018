@@ -133,6 +133,6 @@ class WebcamVideoStream:
         self.writing = True
         self._start()
 
-    def xread(self, f, *param):
+    def xread(self, f=None, *param):
         if f is None: f = self.f
         return f(self.read(), *param)
