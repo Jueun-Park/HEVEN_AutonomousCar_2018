@@ -69,7 +69,7 @@ class WebcamVideoStream:
         if self._started_get():
             self._stop()
             print("[WebcamVideoStream] restart...")
-        self.stream = cv2.VideoCapure(self.src)
+        self.stream = cv2.VideoCapture(self.src)
         self.stream.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.width)
         self.stream.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.height)
         self.ret, self.frame = self.stream.read()
@@ -129,7 +129,7 @@ class WebcamVideoStream:
         if width is None: width = self.width
         if height is None: height = self.height
         fcc = cv2.VideoWriter_fourcc(*'DIVX')
-        self.out = cv2.VideoWrier(src, fcc, fps, (width, height))
+        self.out = cv2.VideoWriter(src, fcc, fps, (width, height))
         self.writing = True
         self._start()
 
