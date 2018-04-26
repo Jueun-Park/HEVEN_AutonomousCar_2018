@@ -107,7 +107,7 @@ class Control:
 
             self.__cross__()
 
-    def get_control(self):
+    def write(self):
         return self.gear, self.speed, self.steer, self.brake
 
     def __default__(self):

@@ -16,6 +16,6 @@ while True:
     platform.recv()
     control.read(*platform.read())
     control.mission(...)
-    platform.write(*control.get_control())
+    platform.write(*control.write())
     platform.send()
 
