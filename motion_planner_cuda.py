@@ -19,7 +19,7 @@ class MotionPlanner():
         self.lidar.initiate()
 
     def loop(self):
-#pycuda alloc
+    # pycuda alloc
         drv.init()
         global context
         from pycuda.tools import make_default_context
@@ -44,11 +44,10 @@ class MotionPlanner():
             } 
             """)
         path = mod.get_function("detect")
-#pycuda alloc end
+        # pycuda alloc end
 
         Rad = np.int32(self.lidar.RADIUS)
         while True:
-            t1 = time.time()
             data = np.zeros((37, 2), np.int)
             current_frame = self.lidar.frame
 
@@ -65,16 +64,13 @@ class MotionPlanner():
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
-            t2 = time.time()
-            print('motion: ', t2 - t1)
-
-#pycuda dealloc
+        # pycuda dealloc
         context.pop()
         context = None
         from pycuda.tools import clear_context_caches
         clear_context_caches()
 
-#pycuda dealloc end
+        # pycuda dealloc end
 
 
     def initiate(self):
@@ -82,38 +78,6 @@ class MotionPlanner():
         thread.start()
 
 
-if __name__=="__main__" :
+if __name__ == "__main__" :
     motion_plan = MotionPlanner()
     motion_plan.initiate()
-
-'''
-canvas = np.zeros((400, 400), np.uint8)
-data = np.zeros((2, 19), np.int)
-
-cv2.circle(canvas, (300, 150), 70, 255, -1)
-
-for r in range(0, 600):
-    for theta in range(0, 91, 5):
-        x = int(r * np.cos(np.radians(theta)))
-        y = int(r * np.sin(np.radians(theta)))
-
-        if x >= 400 or y >= 400: continue
-
-        if data[0][int(theta / 5)] == 0:
-            data[1][int(theta / 5)] = r
-
-        if canvas[y][x] != 0:
-            data[0][int(theta / 5)] = 1
-
-print(data)
-
-for i in range(0, 19):
-    x = int(data[1][i] * np.cos(np.radians(i * 5)))
-    y = int(data[1][i] * np.sin(np.radians(i * 5)))
-    cv2.line(canvas, (0, 0), (x, y), 255)
-
-while True:
-    cv2.imshow('canvas', canvas)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'): break
-'''
