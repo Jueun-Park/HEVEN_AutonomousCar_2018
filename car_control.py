@@ -49,7 +49,7 @@ class Control:
         self.mission_num = 0  # (일반 주행 모드)
 
         self.mode = 0
-        self.default_y_dis = 1  # (임의의 값 / 1m)
+        self.default_y_dis = 0.1  # (임의의 값 / 1m)
 
         #######################################
         self.speed_platform = 0
@@ -85,7 +85,7 @@ class Control:
         if self.mission_num == 0:
             self.cross_track_error = first[0] / 100
             self.linear = first[1]
-            self.cul = first[2]
+            self.cul = first[2] / 100
 
             if self.mode == 0:
                 self.__default__()
@@ -94,8 +94,8 @@ class Control:
                 self.__default2__()
 
         elif self.mission_num == 1:
-            self.corner = first
-            self.place = second
+            # self.corner = first
+            # self.place = second
 
             self.__parking__()
 
@@ -115,7 +115,7 @@ class Control:
             self.__cross__()
 
         else:
-            self.obs_r = first[0]
+            self.obs_r = first[0] / 100
             self.obs_theta = first[1]
 
             self.__obs__()
@@ -175,7 +175,6 @@ class Control:
             self.theta_line = self.theta_line * (-1)
 
         k = 1
-
         if abs(self.theta_line) < 15 and abs(self.cross_track_error) < 0.27:
             k = 0.5
 
@@ -201,23 +200,36 @@ class Control:
 
     def __obs__(self):
         self.steer = 0
-        self.speed = 54
+        self.speed = 36
         self.gear = 0
         self.brake = 0
 
         cal_theta = abs(self.obs_theta)
-        x_position = (self.obs_r + 2.08 * math.cos(cal_theta)) / (2 * math.sin(cal_theta))
+        self.costheta = math.cos(cal_theta)
+        self.sintheta = math.sin(cal_theta)
+
+        if cal_theta == 0:
+            self.sintheta = 0.00000000001
+
+        self.cul_obs = (self.obs_r + 2.08 * self.costheta) / (2 * self.sintheta)
 
         # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
-        self.theta_obs = math.degrees(math.atan(1.04 / (x_position + 0.4925))) * 1.387
+        # self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925))) * 1.387 - 장애물 회피각 산출 코드
+
+        self.theta_cal = math.asin((1.04 + self.obs_r * self.costheta) / self.cul_obs)
+
+        self.son_obs = self.cul_obs * math.sin(self.theta_cal) - self.obs_r * self.costheta
+        self.mother_obs = self.cul_obs * math.cos(self.theta_cal) + 0.4925
+
+        self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
+
+        if self.obs_theta < 0:
+            self.theta_obs = self.theta_obs * (-1)
 
         self.adjust = 0.1
 
-        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs)
-
-        if self.obs_theta < 0:
-            steer_final = steer_final * (-1)
+        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs) * 1.387
 
         self.steer = steer_final * 71
 
