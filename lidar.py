@@ -42,7 +42,7 @@ class Lidar:
     def animation_loop(self):  # 저장한 데이터 그림 그려주는 메서드
         while True:
             canvas = np.zeros((self.RADIUS, self.RADIUS * 2), np.uint8)  # 내가 곧 그림을 그릴 곳 (넘파이어레이)
-            cv2.circle(canvas, (self.RADIUS, self.RADIUS), self.RADIUS, 255, 2)
+            cv2.circle(canvas, (self.RADIUS, self.RADIUS), self.RADIUS, 255, 1)
 
             points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
@@ -60,7 +60,7 @@ class Lidar:
                     points[angle][1] = self.RADIUS - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(canvas, tuple(point), 2, 255, -1) # 캔버스에 점 찍기
+                cv2.circle(canvas, tuple(point), 65, 255, -1) # 캔버스에 점 찍기
 
             self.frame = canvas
 

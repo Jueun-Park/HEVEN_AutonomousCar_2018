@@ -9,7 +9,7 @@ from pycuda.compiler import SourceModule
 import cv2
 import threading
 from lidar import Lidar
-import time
+from lanecam import LaneCam
 
 np.set_printoptions(linewidth=1000)
 
@@ -17,6 +17,7 @@ class MotionPlanner():
     def __init__(self):
         self.lidar = Lidar()
         self.lidar.initiate()
+
 
     def loop(self):
     # pycuda alloc
@@ -34,33 +35,48 @@ class MotionPlanner():
             {
                     for(int r = 0; r < rad[0]; r++) {
                         const int thetaIdx = threadIdx.x;
-                        const int theta = thetaIdx * 5;
+                        const int theta = thetaIdx;
                         int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
                         int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
 
                         if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
                         if (frame[y][x] != 0) data[thetaIdx][0] = 1;
                     }
-            } 
+            }
             """)
         path = mod.get_function("detect")
         # pycuda alloc end
 
         Rad = np.int32(self.lidar.RADIUS)
+
         while True:
-            data = np.zeros((37, 2), np.int)
+            data = np.zeros((181, 2), np.int)
             current_frame = self.lidar.frame
 
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(Rad), drv.In(current_frame), block=(37,1,1))
+                path(drv.InOut(data), drv.In(Rad), drv.In(current_frame), block=(181,1,1))
 
-                for i in range(0, 37):
-                    x = Rad + int(round(data[i][1] * np.cos(np.radians(i * 5)))) - 1
-                    y = Rad - int(round(data[i][1] * np.sin(np.radians(i * 5)))) - 1
+                for i in range(0, 181):
+                    x = Rad + int(round(data[i][1] * np.cos(np.radians(i * 1)))) - 1
+                    y = Rad - int(round(data[i][1] * np.sin(np.radians(i * 1)))) - 1
                     cv2.line(current_frame, (Rad, Rad), (x, y), 255)
 
-                cv2.imshow('lidar', current_frame)
-                #print(data)
+                color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
+
+                data_transpose = np.transpose(data)
+
+
+                #if np.sum(data_transpose[0]) <= 179:
+                    #target = np.min(abs(np.argwhere(data_transpose[0] == 0) - 90))
+                    #print(np.argwhere(data_transpose[0] == 0))
+                #else:
+                target = np.argmax(data.transpose()[1]) * 1
+
+                x_target = Rad + int(round(data[int(target)][1] * np.cos(np.radians(target)))) - 1
+                y_target = Rad - int(round(data[int(target)][1] * np.sin(np.radians(target)))) - 1
+                cv2.line(color, (Rad, Rad), (x_target, y_target), (0, 0, 255), 2)
+
+                cv2.imshow('lidar', color)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
@@ -75,7 +91,9 @@ class MotionPlanner():
 
     def initiate(self):
         thread = threading.Thread(target=self.loop)
+
         thread.start()
+
 
 
 if __name__ == "__main__" :
