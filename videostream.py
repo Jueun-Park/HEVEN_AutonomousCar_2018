@@ -1,5 +1,5 @@
-import threading
 import cv2
+import threading
 
 
 class VideoStream:
@@ -7,103 +7,114 @@ class VideoStream:
         self.frame = None
         self.frame_lock = threading.Lock()
 
-    def _frame_set(self, frame):
+    def write(self, frame):
+        if frame is None:
+            print('[VideoStream] No Frame')
+            return
+        with self.frame_lock:
+            self.frame = frame[:]
+
+    def read(self):
+        with self.frame_lock:
+            if self.frame is None:
+                return self.frame
+            return self.frame[:]
+
+
+class VideoWriteStream(VideoStream):
+    def __init__(self, filesrc, width, height, fps=20.0):
+        super().__init__()
+        self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (width, height))
+
+    def write(self, frame):
+        if frame is None:
+            print('[VideoStream] No Frame')
+            return
+        self.out.write(frame)
         with self.frame_lock:
             self.frame = frame
 
-    def _frame_get(self):
-        with self.frame_lock:
-            return self.frame[:]
-
-    def write(self, frame):
-        self._frame_set(frame)
-
-    def read(self):
-        return self._frame_get()
+    def stop(self):
+        self.out.release()
 
 
 class WebcamVideoStream:
-    def __init__(self, src, width, height, f=None):
+    def __init__(self, src, width, height):
         self.src = src
         self.width = width
         self.height = height
         self.frame_lock = threading.Lock()
-        self.started_lock = threading.Lock()
-        self.started = False
-        self.f = f
+        self.stop_fg = False
+        self.writing = False
 
-        self.stream = None
-        self.out = None
-        self.ret = None
-        self.frame = None
-        self.thread = None
-
-        self._start()
-
-    def _start(self):
-        if self._started_get():
-            self._stop()
-            print("[WebcamVideoStream] restart...")
         self.stream = cv2.VideoCapture(self.src)
         self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        self.thread = threading.Thread(target=self.update)
         self.ret, self.frame = self.stream.read()
-        self.started = True
-        self.thread = threading.Thread(target=self._update)
-        self.thread.start()
-
-    def _started_set(self, val):
-        with self.started_lock:
-            self.started = val
-
-    def _started_get(self):
-        with self.started_lock:
-            return self.started
-
-    def _frame_set(self, ret, frame):
-        # called in self.thread
-        with self.frame_lock:
-            self.ret, self.frame = ret, frame
-
-    def _frame_get(self):
-        with self.frame_lock:
-            return self.ret, self.frame[:]
-
-    def _update(self):
-        # called in self.thread
-        while self._started_get():
-            ret, frame = self.stream.read()
-            self._frame_set(ret, frame)
-
-    def _stop(self):
-        self._started_set(False)
-        self.thread.join()
-        self.stream.release()
+        self.out = None
 
     def start(self):
-        self._start()
+        self.thread.start()
+
+    def update(self):
+        while True:
+            ret, frame = self.stream.read()
+            if frame is None:
+                print('[WebcamVideoStream] No Frame')
+                return
+            with self.frame_lock:
+                self.ret, self.frame = ret, frame
+            if self.stop_fg is True:
+                return
 
     def read(self):
-        return self._frame_get()
+        with self.frame_lock:
+            if self.frame is None:
+                return self.ret, self.frame
+            return self.ret, self.frame[:]
 
     def stop(self):
-        self._stop()
+        self.stop_fg = True
+        self.thread.join()
+        self.stop_fg = False
+        if self.writing is True:
+            self.out.release()
+            self.writing = False
 
-    def xread(self, *param):
-        ret, frame = self.read()
-        return ret, self.f(ret, frame, *param)
+    def release(self):
+        self.stop()
 
-if __name__=="__main__":
-    cap = WebcamVideoStream(0, 800, 448)
-    output = cv2.VideoWriter('a.avi', cv2.VideoWriter_fourcc(*'XVID'), 60.0, (800, 448))
-    #cap = cv2.VideoCapture(0)
-    #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-    #cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 448)
+    def updatewrite(self):
+        while True:
+            ret, frame = self.stream.read()
+            if frame is None:
+                print('[WebcamVideoStream] No Frame')
+                return
+            self.out.write(frame)
+            with self.frame_lock:
+                self.ret, self.frame = ret, frame
+            if self.stop_fg is True:
+                return
 
-    while True:
-        ret, frame = cap.read()
-        final = cv2.flip(frame, 1)
-        cv2.imshow('1', final)
-        output.write(final)
-        if cv2.waitKey(1) & 0xFF == ord('q'): break
-    cap.stop()
+    def writefile(self, filesrc, fps=20.0):
+        self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (self.width, self.height))
+        self.thread = threading.Thread(target=self.updatewrite)
+        self.writing = True
+        self.start()
+
+
+# grame = numpy.zeros((480, 640, 3), dtype=numpy.uint8)
+import time
+cap = WebcamVideoStream(0, 640, 480)
+cap.writefile('1.avi')
+fin = VideoWriteStream('2.avi', 640, 480)
+t = time.time()
+while time.time() - t < 2:
+    tv = time.time()
+    ret, frame = cap.read()
+    final = cv2.flip(frame, 1)
+    fin.write(final)
+    time.sleep(0.01)
+print('OUTOUTOUTOUT')
+cap.release()
