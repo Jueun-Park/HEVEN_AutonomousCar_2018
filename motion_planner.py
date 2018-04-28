@@ -55,17 +55,16 @@ class MotionPlanner():
 
             if current_frame is not None:
                 path(drv.InOut(data), drv.In(Rad), drv.In(current_frame), block=(181,1,1))
+                data_transpose = np.transpose(data)
 
                 for i in range(0, 181):
-                    x = Rad + int(round(data[i][1] * np.cos(np.radians(i * 1)))) - 1
-                    y = Rad - int(round(data[i][1] * np.sin(np.radians(i * 1)))) - 1
+                    x = Rad + int(round(data_transpose[1][i] * np.cos(np.radians(i)))) - 1
+                    y = Rad - int(round(data_transpose[1][i] * np.sin(np.radians(i)))) - 1
                     cv2.line(current_frame, (Rad, Rad), (x, y), 255)
 
                 color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
-                data_transpose = np.transpose(data)
                 count = np.sum(data_transpose[0])
-                target = 0
 
 
                 if count <= 179:
@@ -75,14 +74,12 @@ class MotionPlanner():
                     for i in range(0, len(relative_position)):
                         if abs(relative_position[i]) == minimum_distance:
                             target = 90 + relative_position[i]
-                            print(target)
 
                 else:
-                    #target = np.argmax(data_transpose[1])
-                    print('hi')
+                    target = np.argmax(data_transpose[1])
 
-                x_target = Rad + int(round(float(data[int(target)][1] * np.cos(np.radians(target))))) - 1
-                y_target = Rad - int(round(float(data[int(target)][1] * np.sin(np.radians(target))))) - 1
+                x_target = Rad + int(data_transpose[1][int(target)] * np.cos(np.radians(int(target)))) - 1
+                y_target = Rad - int(data_transpose[1][int(target)] * np.sin(np.radians(int(target)))) - 1
                 cv2.line(color, (Rad, Rad), (x_target, y_target), (0, 0, 255), 2)
 
                 cv2.imshow('lidar', color)
