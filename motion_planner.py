@@ -33,7 +33,7 @@ class MotionPlanner():
             #define PI 3.14159265
             __global__ void detect(int data[][2], int *rad, unsigned char frame[][1000])
             {
-                    for(int r = 0; r < rad[0]; r++) {
+                    for(int r = 0; r < rad[0] - 2; r++) {
                         const int thetaIdx = threadIdx.x;
                         const int theta = thetaIdx;
                         int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
@@ -64,13 +64,22 @@ class MotionPlanner():
                 color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
                 data_transpose = np.transpose(data)
+                count = np.sum(data_transpose[0])
+                target = 0
 
 
-                #if np.sum(data_transpose[0]) <= 179:
-                    #target = np.min(abs(np.argwhere(data_transpose[0] == 0) - 90))
-                    #print(np.argwhere(data_transpose[0] == 0))
-                #else:
-                target = np.argmax(data.transpose()[1]) * 1
+                if count <= 179:
+                    relative_position = np.argwhere(data_transpose[0] == 0) - 90
+                    minimum_distance = int(min(abs(relative_position)))
+
+                    for i in range(0, len(relative_position)):
+                        if abs(relative_position[i]) == minimum_distance:
+                            target = 90 + relative_position[i]
+                            print(target)
+
+                else:
+                    #target = np.argmax(data_transpose[1])
+                    print('hi')
 
                 x_target = Rad + int(round(data[int(target)][1] * np.cos(np.radians(target)))) - 1
                 y_target = Rad - int(round(data[int(target)][1] * np.sin(np.radians(target)))) - 1
