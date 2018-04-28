@@ -58,8 +58,9 @@ class SerialPacket(object):
 
     def get_attr(self, mode=None):
         if mode == None: return self.gear, self.speed, self.steer, self.brake
-        if mode == 'all': pass
-        return self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes
+        if mode == 'a': return self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive
+        if mode == 'ra':  return self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes
+        return 'wrong mode'
 
     def read_bytes(self, b):
         try:

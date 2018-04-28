@@ -53,62 +53,48 @@ class PlatformSerial:
         steer = self.read_packet.steer / 71
         brake = (self.read_packet.brake - SerialPacket.BRAKE_NOBRAKE) / \
                 (SerialPacket.BRAKE_MAXBRAKE - SerialPacket.BRAKE_NOBRAKE)
-        print(self.read_packet.get_attr())
+        print('[READ]')
+        print(self.read_packet.get_attr(mode='a'))
         print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
         print()
 
 import time
-def test_move(timeout=2):
-    t1 = time.time()
-    while time.time() - t1 < timeout:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_FORWARD, 50, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
-        platform.send()
+def t_move():
+    platform.write(SerialPacket.GEAR_FORWARD, 40, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
 
-def test_back(timeout=2):
-    t1 = time.time()
-    while time.time() - t1 < timeout:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_BACKWARD, 60, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
-        platform.send()
+def t_back():
+    platform.write(SerialPacket.GEAR_BACKWARD, 60, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
 
-def test_stop(timeout=2):
-    t1 = time.time()
-    while time.time() - t1 < timeout:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 33)
-        platform.send()
+def t_stop():
+    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 60)
 
-def test_neutral(timeout=2):
-    t1 = time.time()
-    while time.time() - t1 < timeout:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
-        platform.send()
+def t_neutral():
+    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
 
-def test_left(timeout=2):
-    t1 = time.time()
-    while time.time() - t1 < timeout:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXLEFT, SerialPacket.BRAKE_NOBRAKE)
-        platform.send()
+def t_left():
+    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXLEFT, SerialPacket.BRAKE_NOBRAKE)
 
-def test_right(timeout=2):
-    t1 = time.time()
-    while time.time() - t1 < timeout:
-        platform.recv()
-        platform.print_status()
-        platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
-        platform.send()
+def t_right():
+    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
 
 if __name__ == '__main__':
     port = 'COM7'
     platform = PlatformSerial(port)
     while True:
-        test_move()
-        test_stop()
+        platform.recv()
+        platform.print_status()
+        t_stop()
+        platform.send()
+        if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
+            t = time.time()
+            while time.time() - t < 2:
+                platform.recv()
+                platform.print_status()
+                t_move()
+                platform.send()
+            t = time.time()
+            while time.time() - t < 2:
+                platform.recv()
+                platform.print_status()
+                t_stop()
+                platform.send()
