@@ -40,10 +40,12 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left = videostream.WebcamVideoStream('output_L_19.avi', 800, 448, f=self.frm_pretreatment)
-        self.video_right = videostream.WebcamVideoStream('output_R_19.avi', 800, 448, f=self.frm_pretreatment)
+        self.video_left = videostream.WebcamVideoStream(1, 800, 448)
+        self.video_right = videostream.WebcamVideoStream(0, 800, 448)
+        self.video_left.start('left.avi')
+        self.video_right.start('right.avi')
 
-        self.lane_cam_frame = videostream.VideoStream()
+        self.lane_cam_frame = videostream.VideoWriteStream('result.avi', 600, 300, isColor=False)
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -93,12 +95,12 @@ class LaneCam:
         return transposed
 
     def data_loop(self):
-        time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
+        #time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
 
         while True:
             # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
-            ret, left_frame = self.video_left.xread(*LaneCam.xreadParam_L)
-            ret, right_frame = self.video_right.xread(*LaneCam.xreadParam_R)
+            left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
+            right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
             left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
 
             # HSV, RGB 필터링으로 영상을 이진화 함
@@ -354,11 +356,11 @@ class LaneCam:
 
             filtered_both = np.vstack((filtered_R, filtered_L))
             final = cv2.flip(cv2.transpose(filtered_both), 1)
-
+            self.lane_cam_frame.write(final)
             cv2.imshow('2', final)
             if cv2.waitKey(1) & 0xFF == ord('q'): break
-        self.video_left.stop()
-        self.video_right.stop()
+        self.video_left.release()
+        self.video_right.release()
 
 
 if __name__ == "__main__":
