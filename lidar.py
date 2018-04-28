@@ -15,6 +15,7 @@ modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
 
 class Lidar:
     RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
+    NOISE_THRESHOLD = 10  # 노이즈 분류 기준
 
     def __init__(self):
         self.HOST = '169.254.248.220'
@@ -22,11 +23,12 @@ class Lidar:
         self.BUFF = 57600
         self.MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
-        self.data_list = []  # 데이터가 16진수 통으로 들어갈 것이다
+        self.prev_data_list = None
+        self.curr_data_list = None
 
         self.frame = None
 
-    def loop(self):  # 데이터 받아서 저장하는 메서드
+    def data_handling_loop(self):  # 데이터 받아서 저장하는 메서드
         self.sock_lidar = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_lidar.connect((self.HOST, self.PORT))
         self.sock_lidar.send(str.encode(self.MESG))
@@ -37,7 +39,20 @@ class Lidar:
             # 아래 줄은 그 응답 코드을 무시하고 바로 데이터를 받기 위해서 존재함
             if data.__contains__('sEA'): continue
 
-            self.data_list = data.split(' ')[116:477]
+            temp = data.split(' ')[116:477]
+            temp = [int(item, 16) for item in temp]
+
+            if self.prev_data_list is not None:
+                for i in range(0, 361):
+                    if abs(temp[i] - self.prev_data_list[i]) > self.NOISE_THRESHOLD:
+                        self.curr_data_list[i] = self.prev_data_list[i]
+                    else:
+                        self.curr_data_list[i] = temp[i]
+
+            else:
+                self.curr_data_list = temp
+
+            self.prev_data_list = self.curr_data_list
 
     def animation_loop(self):  # 저장한 데이터 그림 그려주는 메서드
         while True:
@@ -47,7 +62,7 @@ class Lidar:
             points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
             for angle in range(0, 361):
-                r = int(self.data_list[angle], 16) / 10  # 차에서 장애물까지의 거리, 단위는 cm
+                r = self.curr_data_list[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
                 if 2 <= r <= self.RADIUS:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
@@ -60,16 +75,16 @@ class Lidar:
                     points[angle][1] = self.RADIUS - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(canvas, tuple(point), 65, 255, -1) # 캔버스에 점 찍기
+                cv2.circle(canvas, tuple(point), 2, 255, -1) # 캔버스에 점 찍기
 
             self.frame = canvas
 
-            #cv2.imshow('lidar', canvas)  # 창 띄워서 확인
+            cv2.imshow('lidar', canvas)  # 창 띄워서 확인
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
 
     def initiate(self):  # 루프 시작
-        receiving_thread = threading.Thread(target=self.loop)  # 데이터 받는 루프
+        receiving_thread = threading.Thread(target=self.data_handling_loop)  # 데이터 받는 루프
         animation_thread = threading.Thread(target=self.animation_loop)  # 창 띄워서 장애물 보여주기 루프
 
         receiving_thread.start()
