@@ -81,8 +81,8 @@ class MotionPlanner():
                     #target = np.argmax(data_transpose[1])
                     print('hi')
 
-                x_target = Rad + int(round(data[int(target)][1] * np.cos(np.radians(target)))) - 1
-                y_target = Rad - int(round(data[int(target)][1] * np.sin(np.radians(target)))) - 1
+                x_target = Rad + int(round(float(data[int(target)][1] * np.cos(np.radians(target))))) - 1
+                y_target = Rad - int(round(float(data[int(target)][1] * np.sin(np.radians(target))))) - 1
                 cv2.line(color, (Rad, Rad), (x_target, y_target), (0, 0, 255), 2)
 
                 cv2.imshow('lidar', color)
