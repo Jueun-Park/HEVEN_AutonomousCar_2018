@@ -37,6 +37,9 @@ class VideoWriteStream(VideoStream):
     def stop(self):
         self.out.release()
 
+    def release(self):
+        self.stop()
+
 
 class WebcamVideoStream:
     def __init__(self, src, width, height):
