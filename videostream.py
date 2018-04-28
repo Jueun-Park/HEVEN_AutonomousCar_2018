@@ -22,9 +22,9 @@ class VideoStream:
 
 
 class VideoWriteStream(VideoStream):
-    def __init__(self, filesrc, width, height, fps=20.0):
+    def __init__(self, filesrc, width, height, fps=20.0, isColor=True):
         super().__init__()
-        self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (width, height))
+        self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (width, height), isColor)
 
     def write(self, frame):
         if frame is None:
@@ -54,7 +54,11 @@ class WebcamVideoStream:
         self.ret, self.frame = self.stream.read()
         self.out = None
 
-    def start(self):
+    def start(self, filesrc=None, fps=60.0):
+        if filesrc is not None:
+            self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (self.width, self.height))
+            self.thread = threading.Thread(target=self.updatewrite)
+            self.writing = True
         self.thread.start()
 
     def update(self):
@@ -63,6 +67,18 @@ class WebcamVideoStream:
             if frame is None:
                 print('[WebcamVideoStream] No Frame')
                 return
+            with self.frame_lock:
+                self.ret, self.frame = ret, frame
+            if self.stop_fg is True:
+                return
+
+    def updatewrite(self):
+        while True:
+            ret, frame = self.stream.read()
+            if frame is None:
+                print('[WebcamVideoStream] No Frame')
+                return
+            self.out.write(frame)
             with self.frame_lock:
                 self.ret, self.frame = ret, frame
             if self.stop_fg is True:
@@ -85,36 +101,19 @@ class WebcamVideoStream:
     def release(self):
         self.stop()
 
-    def updatewrite(self):
-        while True:
-            ret, frame = self.stream.read()
-            if frame is None:
-                print('[WebcamVideoStream] No Frame')
-                return
-            self.out.write(frame)
-            with self.frame_lock:
-                self.ret, self.frame = ret, frame
-            if self.stop_fg is True:
-                return
 
-    def writefile(self, filesrc, fps=20.0):
-        self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (self.width, self.height))
-        self.thread = threading.Thread(target=self.updatewrite)
-        self.writing = True
-        self.start()
-
-
-# grame = numpy.zeros((480, 640, 3), dtype=numpy.uint8)
-import time
-cap = WebcamVideoStream(0, 640, 480)
-cap.writefile('1.avi')
-fin = VideoWriteStream('2.avi', 640, 480)
-t = time.time()
-while time.time() - t < 2:
-    tv = time.time()
-    ret, frame = cap.read()
-    final = cv2.flip(frame, 1)
-    fin.write(final)
-    time.sleep(0.01)
-print('OUTOUTOUTOUT')
-cap.release()
+if __name__ == "__main__":
+    # grame = numpy.zeros((480, 640, 3), dtype=numpy.uint8)
+    import time
+    cap = WebcamVideoStream(0, 640, 480)
+    cap.start('1.avi')
+    fin = VideoWriteStream('2.avi', 640, 480)
+    t = time.time()
+    while time.time() - t < 2:
+        tv = time.time()
+        ret, frame = cap.read()
+        final = cv2.flip(frame, 1)
+        fin.write(final)
+        time.sleep(0.01)
+    print('OUTOUTOUTOUT')
+    cap.release()
