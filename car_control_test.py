@@ -1,4 +1,3 @@
-# 엔코더 앞바퀴 왼쪽에 부착
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
@@ -40,8 +39,8 @@ class Control:
         self.pt7 = 0
         self.pt8 = 0
 
-        self.usit = 0
-        self.psit = 0
+        self.usit = 1
+        self.psit = 1
 
         self.mission_num = 0  # (일반 주행 모드)
 
@@ -93,6 +92,8 @@ class Control:
                 self.__default2__()
 
         elif self.mission_num == 1:
+            # self.corner = first
+            # self.place = second
 
             self.__parking__()
 
@@ -102,6 +103,7 @@ class Control:
             self.__moving__()
 
         elif self.mission_num == 6:
+            self.obs_uturn = first
 
             self.__uturn__()
 
@@ -385,6 +387,14 @@ class Control:
         self.speed = 36
         self.gear = 0
         self.brake = 0
+
+        self.obs_y = self.obs_uturn[1] / 100
+
+        if abs(self.obs_y) < self.car_front:
+            self.speed = 0
+
+            if self.usit == 0:
+                self.usit = 1
 
         if self.usit == 1:
             self.speed = 36
