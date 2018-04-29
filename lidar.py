@@ -41,41 +41,9 @@ class Lidar:
             temp = data.split(' ')[116:477]
             self.data_list = [int(item, 16) for item in temp]
 
-    def plotting_loop(self):  # 저장한 데이터 그림 그려주는 메서드
-        while True:
-            canvas = np.zeros((self.RADIUS, self.RADIUS * 2), np.uint8)  # 내가 곧 그림을 그릴 곳 (넘파이어레이)
-            cv2.circle(canvas, (self.RADIUS, self.RADIUS), self.RADIUS, 255, 1)
-
-            points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
-
-            for angle in range(0, 361):
-                r = self.data_list[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
-
-                if 2 <= r <= self.RADIUS:  # 라이다 바로 앞 1cm 의 노이즈는 무시
-
-                    # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
-                    x = -r * math.cos(math.radians(0.5 * angle))
-                    y = r * math.sin(math.radians(0.5 * angle))
-
-                    # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
-                    points[angle][0] = round(x) + self.RADIUS
-                    points[angle][1] = self.RADIUS - round(y)
-
-            for point in points:  # 장애물들에 대하여
-                cv2.circle(canvas, tuple(point), 2 , 255, -1) # 캔버스에 점 찍기
-
-            self.frame = canvas
-
-            # cv2.imshow('lidar', canvas)  # 창 띄워서 확인
-            # if cv2.waitKey(1) & 0xFF == ord('q'): break
-
     def initiate(self):  # 루프 시작
         receiving_thread = threading.Thread(target=self.data_handling_loop)  # 데이터 받는 루프
-        plotting_thread = threading.Thread(target=self.plotting_loop)  # 창 띄워서 장애물 보여주기 루프
-
         receiving_thread.start()
-        time.sleep(2)
-        plotting_thread.start()
 
 
 if __name__ == "__main__":
