@@ -13,7 +13,7 @@ class Parabola:
 
     # 기울기 구하는 함수
     def get_derivative(self, x):
-        derivative = self.a1 = 2 * self.a2 * x
+        derivative = self.a1 + 2 * self.a2 * x
         return derivative
 
     # 함숫값 구하는 함수
