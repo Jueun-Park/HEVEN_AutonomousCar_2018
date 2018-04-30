@@ -200,7 +200,7 @@ class Control:
         self.gear = 0
         self.brake = 0
 
-        cal_theta = abs(self.obs_theta)
+        cal_theta = math.radians(abs(self.obs_theta))
         self.costheta = math.cos(cal_theta)
         self.sintheta = math.sin(cal_theta)
 
@@ -212,7 +212,7 @@ class Control:
 
             # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
-            # self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925))) * 1.387 - 장애물 회피각 산출 코드
+            # self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925))) - 장애물 회피각 산출 코드
 
             self.theta_cal = math.asin((1.04 + self.obs_r * self.costheta) / self.cul_obs)
 

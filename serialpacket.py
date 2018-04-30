@@ -41,7 +41,7 @@ class SerialPacket(object):
         if attr == 'end_bytes': super().__setattr__(attr, np.array(v, np.uint8)); return
         super().__setattr__(attr, v)
 
-    def _default(self):
+    def default(self):
         self.start_bytes = SerialPacket.START_BYTES
         self.aorm = SerialPacket.AORM_DEFAULT
         self.estop = SerialPacket.ESTOP_DEFAULT
@@ -52,9 +52,6 @@ class SerialPacket(object):
         self.enc = 0
         self.alive = 0
         self.end_bytes = SerialPacket.END_BYTES
-
-    def default(self):
-        self._default()
 
     def get_attr(self, mode=None):
         if mode == None: return self.gear, self.speed, self.steer, self.brake
@@ -68,7 +65,7 @@ class SerialPacket(object):
         except:
             print('[SerialPacket| READ ERROR:', b)
             print('-Set to default value]')
-            self._default()
+            self.default()
             return
 
         self.start_bytes = bytearray(u[0])
@@ -88,7 +85,7 @@ class SerialPacket(object):
         except:
             print('[SerialPacket| WRITE ERROR]')
             print('-Set to default value]')
-            self._default()
+            self.default()
             b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
         return b
 

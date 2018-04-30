@@ -22,11 +22,19 @@ class VideoStream:
 
 
 class VideoWriteStream(VideoStream):
-    def __init__(self, filesrc, width, height, fps=20.0, isColor=True):
+    def __init__(self, filesrc, fps=20.0):
         super().__init__()
-        self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (width, height), isColor)
+        self.filesrc = filesrc
+        self.fps = fps
+
+    def initWrite(self, frame):
+        isColor = False
+        if frame.ndim == 3: isColor = True
+        self.out = cv2.VideoWriter(self.filesrc, cv2.VideoWriter_fourcc(*'DIVX'), self.fps, (len(frame[0]), len(frame)), isColor)
+        self.initWrite = (lambda x: None)
 
     def write(self, frame):
+        self.initWrite(frame)
         if frame is None:
             print('[VideoStream] No Frame')
             return
@@ -110,7 +118,7 @@ if __name__ == "__main__":
     import time
     cap = WebcamVideoStream(0, 640, 480)
     cap.start('1.avi')
-    fin = VideoWriteStream('2.avi', 640, 480)
+    fin = VideoWriteStream('2.avi')
     t = time.time()
     while time.time() - t < 2:
         tv = time.time()
