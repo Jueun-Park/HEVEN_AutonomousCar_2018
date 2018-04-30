@@ -10,6 +10,7 @@ import cv2
 import threading
 from parabola import Parabola
 from lidar import Lidar
+import time
 
 
 class MotionPlanner():
@@ -70,7 +71,7 @@ class MotionPlanner():
                     points[angle][1] = RAD - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(current_frame, tuple(point), 2, 255, -1)  # 캔버스에 점 찍기
+                cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
 
             data = np.zeros((181, 2), np.int)
 
@@ -120,5 +121,9 @@ class MotionPlanner():
 
 
 if __name__ == "__main__" :
-    motion_plan = MotionPlanner()
+    lidar = Lidar()
+    lidar.initiate()
+    time.sleep(2)
+
+    motion_plan = MotionPlanner(lidar, None, None)
     motion_plan.initiate()
