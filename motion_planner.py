@@ -51,11 +51,8 @@ class MotionPlanner():
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
 
-        data = np.zeros((181, 2), np.int)
         previous_data = None
-
-        target = 0
-        previous_target = 0
+        previous_target = None
 
         while True:
             lidar_raw_data = self.lidar.data_list
@@ -79,6 +76,7 @@ class MotionPlanner():
             for point in points:  # 장애물들에 대하여
                 cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
 
+            data = np.zeros((181, 2), np.int)
             if current_frame is not None:
                 path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), block=(181,1,1))
                 data_transposed = np.transpose(data)
@@ -98,12 +96,12 @@ class MotionPlanner():
 
                     for i in range(0, len(relative_position)):
                         if abs(relative_position[i]) == minimum_distance:
-                            target = 90 + relative_position[i]
+                            target = int(90 + relative_position[i])
 
                 else:
-                    target = np.argmax(data_transposed[1])
+                    target = int(np.argmax(data_transposed[1]))
 
-                if previous_data is not None and abs(previous_data[previous_target] - data[previous_target]) <= 2:
+                if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 2:
                     target = previous_target
 
                 x_target = RAD + int(data_transposed[1][int(target)] * np.cos(np.radians(int(target)))) - 1
