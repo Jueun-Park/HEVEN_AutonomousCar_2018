@@ -128,7 +128,6 @@ class MotionPlanner():
 
     def initiate(self):
         thread = threading.Thread(target=self.loop)
-
         thread.start()
 
 
