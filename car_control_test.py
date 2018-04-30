@@ -44,7 +44,9 @@ class Control:
 
         self.mission_num = 0  # (일반 주행 모드)
 
-        self.mode = 0
+        self.default_mode = 0
+        self.obs_mode = 1
+        
         self.default_y_dis = 0.1  # (임의의 값 / 1m)
 
         #######################################
@@ -85,10 +87,10 @@ class Control:
             self.linear = first[1]
             self.cul = first[2] / 100
 
-            if self.mode == 0:
+            if self.default_mode == 0:
                 self.__default__()
 
-            elif self.mode == 1:
+            elif self.default_mode == 1:
                 self.__default2__()
 
         elif self.mission_num == 1:
@@ -210,18 +212,20 @@ class Control:
             self.theta_obs = 0
 
         else:
-            self.cul_obs = (self.obs_r + 2.08 * self.costheta) / (2 * self.sintheta)
+            if self.obs_mode == 0:
+                self.cul_obs = (self.obs_r + 2.08 * self.costheta) / (2 * self.sintheta)
 
-            # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
+                # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
-            self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
+                self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
 
-            # self.theta_cal = math.asin((1.04 + self.obs_r * self.costheta) / self.cul_obs)
+            elif self.obs_mode == 1:
+                self.theta_cal = math.asin((1.04 + self.obs_r * self.costheta) / self.cul_obs)
 
-            # self.son_obs = self.cul_obs * math.sin(self.theta_cal) - self.obs_r * self.costheta
-            # self.mother_obs = self.cul_obs * math.cos(self.theta_cal) + 0.4925
+                self.son_obs = self.cul_obs * math.sin(self.theta_cal) - self.obs_r * self.costheta
+                self.mother_obs = self.cul_obs * math.cos(self.theta_cal) + 0.4925
 
-            # self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
+                self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
 
         if (self.obs_theta - 90) > 0:
             self.theta_obs = self.theta_obs * (-1)
