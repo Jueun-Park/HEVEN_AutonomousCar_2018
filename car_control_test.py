@@ -226,7 +226,7 @@ class Control:
         if (self.obs_theta - 90) > 0:
             self.theta_obs = self.theta_obs * (-1)
 
-        self.adjust = 0.1
+        self.adjust = 0.05
 
         steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs) * 1.387
 
