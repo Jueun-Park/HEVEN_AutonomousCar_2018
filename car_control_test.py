@@ -223,7 +223,7 @@ class Control:
 
             self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
 
-        if (self.obs_theta - 90) > 0:
+        if (self.obs_theta - 90) < 0:
             self.theta_obs = self.theta_obs * (-1)
 
         self.adjust = 0.1
