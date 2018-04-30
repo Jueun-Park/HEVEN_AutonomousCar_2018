@@ -45,7 +45,7 @@ class LaneCam:
         self.video_left.start('left.avi')
         self.video_right.start('right.avi')
 
-        self.lane_cam_frame = videostream.VideoWriteStream('result.avi', 600, 300, isColor=False)
+        self.lane_cam_frame = videostream.VideoWriteStream('result.avi')
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
