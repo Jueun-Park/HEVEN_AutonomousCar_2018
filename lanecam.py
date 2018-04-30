@@ -95,7 +95,7 @@ class LaneCam:
         return transposed
 
     def data_loop(self):
-        #time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
+        time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
 
         while True:
             # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기

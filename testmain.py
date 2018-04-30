@@ -1,21 +1,26 @@
 from communication import PlatformSerial
-from motion_planner_cuda import MotionPlanner
-from car_control import Control
+from motion_planner import MotionPlanner
+from car_control_test import Control
+from lidar import Lidar
+import time
 
-# port = '/dev/ttyUSB0'
-port = 'COM7'
-# e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
-platform = PlatformSerial(port)
+platform = PlatformSerial('COM7')
+lidar = Lidar()
+lidar.initiate()
+time.sleep(2)
 
-motion = MotionPlanner()
+motion = MotionPlanner(lidar)
 motion.initiate()
-
 control = Control()
 
 while True:
     platform.recv()
     control.read(*platform.read())
-    control.mission(...)
+
+    if motion.target_angle is not None and motion.distance is not None:
+        tup = (motion.distance, motion.target_angle)
+        control.mission(10, tup, None)
+        print(tup, '   ', control.steer)
+
     platform.write(*control.write())
     platform.send()
-

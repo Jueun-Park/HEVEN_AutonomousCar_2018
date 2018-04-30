@@ -16,12 +16,13 @@ import time
 class MotionPlanner():
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
 
-    def __init__(self, lidar_instance, lanecam_instance, signcam_instance):
-        self.lidar = lidar_instance
-        self.lanecam = lanecam_instance
-        self.signcam = signcam_instance
+    def __init__(self, lidar_instance): #, lidar_instance, lanecam_instance, signcam_instance):
+        self.lidar = lidar_instance #lidar_instance
+        self.lanecam = None #lanecam_instance
+        self.signcam = None #signcam_instance
 
         self.target_angle = None
+        self.distance = None
 
     def loop(self):
     # pycuda alloc
@@ -65,7 +66,7 @@ class MotionPlanner():
             for angle in range(0, 361):
                 r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
-                if 2 <= r <= RAD:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+                if 2 <= r <= RAD + 50:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                     # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
                     x = -r * np.cos(np.radians(0.5 * angle))
@@ -92,7 +93,13 @@ class MotionPlanner():
 
                 count = np.sum(data_transposed[0])
 
+                if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 3:
+                    target = previous_target
+
+                #if count == 181: target = 90
+
                 if count <= 179:
+
                     relative_position = np.argwhere(data_transposed[0] == 0) - 90
                     minimum_distance = int(min(abs(relative_position)))
 
@@ -103,10 +110,11 @@ class MotionPlanner():
                 else:
                     target = int(np.argmax(data_transposed[1]))
 
-                if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 2:
-                    target = previous_target
+                if np.sum(data_transposed[1]) == 0:
+                    target = 90
 
                 self.target_angle = target
+                self.distance = data_transposed[1][target]
 
                 x_target = RAD + int(data_transposed[1][int(target)] * np.cos(np.radians(int(target)))) - 1
                 y_target = RAD - int(data_transposed[1][int(target)] * np.sin(np.radians(int(target)))) - 1
@@ -136,5 +144,5 @@ if __name__ == "__main__" :
     lidar.initiate()
     time.sleep(2)
 
-    motion_plan = MotionPlanner(lidar, None, None)
+    motion_plan = MotionPlanner(lidar)
     motion_plan.initiate()

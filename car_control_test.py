@@ -198,7 +198,7 @@ class Control:
 
     def __obs__(self):
         self.steer = 0
-        self.speed = 36
+        self.speed = 18
         self.gear = 0
         self.brake = 0
 
