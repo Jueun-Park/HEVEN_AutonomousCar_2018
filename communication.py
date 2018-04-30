@@ -12,32 +12,20 @@ class PlatformSerial:
         self.read_packet = SerialPacket()
         self.write_packet = SerialPacket()
 
-    def _read(self, packet=SerialPacket()):
+    def send(self):
+        self.write_packet.alive = self.read_packet.alive
+        try:
+            self.ser.write(self.write_packet.write_bytes())
+        except Exception as e:
+            print('[PlatformSerial| WRITE ERROR', e, ']')
+
+    def recv(self):
         try:
             b = self.ser.read(18)
         except Exception as e:
             print('[PlatformSerial| READ ERROR', e, ']')
             return
-        packet.read_bytes(b)
-
-    def _write(self, packet=SerialPacket()):
-        try:
-            self.ser.write(packet.write_bytes())
-        except Exception as e:
-            print('[PlatformSerial| WRITE ERROR', e, ']')
-
-    def send(self):
-        self.write_packet.alive = self.read_packet.alive
-        self._write(self.write_packet)
-
-    def recv(self):
-        self._read(self.read_packet)
-
-    def set_automode(self):
-        self.write_packet.aorm = SerialPacket.AORM_AUTO
-
-    def set_manualmode(self):
-        self.write_packet.aorm = SerialPacket.AORM_MANUAL
+        self.read_packet.read_bytes(b)
 
     def read(self):
         return self.read_packet.speed, self.read_packet.enc
