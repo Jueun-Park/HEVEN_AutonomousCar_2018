@@ -2,22 +2,23 @@
 # input: 1. numpy array (from lidar)
 #        2. numpy array (from lane_cam)
 # output: 차선 center 위치, 기울기, 곡률이 담긴 numpy array
+
 import pycuda.driver as drv
 import numpy as np
 from pycuda.compiler import SourceModule
-
 import cv2
 import threading
+from parabola import Parabola
 from lidar import Lidar
-from lanecam import LaneCam
 
-np.set_printoptions(linewidth=1000)
 
 class MotionPlanner():
-    def __init__(self):
-        self.lidar = Lidar()
-        self.lidar.initiate()
+    OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
 
+    def __init__(self, lidar_instance, lanecam_instance, signcam_instance):
+        self.lidar = lidar_instance
+        self.lanecam = lanecam_instance
+        self.signcam = signcam_instance
 
     def loop(self):
     # pycuda alloc
@@ -31,8 +32,7 @@ class MotionPlanner():
             #include <math.h>
 
             #define PI 3.14159265
-            __global__ void detect(int data[][2], int *rad, unsigned char frame[][1000])
-            {
+            __global__ void detect(int data[][2], int *rad, unsigned char frame[][1000]) {
                     for(int r = 0; r < rad[0] - 2; r++) {
                         const int thetaIdx = threadIdx.x;
                         const int theta = thetaIdx;
@@ -44,31 +44,51 @@ class MotionPlanner():
                     }
             }
             """)
+
         path = mod.get_function("detect")
         # pycuda alloc end
 
-        Rad = np.int32(self.lidar.RADIUS)
+        RAD = np.int32(self.OBSTACLE_RADIUS)
 
         while True:
+            lidar_raw_data = self.lidar.data_list
+            current_frame = np.zeros((RAD, RAD * 2), np.uint8)
+
+            points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
+
+            for angle in range(0, 361):
+                r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
+
+                if 2 <= r <= RAD:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+
+                    # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
+                    x = -r * np.cos(np.radians(0.5 * angle))
+                    y = r * np.sin(np.radians(0.5 * angle))
+
+                    # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
+                    points[angle][0] = round(x) + RAD
+                    points[angle][1] = RAD - round(y)
+
+            for point in points:  # 장애물들에 대하여
+                cv2.circle(current_frame, tuple(point), 2, 255, -1)  # 캔버스에 점 찍기
+
             data = np.zeros((181, 2), np.int)
-            current_frame = self.lidar.frame
 
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(Rad), drv.In(current_frame), block=(181,1,1))
-                data_transpose = np.transpose(data)
+                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), block=(181,1,1))
+                data_transposed = np.transpose(data)
 
                 for i in range(0, 181):
-                    x = Rad + int(round(data_transpose[1][i] * np.cos(np.radians(i)))) - 1
-                    y = Rad - int(round(data_transpose[1][i] * np.sin(np.radians(i)))) - 1
-                    cv2.line(current_frame, (Rad, Rad), (x, y), 255)
+                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i)))) - 1
+                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i)))) - 1
+                    cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
                 color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
-                count = np.sum(data_transpose[0])
-
+                count = np.sum(data_transposed[0])
 
                 if count <= 179:
-                    relative_position = np.argwhere(data_transpose[0] == 0) - 90
+                    relative_position = np.argwhere(data_transposed[0] == 0) - 90
                     minimum_distance = int(min(abs(relative_position)))
 
                     for i in range(0, len(relative_position)):
@@ -76,11 +96,11 @@ class MotionPlanner():
                             target = 90 + relative_position[i]
 
                 else:
-                    target = np.argmax(data_transpose[1])
+                    target = np.argmax(data_transposed[1])
 
-                x_target = Rad + int(data_transpose[1][int(target)] * np.cos(np.radians(int(target)))) - 1
-                y_target = Rad - int(data_transpose[1][int(target)] * np.sin(np.radians(int(target)))) - 1
-                cv2.line(color, (Rad, Rad), (x_target, y_target), (0, 0, 255), 2)
+                x_target = RAD + int(data_transposed[1][int(target)] * np.cos(np.radians(int(target)))) - 1
+                y_target = RAD - int(data_transposed[1][int(target)] * np.sin(np.radians(int(target)))) - 1
+                cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 cv2.imshow('lidar', color)
 
@@ -91,15 +111,12 @@ class MotionPlanner():
         context = None
         from pycuda.tools import clear_context_caches
         clear_context_caches()
-
         # pycuda dealloc end
-
 
     def initiate(self):
         thread = threading.Thread(target=self.loop)
 
         thread.start()
-
 
 
 if __name__ == "__main__" :
