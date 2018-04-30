@@ -33,7 +33,7 @@ class MotionPlanner():
             #include <math.h>
 
             #define PI 3.14159265
-            __global__ void detect(int data[][2], int *rad, unsigned char frame[][1000]) {
+            __global__ void detect(int data[][2], int *rad, unsigned char *frame, int *pcol) {
                     for(int r = 0; r < rad[0] - 2; r++) {
                         const int thetaIdx = threadIdx.x;
                         const int theta = thetaIdx;
@@ -41,7 +41,7 @@ class MotionPlanner():
                         int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
 
                         if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
-                        if (frame[y][x] != 0) data[thetaIdx][0] = 1;
+                        if (*(frame + y * *pcol + x) != 0) data[thetaIdx][0] = 1;
                     }
             }
             """)
@@ -78,7 +78,7 @@ class MotionPlanner():
 
             data = np.zeros((181, 2), np.int)
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), block=(181,1,1))
+                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(181,1,1))
                 data_transposed = np.transpose(data)
 
                 for i in range(0, 181):
