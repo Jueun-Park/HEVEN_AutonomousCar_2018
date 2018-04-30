@@ -21,6 +21,8 @@ class MotionPlanner():
         self.lanecam = lanecam_instance
         self.signcam = signcam_instance
 
+        self.target_angle = None
+
     def loop(self):
     # pycuda alloc
         drv.init()
@@ -104,6 +106,8 @@ class MotionPlanner():
                 if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 2:
                     target = previous_target
 
+                self.target_angle = target
+
                 x_target = RAD + int(data_transposed[1][int(target)] * np.cos(np.radians(int(target)))) - 1
                 y_target = RAD - int(data_transposed[1][int(target)] * np.sin(np.radians(int(target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
@@ -124,7 +128,6 @@ class MotionPlanner():
 
     def initiate(self):
         thread = threading.Thread(target=self.loop)
-
         thread.start()
 
 
