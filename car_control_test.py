@@ -202,7 +202,7 @@ class Control:
         self.gear = 0
         self.brake = 0
 
-        cal_theta = math.radians(abs(self.obs_theta))
+        cal_theta = math.radians(abs(self.obs_theta - 90))
         self.costheta = math.cos(cal_theta)
         self.sintheta = math.sin(cal_theta)
 
@@ -223,7 +223,7 @@ class Control:
 
             self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
 
-        if self.obs_theta < 0:
+        if (self.obs_theta - 90) > 0:
             self.theta_obs = self.theta_obs * (-1)
 
         self.adjust = 0.1
