@@ -214,14 +214,14 @@ class Control:
 
             # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
-            # self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925))) - 장애물 회피각 산출 코드
+            self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
 
-            self.theta_cal = math.asin((1.04 + self.obs_r * self.costheta) / self.cul_obs)
+            # self.theta_cal = math.asin((1.04 + self.obs_r * self.costheta) / self.cul_obs)
 
-            self.son_obs = self.cul_obs * math.sin(self.theta_cal) - self.obs_r * self.costheta
-            self.mother_obs = self.cul_obs * math.cos(self.theta_cal) + 0.4925
+            # self.son_obs = self.cul_obs * math.sin(self.theta_cal) - self.obs_r * self.costheta
+            # self.mother_obs = self.cul_obs * math.cos(self.theta_cal) + 0.4925
 
-            self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
+            # self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
 
         if (self.obs_theta - 90) > 0:
             self.theta_obs = self.theta_obs * (-1)
