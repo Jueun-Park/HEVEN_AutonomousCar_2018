@@ -37,14 +37,14 @@ class MotionPlanner():
 
             #define PI 3.14159265
             __global__ void detect(int data[][2], int *rad, unsigned char *frame, int *pcol) {
-                    for(int r = 0; r < rad[0] - 2; r++) {
+                    for(int r = 0; r < rad[0]; r++) {
                         const int thetaIdx = threadIdx.x;
-                        const int theta = thetaIdx;
+                        const int theta = thetaIdx + 30;
                         int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
                         int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
 
-                        if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
-                        if (*(frame + y * *pcol + x) != 0) data[thetaIdx][0] = 1;
+                        if (data[thetaIdx + 30][0] == 0) data[thetaIdx + 30][1] = r;
+                        if (*(frame + y * *pcol + x) != 0) data[thetaIdx + 30][0] = 1;
                     }
             }
             """)
@@ -80,13 +80,14 @@ class MotionPlanner():
                 cv2.circle(current_frame, tuple(point), 55, 255, -1)  # 캔버스에 점 찍기
 
             data = np.zeros((181, 2), np.int)
+
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(181,1,1))
+                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
                 data_transposed = np.transpose(data)
 
-                for i in range(0, 181):
-                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i)))) - 1
-                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i)))) - 1
+                for i in range(0, 121):
+                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i + 30)))) - 1
+                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i + 30)))) - 1
                     cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
                 color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
@@ -96,16 +97,13 @@ class MotionPlanner():
                 if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 3:
                     target = previous_target
 
-                #if count == 181: target = 90
-
                 if count <= 179:
-
-                    relative_position = np.argwhere(data_transposed[0] == 0) - 90
+                    relative_position = np.argwhere(data_transposed[0] == 0) - 60
                     minimum_distance = int(min(abs(relative_position)))
 
                     for i in range(0, len(relative_position)):
                         if abs(relative_position[i]) == minimum_distance:
-                            target = int(90 + relative_position[i])
+                            target = int(60 + relative_position[i])
 
                 else:
                     target = int(np.argmax(data_transposed[1]))
