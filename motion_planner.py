@@ -79,7 +79,7 @@ class MotionPlanner():
             for point in points:  # 장애물들에 대하여
                 cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
 
-            data = np.zeros((181, 2), np.int)
+            data = np.zeros((121, 2), np.int)
 
             if current_frame is not None:
                 path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
@@ -97,7 +97,7 @@ class MotionPlanner():
                 if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 3:
                     target = previous_target
 
-                if count <= 179:
+                if count <= 119:
                     relative_position = np.argwhere(data_transposed[0] == 0) - 60
                     minimum_distance = int(min(abs(relative_position)))
 
