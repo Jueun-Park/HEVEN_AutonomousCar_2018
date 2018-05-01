@@ -15,6 +15,7 @@ import time
 
 class MotionPlanner():
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
+    RANGE = 120
 
     def __init__(self, lidar_instance): #, lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = lidar_instance #lidar_instance
@@ -36,7 +37,8 @@ class MotionPlanner():
             #include <math.h>
 
             #define PI 3.14159265
-            __global__ void detect(int data[][2], int *rad, unsigned char *frame, int *pcol) {
+            __global__ void detect(int data[][2], int* rad, int* range, unsigned char *frame, int *pcol) {
+                    printf("%d\n", range[0]);
                     for(int r = 0; r < rad[0]; r++) {
                         const int thetaIdx = threadIdx.x;
                         const int theta = thetaIdx + 30;
@@ -82,7 +84,7 @@ class MotionPlanner():
             data = np.zeros((121, 2), np.int)
 
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
+                path(drv.InOut(data), drv.In(RAD), drv.In(self.RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
                 data_transposed = np.transpose(data)
 
                 for i in range(0, 121):
