@@ -15,7 +15,7 @@ import time
 
 class MotionPlanner():
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
-    RANGE = 90
+    RANGE = 110
 
     def __init__(self, lidar_instance): #, lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = lidar_instance #lidar_instance
