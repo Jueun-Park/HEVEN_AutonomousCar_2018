@@ -15,7 +15,7 @@ import time
 
 class MotionPlanner():
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
-    RANGE = 120
+    RANGE = 90
 
     def __init__(self, lidar_instance): #, lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = lidar_instance #lidar_instance
@@ -84,40 +84,40 @@ class MotionPlanner():
             data = np.zeros((self.RANGE + 1, 2), np.int)
 
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
+                path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(self.RANGE + 1,1,1))
                 data_transposed = np.transpose(data)
 
-                for i in range(0, 121):
-                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i + 30)))) - 1
-                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i + 30)))) - 1
+                for i in range(0, self.RANGE + 1):
+                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE)))) - 1
+                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE)))) - 1
                     cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
                 color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
                 count = np.sum(data_transposed[0])
 
-                if count <= 119:
-                    relative_position = np.argwhere(data_transposed[0] == 0) - 60
+                if count <= self.RANGE - 1:
+                    relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
                     minimum_distance = int(min(abs(relative_position)))
 
                     for i in range(0, len(relative_position)):
                         if abs(relative_position[i]) == minimum_distance:
-                            target = int(60 + relative_position[i])
+                            target = int(90 - AUX_RANGE + relative_position[i])
 
                 else:
-                    target = int(np.argmax(data_transposed[1]) + 30)
+                    target = int(np.argmax(data_transposed[1]) + AUX_RANGE)
 
                 if np.sum(data_transposed[1]) == 0:
                     target = 90
 
-                if previous_data is not None and abs(previous_data[previous_target - 30][1] - data[target - 30][1]) <= 5:
+                if previous_data is not None and abs(previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
                     target = previous_target
 
                 self.target_angle = target
-                self.distance = data_transposed[1][target - 30]
+                self.distance = data_transposed[1][target - AUX_RANGE]
 
-                x_target = RAD + int(data_transposed[1][int(target) - 30] * np.cos(np.radians(int(target)))) - 1
-                y_target = RAD - int(data_transposed[1][int(target) - 30] * np.sin(np.radians(int(target)))) - 1
+                x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
+                y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 previous_data = data
