@@ -38,10 +38,9 @@ class MotionPlanner():
 
             #define PI 3.14159265
             __global__ void detect(int data[][2], int* rad, int* range, unsigned char *frame, int *pcol) {
-                    printf("%d\n", range[0]);
                     for(int r = 0; r < rad[0]; r++) {
                         const int thetaIdx = threadIdx.x;
-                        const int theta = thetaIdx + 30;
+                        const int theta = thetaIdx + range[0];
                         int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
                         int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
 
@@ -55,6 +54,7 @@ class MotionPlanner():
         # pycuda alloc end
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
+        AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
         previous_data = None
         previous_target = None
@@ -81,10 +81,10 @@ class MotionPlanner():
             for point in points:  # 장애물들에 대하여
                 cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
 
-            data = np.zeros((121, 2), np.int)
+            data = np.zeros((self.RANGE + 1, 2), np.int)
 
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(RAD), drv.In(self.RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
+                path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(121,1,1))
                 data_transposed = np.transpose(data)
 
                 for i in range(0, 121):
