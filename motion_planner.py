@@ -108,7 +108,17 @@ class MotionPlanner():
                     target = int(np.argmax(data_transposed[1]) + AUX_RANGE)
 
                 if np.sum(data_transposed[1]) == 0:
-                    target = 90
+                    r = 0
+                    while True:
+                        for theta in range(AUX_RANGE, 181 - AUX_RANGE):
+                            x = RAD + r * np.cos(np.radians(theta)) - 1
+                            y = RAD - r * np.sin(np.radians(theta)) - 1
+
+                            if current_frame[y][x] == 0:
+                                target = theta
+                                break
+                        r += 1
+                        
 
                 if previous_data is not None and abs(previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
                     target = previous_target
