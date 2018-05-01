@@ -43,8 +43,8 @@ class MotionPlanner():
                         int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
                         int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
 
-                        if (data[thetaIdx + 30][0] == 0) data[thetaIdx + 30][1] = r;
-                        if (*(frame + y * *pcol + x) != 0) data[thetaIdx + 30][0] = 1;
+                        if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
+                        if (*(frame + y * *pcol + x) != 0) data[thetaIdx][0] = 1;
                     }
             }
             """)
@@ -77,7 +77,7 @@ class MotionPlanner():
                     points[angle][1] = RAD - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(current_frame, tuple(point), 55, 255, -1)  # 캔버스에 점 찍기
+                cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
 
             data = np.zeros((121, 2), np.int)
 
@@ -94,9 +94,6 @@ class MotionPlanner():
 
                 count = np.sum(data_transposed[0])
 
-                if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 3:
-                    target = previous_target
-
                 if count <= 119:
                     relative_position = np.argwhere(data_transposed[0] == 0) - 60
                     minimum_distance = int(min(abs(relative_position)))
@@ -106,16 +103,19 @@ class MotionPlanner():
                             target = int(60 + relative_position[i])
 
                 else:
-                    target = int(np.argmax(data_transposed[1]))
+                    target = int(np.argmax(data_transposed[1]) + 30)
 
                 if np.sum(data_transposed[1]) == 0:
                     target = 90
 
-                self.target_angle = target
-                self.distance = data_transposed[1][target]
+                if previous_data is not None and abs(previous_data[previous_target - 30][1] - data[target - 30][1]) <= 5:
+                    target = previous_target
 
-                x_target = RAD + int(data_transposed[1][int(target)] * np.cos(np.radians(int(target)))) - 1
-                y_target = RAD - int(data_transposed[1][int(target)] * np.sin(np.radians(int(target)))) - 1
+                self.target_angle = target
+                self.distance = data_transposed[1][target - 30]
+
+                x_target = RAD + int(data_transposed[1][int(target) - 30] * np.cos(np.radians(int(target)))) - 1
+                y_target = RAD - int(data_transposed[1][int(target) - 30] * np.sin(np.radians(int(target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 previous_data = data
