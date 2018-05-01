@@ -15,6 +15,7 @@ import time
 
 class MotionPlanner():
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
+    RANGE = 110
 
     def __init__(self, lidar_instance): #, lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = lidar_instance #lidar_instance
@@ -36,10 +37,10 @@ class MotionPlanner():
             #include <math.h>
 
             #define PI 3.14159265
-            __global__ void detect(int data[][2], int *rad, unsigned char *frame, int *pcol) {
-                    for(int r = 0; r < rad[0] - 2; r++) {
+            __global__ void detect(int data[][2], int* rad, int* range, unsigned char *frame, int *pcol) {
+                    for(int r = 0; r < rad[0]; r++) {
                         const int thetaIdx = threadIdx.x;
-                        const int theta = thetaIdx;
+                        const int theta = thetaIdx + range[0];
                         int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
                         int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
 
@@ -53,6 +54,7 @@ class MotionPlanner():
         # pycuda alloc end
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
+        AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
         previous_data = None
         previous_target = None
@@ -79,49 +81,70 @@ class MotionPlanner():
             for point in points:  # 장애물들에 대하여
                 cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
 
-            data = np.zeros((181, 2), np.int)
+            data = np.zeros((self.RANGE + 1, 2), np.int)
+
             if current_frame is not None:
-                path(drv.InOut(data), drv.In(RAD), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(181,1,1))
+                path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(self.RANGE + 1,1,1))
                 data_transposed = np.transpose(data)
 
-                for i in range(0, 181):
-                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i)))) - 1
-                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i)))) - 1
+                for i in range(0, self.RANGE + 1):
+                    x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE)))) - 1
+                    y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE)))) - 1
                     cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
                 color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
                 count = np.sum(data_transposed[0])
 
-                if previous_data is not None and abs(previous_data[previous_target][1] - data[previous_target][1]) <= 3:
-                    target = previous_target
-
-                #if count == 181: target = 90
-
-                if count <= 179:
-
-                    relative_position = np.argwhere(data_transposed[0] == 0) - 90
+                if count <= self.RANGE - 1:
+                    relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
                     minimum_distance = int(min(abs(relative_position)))
 
                     for i in range(0, len(relative_position)):
                         if abs(relative_position[i]) == minimum_distance:
-                            target = int(90 + relative_position[i])
+                            target = int(90 - AUX_RANGE + relative_position[i])
 
                 else:
-                    target = int(np.argmax(data_transposed[1]))
+                    target = int(np.argmax(data_transposed[1]) + AUX_RANGE)
 
                 if np.sum(data_transposed[1]) == 0:
-                    target = 90
+                    r = 0
+                    found = False
+                    while not found:
+                        for theta in (AUX_RANGE, 180 - AUX_RANGE):
+                            x = RAD + int(r * np.cos(np.radians(theta))) - 1
+                            y = RAD - int(r * np.sin(np.radians(theta))) - 1
 
-                self.target_angle = target
-                self.distance = data_transposed[1][target]
+                            if current_frame[y][x] == 0:
+                                found = True
+                                target = -theta
+                                break
+                        r += 1
 
-                x_target = RAD + int(data_transposed[1][int(target)] * np.cos(np.radians(int(target)))) - 1
-                y_target = RAD - int(data_transposed[1][int(target)] * np.sin(np.radians(int(target)))) - 1
-                cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
+                if target >= 0:
+                    if previous_data is not None and abs(
+                            previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
+                        target = previous_target
 
-                previous_data = data
-                previous_target = target
+                    x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
+                    y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
+                    cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
+
+                    self.target_angle = target
+                    self.distance = data_transposed[1][target - AUX_RANGE]
+
+                    previous_data = data
+                    previous_target = target
+
+                else:
+                    x_target = RAD + int(100 * np.cos(np.radians(int(-target)))) - 1
+                    y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
+                    cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
+
+                    self.target_angle = -target
+                    self.distance = 10
+
+
 
                 cv2.imshow('lidar', color)
 

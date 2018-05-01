@@ -45,7 +45,7 @@ class Control:
         self.mission_num = 0  # (일반 주행 모드)
 
         self.default_mode = 0
-        self.obs_mode = 1
+        self.obs_mode = 0
 
         self.default_y_dis = 0.1  # (임의의 값 / 1m)
 
@@ -185,7 +185,7 @@ class Control:
         self.adjust = 0.1
 
         steer_now = (self.theta_line + self.theta_error)
-        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now) * 1.387
+        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now) * 1.387 * 1.3
 
         self.steer = steer_final * 71
 
