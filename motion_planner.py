@@ -77,7 +77,7 @@ class MotionPlanner():
                     points[angle][1] = RAD - round(y)
 
             for point in points:  # 장애물들에 대하여
-                cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
+                cv2.circle(current_frame, tuple(point), 55, 255, -1)  # 캔버스에 점 찍기
 
             data = np.zeros((181, 2), np.int)
             if current_frame is not None:
