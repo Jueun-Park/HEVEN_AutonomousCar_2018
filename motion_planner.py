@@ -10,20 +10,24 @@ import cv2
 import threading
 from parabola import Parabola
 from lidar import Lidar
+from lanecam import LaneCam
 import time
 
 
-class MotionPlanner():
+class MotionPlanner:
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
     RANGE = 110
 
-    def __init__(self, lidar_instance): #, lidar_instance, lanecam_instance, signcam_instance):
-        self.lidar = lidar_instance #lidar_instance
-        self.lanecam = None #lanecam_instance
+    def __init__(self): #, lidar_instance, lanecam_instance, signcam_instance):
+        self.lidar = Lidar() #lidar_instance
+        self.lanecam = LaneCam() #lanecam_instance
         self.signcam = None #signcam_instance
 
         self.target_angle = None
         self.distance = None
+
+        self.thread = threading.Thread(target=self.loop)
+        self.thread.start()
 
     def loop(self):
     # pycuda alloc
@@ -144,12 +148,10 @@ class MotionPlanner():
                     self.target_angle = -target
                     self.distance = 10
 
-
-
                 cv2.imshow('lidar', color)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): break
-
+        self.lidar.stop()
         # pycuda dealloc
         context.pop()
         context = None
@@ -157,15 +159,6 @@ class MotionPlanner():
         clear_context_caches()
         # pycuda dealloc end
 
-    def initiate(self):
-        thread = threading.Thread(target=self.loop)
-        thread.start()
-
 
 if __name__ == "__main__" :
-    lidar = Lidar()
-    lidar.initiate()
-    time.sleep(2)
-
-    motion_plan = MotionPlanner(lidar)
-    motion_plan.initiate()
+    motion_plan = MotionPlanner()

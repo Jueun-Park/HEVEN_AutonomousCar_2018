@@ -45,7 +45,7 @@ class LaneCam:
         self.video_left.start('left.avi')
         self.video_right.start('right.avi')
 
-        self.lane_cam_frame = videostream.VideoWriteStream('result.avi')
+        self.lane_cam_frame = videostream.VideoStream()
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -62,6 +62,9 @@ class LaneCam:
         # 차선과 닮은 이차함수의 계수 세 개를 담음
         self.left_coefficients = None
         self.right_coefficients = None
+
+        self.thread = threading.Thread(target=self.data_loop)
+        self.thread.start()
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -365,5 +368,3 @@ class LaneCam:
 
 if __name__ == "__main__":
     lane_cam = LaneCam()
-    thr = threading.Thread(target=lane_cam.data_loop)
-    thr.start()

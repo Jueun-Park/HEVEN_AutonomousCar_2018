@@ -443,7 +443,7 @@ class Control:
             self.speed = 36
             self.brake = 0
 
-
-control = Control()
-control.mission(4, (500, 104), None)
-print(control.steer)
+if __name__ == '__main__':
+    control = Control()
+    control.mission(4, (500, 104), None)
+    print(control.steer)

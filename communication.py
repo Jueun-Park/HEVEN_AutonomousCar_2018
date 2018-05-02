@@ -36,7 +36,7 @@ class PlatformSerial:
         self.write_packet.steer = steer
         self.write_packet.brake = brake
 
-    def print_status(self):
+    def status(self):
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = (self.read_packet.brake - SerialPacket.BRAKE_NOBRAKE) / \
@@ -45,6 +45,7 @@ class PlatformSerial:
         print(self.read_packet.get_attr(mode='a'))
         print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
         print()
+        return speed, steer, brake
 
 import time
 def t_move():
@@ -66,23 +67,22 @@ def t_right():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
 
 if __name__ == '__main__':
-    port = 'COM7'
-    platform = PlatformSerial(port)
+    platform = PlatformSerial('COM3')
     while True:
         platform.recv()
-        platform.print_status()
+        platform.status()
         t_stop()
         platform.send()
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
             t = time.time()
             while time.time() - t < 2:
                 platform.recv()
-                platform.print_status()
+                platform.status()
                 t_move()
                 platform.send()
             t = time.time()
             while time.time() - t < 2:
                 platform.recv()
-                platform.print_status()
+                platform.status()
                 t_stop()
                 platform.send()
