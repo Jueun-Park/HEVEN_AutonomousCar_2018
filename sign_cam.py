@@ -2,33 +2,12 @@
 # input: sign_cam
 # output: 표지판 종류 (to car_control)
 
-# modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
-#          'MOVING_OBS': 3,'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
 import cv2
-import threading
 import numpy as np
 import time
 
-crosswalk_stop = 0
-narrow_stop = 0
-moving_stop = 0
-static_stop = 0
-s_curve_stop = 0
-u_turn_stop = 0
-parking_stop = 0
-
-detect_crsosswalk = 0
-detect_narrow = 0
-detect_moving = 0
-detect_static = 0
-detect_scurve = 0
-detect_uturn = 0
-detect_parking = 0
-
-is_in_mission = False
-
-####################### Sign Borad ##########################
+# Sign Boards
 try:
     parking_cascade = cv2.CascadeClassifier('./sign_xml_files/parkingdetect.xml')  # 1. 자동 주차
     static_cascade = cv2.CascadeClassifier('./sign_xml_files/static_0514.xml')  # 2. 정적 장애물
@@ -42,194 +21,130 @@ except Exception as e:
     exit(1)
 
 
-def give_delay_for_test():
-    global is_in_mission, Mission
-    time.sleep(3)
-    is_in_mission = False
-    Mission = 0
+class SignDetector:
+    def __init__(self, cascade, scale_factor, min_neighbors):
+        self.cascade = cascade
+        self.scale_factor = scale_factor
+        self.min_neighbors = min_neighbors
+
+    def detect(self, image):
+        gray_image = get_gray_img(image)
+        detected_array = self.cascade.detectMultiScale(gray_image, self.scale_factor, self.min_neighbors)
+        return detected_array
 
 
-########################## Machine ###########################
-def crosswalk_detect():  # 05016 am09  yoon test : 1.07/20 good
-    global crosswalk_stop, is_in_mission, Mission, img
-    if crosswalk_stop == 3 or is_in_mission:
+def get_gray_img(image):
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+def draw_square_on_image(image, square_array):
+    try:
+        for (x, y, w, h) in square_array:
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        return image
+    except Exception:
+        return image
+
+
+def is_in_this_mission(ndarray):
+    try:
+        if np.sum(ndarray) >= 1:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
+def process_one_frame_sign(frame, is_in_mission):
+    if is_in_mission:
         pass
+
+    t1 = time.time()  # 프레임 시작 시간 측정
+
+    # 그래픽카드로 돌려보자? 쿠다 깔려 있어야 하는 듯?
+    # frame = cv2.UMat(frame)
+
+    # 이미지 중 표지판이 있는 곳 확인
+    # 아직 구현 안 됨
+
+    for mode_no in detector_dic:  # 표지판을 인식해라 감지기들이여.
+        if detector_dic[mode_no]:
+            # 각 미션에 해당하는 표지판 감지기가 위치 어레이를 반환하면 data dictionary 에 담는다.
+            signboard_location_data[mode_no] = detector_dic[mode_no].detect(frame)
+        else:
+            continue
+
+    now_mode_no = 0
+    for mode_no in signboard_location_data:  # 데이터 가지고
+        # 어떤 표지판 인식했는지 확인
+        if is_in_this_mission(signboard_location_data[mode_no]):
+            now_mode_no = mode_no
+        frame = draw_square_on_image(frame, signboard_location_data[mode_no])  # 인식한 자리에 네모 표시
+
+    # <여기서 수정할 내용>
+    # 1. 정확도 문제 때문에, 연속으로 세 프레임 이상 감지해야 실제로 미션에 진입했다고 표시해 주는 기능 필요
+    # - 딕셔너리에 기록하고 인풋 받고 다시 리턴하고를 반복하자.?
+    # 2. 이미 지나친 미션에 대해서는 디텍터 인스턴스를 삭제해 버려서 다시 검사 안 하도록 하면 연산 속도 늘릴 수 있을 듯
+    # 3. 미션에 진입한 이후에는 is_in_mission 리턴값 참조하여 그 동안에는 메서드 실행 안 하도록 해 줘야 한다. (병렬 처리?)
+
+    if now_mode_no > 0:  # 감지 여부 출력
+        print(now_mode_no, mission_name_dic[now_mode_no], ": DETECT!")
+        is_in_mission = True
     else:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        print("Stop 1 Crosswalk is ", crosswalk_stop)
-        crosswalk = crosswalk_cascade.detectMultiScale(gray, 1.1, 20)
-        for (x, y, w, h) in crosswalk:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        rec1 = np.matrix(crosswalk)
+        print("defalt mode", now_mode_no)
 
-        if np.sum(rec1) >= 1:
-            detect_crosswalk = 1
-            crosswalk_stop += 1
-            if crosswalk_stop == 3:  # 세 프레임 이상 인식하면 미션 시작으로 인식
-                Mission = 3
-                is_in_mission = True
-                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
-            print("CrossWalk!!! ", detect_crosswalk)
+    cv2.imshow('test', frame)  # 인식 된 곳에 네모 그려둔 것 표시
+    t2 = time.time()  # 프레임 종료 시간 측정
+    print("time per frame:", t2 - t1)
+    return now_mode_no, is_in_mission
 
 
-def narrow_detect():
-    global narrow_stop, is_in_mission, Mission, img
-    if narrow_stop == 3 or is_in_mission:
-        pass
-    else:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        print("Stop 2 Narrow is ", narrow_stop)
-        narrow = narrow_cascade.detectMultiScale(gray, 1.1, 15)
-        for (x, y, w, h) in narrow:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-        rec2 = np.matrix(narrow)
-
-        if np.sum(rec2) >= 1:
-            detect_narrow = 2
-            narrow_stop += 1
-            if narrow_stop == 3:
-                Mission = 2
-                is_in_mission = True
-            print("Narrow!!!!! ", detect_narrow)
-
-
-def moving_detect():
-    global moving_stop, is_in_mission, Mission, img
-    if moving_stop == 3 or is_in_mission:
-        pass
-    else:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        print("Stop 3 Moving is ", moving_stop)
-        moving = moving_cascade.detectMultiScale(gray, 1.03, 5)
-        for (x, y, w, h) in moving:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 150, 0), 2)
-        rec3 = np.matrix(moving)
-
-        if np.sum(rec3) >= 1:
-            detect_moving = 3
-            moving_stop += 1
-            if moving_stop == 3:
-                Mission = 1
-                is_in_mission = True
-                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
-            print("Moving!!!! ", detect_moving)
-
-
-def static_detect():
-    global static_stop, is_in_mission, Mission, img
-    if static_stop == 3 or is_in_mission:
-        pass
-    else:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        print("Stop 4 Static is ", static_stop)
-        static = static_cascade.detectMultiScale(gray, 1.3, 20)
-        for (x, y, w, h) in static:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 255), 2)
-        rec4 = np.matrix(static)
-
-        if np.sum(rec4) >= 1:
-            detect_static = 4
-            static_stop += 1
-            if static_stop == 3:
-                Mission = 9
-                is_in_mission = True
-            print("Static!!!! ", detect_static)
-
-
-def s_curve_detect():
-    global s_curve_stop, is_in_mission, Mission, img
-    if s_curve_stop == 3 or is_in_mission:
-        pass
-    else:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        print("Stop 5 Scurve is ", s_curve_stop)
-        scurve = s_curve_cascade.detectMultiScale(gray, 1.03, 20)
-        for (x, y, w, h) in scurve:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 120), 2)
-        rec5 = np.matrix(scurve)
-
-        if np.sum(rec5) >= 1:
-            detect_scurve = 5
-            s_curve_stop += 1
-            if s_curve_stop == 3:
-                Mission = 4
-                is_in_mission = True
-            print("Scurve!!!! ", detect_scurve)
-
-
-def parking_detect():
-    global parking_stop, is_in_mission, Mission, img
-    if parking_stop == 3 or is_in_mission:
-        pass
-    else:
-        print("Stop 7 Parking is ", parking_stop)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        parking = parking_cascade.detectMultiScale(gray, 1.3, 5)
-        for (x, y, w, h) in parking:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        rec7 = np.matrix(parking)
-
-        if np.sum(rec7) >= 1:
-            detect_parking = 7
-            parking_stop += 1
-            if parking_stop == 3:
-                Mission = 7
-                is_in_mission = True
-                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
-            print("Parking!!!!! ", detect_parking)
-
-
-def u_turn_detect():
-    global u_turn_stop, is_in_mission, Mission, img
-    if u_turn_stop == 3 or is_in_mission:
-        pass
-    else:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        print("Stop 6 Uturn is ", u_turn_stop)
-        uturn = u_turn_cascade.detectMultiScale(gray, 1.06, 5)
-        for (x, y, w, h) in uturn:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-        rec6 = np.matrix(uturn)
-
-        if np.sum(rec6) >= 1:
-            detect_uturn = 6
-            u_turn_stop += 1
-            if u_turn_stop == 3:
-                Mission = 5
-                is_in_mission = True
-                print("Uturn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                give_delay_for_test()  # 테스트 할 때만 쓰는 것. 실제로 쓰려면 이 줄 없애야 함
-            print("Uturn!!!! ", detect_uturn)
-
-
-def main():
-    U_thread = threading.Thread(target=u_turn_detect())  # 유턴 표지판 탐지
-    Cros_thread = threading.Thread(target=crosswalk_detect())  # 횡단보도 표지판 탐지
-    Mov_thread = threading.Thread(target=moving_detect())  # 동적장애물 표지판 탐지
-    Park_thread = threading.Thread(target=parking_detect())  # 주차 표지판 탐지
-
-    U_thread.start()
-    Cros_thread.start()
-    Mov_thread.start()
-    Park_thread.start()
-
-
+# TEST CODE
 if __name__ == "__main__":
-    # open cam
-    cam = cv2.VideoCapture('./Previous Code/0507_one_lap_normal.mp4')
+    # mode dictionary (mission_name: mode_no)
+    modes = {'DEFAULT': 0,
+             'PARKING': 1,
+             'STATIC_OBS': 2,
+             'MOVING_OBS': 3,
+             'S_CURVE': 4,
+             'NARROW': 5,
+             'U_TURN': 6,
+             'CROSS_WALK': 7, }
 
-    cam.set(3, 480)
-    cam.set(4, 270)
+    # mission name dictionary (mode_no: mission_name)
+    mission_name_dic = {0: 'DEFAULT',
+                        1: 'PARKING',
+                        2: 'STATIC_OBS',
+                        3: 'MOVING_OBS',
+                        4: 'S_CURVE',
+                        5: 'NARROW',
+                        6: 'U_TURN',
+                        7: 'CROSS_WALK', }
 
-    if (not cam.isOpened()):
-        print("cam open failed")
-    while True:
-        s, img = cam.read()
-        main()
-        cv2.imshow('cam', img)
+    # 표지판 감지기 인스턴스들 생성 (mode_no: sign_detector)
+    detector_dic = {0: None,
+                    1: SignDetector(parking_cascade, 1.3, 5),
+                    2: None,
+                    3: SignDetector(moving_cascade, 1.03, 5),
+                    4: None,
+                    5: None,
+                    6: SignDetector(u_turn_cascade, 1.06, 5),
+                    7: None, }
 
-        if cv2.waitKey(30) & 0xff == 27:
-            break
-    cam.release()
-    cv2.destroyAllWindows()
-    cv2.waitKey(0)
+    # 표지판 감지한 위치 담는 딕셔너리 (mode_no: location_data_array)
+    signboard_location_data = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+
+    # 웹캠 읽어오기
+    cam = cv2.VideoCapture(0)
+    time.sleep(2)
+
+    is_in_mission = False
+    # 영상 처리
+    while (True):
+        frame_okay, frame = cam.read()  # 한 프레임을 가져오자.
+        process_one_frame_sign(frame, is_in_mission)
+
+        if cv2.waitKey(1) & 0xff == ord('q'):
+            cam.release()
+            cv2.destroyAllWindows()

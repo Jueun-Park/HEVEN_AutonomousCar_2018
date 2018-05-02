@@ -3,12 +3,24 @@
 
 [위키 작성법(마크다운 문서)](https://gist.github.com/ihoneymon/652be052a0727ad59601)
 
+## 자율주행 프로그램 구조
+|Category|Role|Program Name|
+|:--------|:--------|:--------|
+|**Perception**|LiDAR Mapper|```lidar.py```|
+|"|Cam Video Stream Control|```videostream.py```|
+|"|Lane Detector|```lane_cam.py```|
+|"|Sign Detector|```shape_detect.py```<br>```sign_cam.py```|
+|**Planning**|Motion & Prticular Condition Planner|```parabola.py```<br>```motion_planner.py```|
+|**Control**|Car Speed/Steering Control|```car_control.py```|
+|**Communication**|Communication with Platform|```serial_packet.py```<br>```communication.py```|
+|**Process**|Main Process Management|```main.py```|
+
 ## 팀원
 김성우 김홍빈 박주은 박준혁 유성룡
 
 김민수 이중구 이용호
 
-예비 팀원: 김윤진 김진웅 예하진 유재현 이민영 이아영 현지웅
+예비 팀원: 김윤진 김진웅 예하진 이아영 현지웅
 
 ## 알고리즘
 ### Perception

@@ -1,4 +1,5 @@
 from serialpacket import SerialPacket
+from car_control_test import Control
 import serial
 
 
@@ -46,43 +47,31 @@ class PlatformSerial:
         print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
         print()
 
-import time
-def t_move():
-    platform.write(SerialPacket.GEAR_FORWARD, 40, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
-
-def t_back():
-    platform.write(SerialPacket.GEAR_BACKWARD, 60, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
 
 def t_stop():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 60)
 
-def t_neutral():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
-
-def t_left():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXLEFT, SerialPacket.BRAKE_NOBRAKE)
-
-def t_right():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
 
 if __name__ == '__main__':
     port = 'COM7'
     platform = PlatformSerial(port)
+    control = Control()
     while True:
         platform.recv()
         platform.print_status()
         t_stop()
+        platform.read()
         platform.send()
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
-            t = time.time()
-            while time.time() - t < 2:
-                platform.recv()
-                platform.print_status()
-                t_move()
-                platform.send()
-            t = time.time()
-            while time.time() - t < 2:
-                platform.recv()
-                platform.print_status()
-                t_stop()
-                platform.send()
+            platform.recv()
+            platform.print_status()
+            control.read(*platform.read())
+            control.mission(1, 0, 0)  # {주차 - 1, 유턴 - 6}
+            control.change()
+            if control.change_mission == 0:
+                platform.write(*control.write())
+                print("Doing Macro\n")
+            else:
+                platform.write(0, 0, 0, 0)
+                print("End Macro\n")
+            platform.send()
