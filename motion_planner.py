@@ -118,7 +118,7 @@ class MotionPlanner():
                                 target = theta
                                 break
                         r += 1
-                        
+
 
                 if previous_data is not None and abs(previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
                     target = previous_target
