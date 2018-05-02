@@ -1,5 +1,6 @@
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
+# self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}
 
 import time
 import math
@@ -60,11 +61,13 @@ class Control:
         self.corner = 0
         self.place = 0
         self.obs_exist = 0
+        self.count = 0
         self.obs_uturn = 0
         self.stop_line = 0
         self.obs_r = 0
         self.obs_theta = 0
         #######################################
+        self.change_mission = 0
 
     def read(self, speed, enc):
         #######################################
@@ -120,11 +123,19 @@ class Control:
     def write(self):
         return self.gear, self.speed, self.steer, self.brake
 
+    def change(self):
+        # 일회용 미션 함수의 종료를 알리는 변수
+        # default, obs는 0을 반환
+        # parking, uturn, moving_obs, cross는 1을 반환
+        return self.change_mission
+
     def __default__(self):
         self.steer = 0
         self.speed = 54
         self.gear = 0
         self.brake = 0
+
+        self.change_mission = 0
 
         self.tan_value = self.linear * (-1)
         self.theta_1 = math.degrees(math.atan(self.tan_value))
@@ -133,9 +144,11 @@ class Control:
         if abs(self.theta_1) < 15 and abs(self.cross_track_error) < 0.27:
             k = 0.5
 
-        self.velocity = (self.speed_platform*100)/3600
-
-        self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
+        if self.speed_platform == 0:
+            self.theta_2 = 0
+        else:
+            self.velocity = (self.speed_platform*100)/3600
+            self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
         self.adjust = 0.05
 
@@ -159,6 +172,8 @@ class Control:
         self.gear = 0
         self.brake = 0
 
+        self.change_mission = 0
+
         self.tan_value_1 = abs(self.linear)
         self.theta_1 = math.atan(self.tan_value_1)
 
@@ -175,15 +190,17 @@ class Control:
         if abs(self.theta_line) < 15 and abs(self.cross_track_error) < 0.27:
             k = 0.5
 
-        self.velocity = (self.speed_platform * 100) / 3600
-
-        self.theta_error = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
+        if self.speed_platform == 0:
+            self.theta_error = 0
+        else:
+            self.velocity = (self.speed_platform*100)/3600
+            self.theta_error = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
         self.adjust = 0.05
         self.correction_default = 1
 
         steer_now = (self.theta_line + self.theta_error)
-        steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)) * 1.387
+        steer_final = (self.adjust * self.steer_past) + (1 - self.adjust) * steer_now * 1.387
 
         self.steer = steer_final * 71 * self.correction_default
 
@@ -202,9 +219,11 @@ class Control:
         self.gear = 0
         self.brake = 0
 
+        self.change_mission = 0
+
         cal_theta = math.radians(abs(self.obs_theta - 90))
-        self.costheta = math.cos(cal_theta)
-        self.sintheta = math.sin(cal_theta)
+        self.cos_theta = math.cos(cal_theta)
+        self.sin_theta = math.sin(cal_theta)
 
         if (self.obs_theta - 90) == 0:
             self.theta_obs = 0
@@ -217,17 +236,17 @@ class Control:
 
         else:
             if self.obs_mode == 0:
-                self.cul_obs = (self.obs_r + 2.08 * self.costheta) / (2 * self.sintheta)
+                self.cul_obs = (self.obs_r + 2.08 * self.cos_theta) / (2 * self.sin_theta)
 
                 # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
                 self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
 
             elif self.obs_mode == 1:
-                self.cul_obs = (self.obs_r + (2.08 * self.costheta)) / (2 * self.sintheta)
-                self.theta_cal = math.atan((1.04 + (self.obs_r * self.costheta)) / self.cul_obs)
+                self.cul_obs = (self.obs_r + (2.08 * self.cos_theta)) / (2 * self.sin_theta)
+                self.theta_cal = math.atan((1.04 + (self.obs_r * self.cos_theta)) / self.cul_obs)
 
-                self.son_obs = (self.cul_obs * math.sin(self.theta_cal)) - (self.obs_r * self.costheta)
+                self.son_obs = (self.cul_obs * math.sin(self.theta_cal)) - (self.obs_r * self.cos_theta)
                 self.mother_obs = (self.cul_obs * math.cos(self.theta_cal)) + 0.4925
 
                 self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
@@ -238,7 +257,7 @@ class Control:
         self.adjust = 0.10
         self.correction = 1.1
 
-        steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs)) * 1.387 * self.correction
+        steer_final = (self.adjust * self.steer_past) + (1 - self.adjust) * self.theta_obs * 1.387 * self.correction
 
         self.steer = steer_final * 71
 
@@ -257,17 +276,26 @@ class Control:
         self.gear = 0
         self.brake = 0
 
+        self.change_mission = 0
+
         if self.obs_exist is True:
             self.speed = 0
             self.brake = 60
+            if self.count == 0:
+                self.count += 1
         else:
             self.speed = 36
+
+            if self.count > 0:
+                self.change_mission = 1
 
     def __cross__(self):
         self.steer = 0
         self.speed = 36
         self.gear = 0
         self.brake = 0
+
+        self.change_mission = 0
 
         if abs(self.stop_line) < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
@@ -279,12 +307,15 @@ class Control:
                 self.brake = 60
             else:
                 self.speed = 54
+                self.change_mission = 1
 
     def __parking__(self):
         self.steer = 0
         self.speed = 0
         self.gear = 0
         self.brake = 0
+
+        self.change_mission = 0
 
         if self.psit == 1:
             self.speed = 36
@@ -385,12 +416,15 @@ class Control:
             self.speed = 36
             self.steer = 0
             self.brake = 0
+            self.change_mission = 1
 
     def __uturn__(self):
         self.steer = 0
         self.speed = 36
         self.gear = 0
         self.brake = 0
+
+        self.change_mission = 0
 
         self.obs_y = self.obs_uturn[1] / 100
 
@@ -442,8 +476,11 @@ class Control:
             self.steer = 0
             self.speed = 36
             self.brake = 0
+            self.change_mission = 1
 
 
 control = Control()
-control.mission(4, (500, 104), None)
+control.mission(4, (500, 90), 0)
+control.change()
 print(control.steer)
+print(control.change_mission)

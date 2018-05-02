@@ -1,5 +1,7 @@
 from serialpacket import SerialPacket
+from car_control_test import Control
 import serial
+
 
 class PlatformSerial:
     def __init__(self, platform_port):
@@ -45,7 +47,7 @@ class PlatformSerial:
         print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
         print()
 
-from car_control_test import Control
+
 def t_stop():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 60)
 
@@ -58,12 +60,18 @@ if __name__ == '__main__':
         platform.recv()
         platform.print_status()
         t_stop()
+        platform.read()
         platform.send()
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
             platform.recv()
             platform.print_status()
-            control.read(platform.read_packet.speed, platform.read_packet.enc)
-            control.mission(1, 0, 0)  # 주차 - 1, 유턴 - 6
-            control.write()
-            platform.write(control.gear, control.speed, control.steer, control.brake)
+            control.read(*platform.read())
+            control.mission(1, 0, 0)  # {주차 - 1, 유턴 - 6}
+            control.change()
+            if control.change_mission == 0:
+                platform.write(*control.write())
+                print("Doing Macro\n")
+            else:
+                platform.write(0, 0, 0, 0)
+                print("End Macro\n")
             platform.send()
