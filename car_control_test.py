@@ -44,8 +44,8 @@ class Control:
 
         self.mission_num = 0  # (일반 주행 모드)
 
-        self.default_mode = 0
-        self.obs_mode = 0
+        self.default_mode = 1
+        self.obs_mode = 1
 
         self.default_y_dis = 0.1  # (임의의 값 / 1m)
 
@@ -94,8 +94,6 @@ class Control:
                 self.__default2__()
 
         elif self.mission_num == 1:
-            # self.corner = first
-            # self.place = second
 
             self.__parking__()
 
@@ -105,7 +103,6 @@ class Control:
             self.__moving__()
 
         elif self.mission_num == 6:
-            self.obs_uturn = first
 
             self.__uturn__()
 
@@ -140,10 +137,10 @@ class Control:
 
         self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.1
+        self.adjust = 0.05
 
         steer_now = (self.theta_1 + self.theta_2)
-        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)
+        steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now))
 
         self.steer = steer_final * 71
 
@@ -182,12 +179,13 @@ class Control:
 
         self.theta_error = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.1
+        self.adjust = 0.05
+        self.correction_default = 1
 
         steer_now = (self.theta_line + self.theta_error)
-        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now) * 1.387 * 1.3
+        steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now)) * 1.387
 
-        self.steer = steer_final * 71
+        self.steer = steer_final * 71 * self.correction_default
 
         self.steer_past = steer_final
 
@@ -208,8 +206,14 @@ class Control:
         self.costheta = math.cos(cal_theta)
         self.sintheta = math.sin(cal_theta)
 
-        if cal_theta == 0:
+        if (self.obs_theta - 90) == 0:
             self.theta_obs = 0
+
+        elif self.obs_theta == -35:
+            self.theta_obs = 27
+
+        elif self.obs_theta == -145:
+            self.theta_obs = -27
 
         else:
             if self.obs_mode == 0:
@@ -220,20 +224,21 @@ class Control:
                 self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
 
             elif self.obs_mode == 1:
-                self.cul_obs = (self.obs_r + 2.08 * self.costheta) / (2 * self.sintheta)
+                self.cul_obs = (self.obs_r + (2.08 * self.costheta)) / (2 * self.sintheta)
                 self.theta_cal = math.asin((1.04 + (self.obs_r * self.costheta)) / self.cul_obs)
 
-                self.son_obs = self.cul_obs * math.sin(self.theta_cal) - self.obs_r * self.costheta
-                self.mother_obs = self.cul_obs * math.cos(self.theta_cal) + 0.4925
+                self.son_obs = (self.cul_obs * math.sin(self.theta_cal)) - (self.obs_r * self.costheta)
+                self.mother_obs = (self.cul_obs * math.cos(self.theta_cal)) + 0.4925
 
                 self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
 
         if (self.obs_theta - 90) > 0:
             self.theta_obs = self.theta_obs * (-1)
 
-        self.adjust = 0.05
+        self.adjust = 0.10
+        self.correction = 1.1
 
-        steer_final = (self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs) * 1.387
+        steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * self.theta_obs)) * 1.387 * self.correction
 
         self.steer = steer_final * 71
 
@@ -269,7 +274,7 @@ class Control:
                 self.t1 = time.time()
             self.t2 = time.time()
 
-            if (self.t2 - self.t1) < 3.0:  # 3초간 정지, 실험을 통해 보정 필요
+            if (self.t2 - self.t1) < 3.0:
                 self.speed = 0
                 self.brake = 60
             else:
@@ -280,12 +285,6 @@ class Control:
         self.speed = 0
         self.gear = 0
         self.brake = 0
-
-        # self.corner1 = self.corner[0]
-        # self.corner2 = self.corner[1]
-        # self.corner3 = self.corner[2]
-
-        # 주차 매크로를 시작할 일정 거리까지 이동하는 코드 짜놓기 / 비전이랑 라이다 회의 필요
 
         if self.psit == 1:
             self.speed = 36
@@ -443,6 +442,7 @@ class Control:
             self.steer = 0
             self.speed = 36
             self.brake = 0
+
 
 control = Control()
 control.mission(4, (500, 104), None)
