@@ -225,7 +225,7 @@ class Control:
 
             elif self.obs_mode == 1:
                 self.cul_obs = (self.obs_r + (2.08 * self.costheta)) / (2 * self.sintheta)
-                self.theta_cal = math.asin((1.04 + (self.obs_r * self.costheta)) / self.cul_obs)
+                self.theta_cal = math.atan((1.04 + (self.obs_r * self.costheta)) / self.cul_obs)
 
                 self.son_obs = (self.cul_obs * math.sin(self.theta_cal)) - (self.obs_r * self.costheta)
                 self.mother_obs = (self.cul_obs * math.cos(self.theta_cal)) + 0.4925
