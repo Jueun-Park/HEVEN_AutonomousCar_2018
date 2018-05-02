@@ -109,29 +109,46 @@ class MotionPlanner():
 
                 if np.sum(data_transposed[1]) == 0:
                     r = 0
-                    while True:
-                        for theta in range(AUX_RANGE, 181 - AUX_RANGE):
-                            x = RAD + r * np.cos(np.radians(theta)) - 1
-                            y = RAD - r * np.sin(np.radians(theta)) - 1
+                    found = False
+                    while not found:
+                        for theta in (AUX_RANGE, 180 - AUX_RANGE):
+                            x = RAD + int(r * np.cos(np.radians(theta))) - 1
+                            y = RAD - int(r * np.sin(np.radians(theta))) - 1
 
                             if current_frame[y][x] == 0:
-                                target = theta
+                                found = True
+                                target = -theta
                                 break
                         r += 1
+<<<<<<< HEAD
+
+=======
+>>>>>>> 542ef863778528e3913f0405a48a22dcf792d663
+
+                if target >= 0:
+                    if previous_data is not None and abs(
+                            previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
+                        target = previous_target
+
+                    x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
+                    y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
+                    cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
+
+                    self.target_angle = target
+                    self.distance = data_transposed[1][target - AUX_RANGE]
+
+                    previous_data = data
+                    previous_target = target
+
+                else:
+                    x_target = RAD + int(100 * np.cos(np.radians(int(-target)))) - 1
+                    y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
+                    cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
+
+                    self.target_angle = -target
+                    self.distance = 10
 
 
-                if previous_data is not None and abs(previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
-                    target = previous_target
-
-                self.target_angle = target
-                self.distance = data_transposed[1][target - AUX_RANGE]
-
-                x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
-                y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
-                cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
-
-                previous_data = data
-                previous_target = target
 
                 cv2.imshow('lidar', color)
 
