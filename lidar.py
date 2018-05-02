@@ -35,6 +35,7 @@ class Lidar:
 
         receiving_thread = threading.Thread(target=self.data_handling_loop)  # 데이터 받는 루프
         receiving_thread.start()
+        time.sleep(2)
 
     def data_handling_loop(self):  # 데이터 받아서 저장하는 메서드
         while True:

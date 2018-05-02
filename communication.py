@@ -66,6 +66,7 @@ def t_left():
 def t_right():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
 
+
 if __name__ == '__main__':
     platform = PlatformSerial('COM3')
     while True:
