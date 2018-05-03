@@ -1,30 +1,27 @@
 from communication import PlatformSerial
 from motion_planner import MotionPlanner
 from car_control_test import Control
-from lidar import Lidar
-from lanecam import LaneCam
-import threading
+
+from monitor import Monitor
 import time
 
 platform = PlatformSerial('COM3')
-lidar = Lidar()
-lidar.initiate()
-time.sleep(2)
-lane_cam=LaneCam()
-thr = threading.Thread(target=lane_cam.data_loop)
-thr.start()
-
-motion = MotionPlanner(lidar)
-motion.initiate()
+motion = MotionPlanner()
 control = Control()
 
+monitor = Monitor()
+
+import cv2
 while True:
     platform.recv()
     control.read(*platform.read())
+    platform.status()
+    motion.loop()
     if motion.target_angle is not None and motion.distance is not None:
-        tup = (motion.distance, motion.target_angle)
-        control.mission(10, tup, None)
-        print(tup, '   ', control.steer)
-
+        control.mission(10, (motion.distance, motion.target_angle), None)
     platform.write(*control.write())
     platform.send()
+    monitor.show(*motion.getFrame())
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        motion.stop()
+        break

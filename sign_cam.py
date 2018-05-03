@@ -136,7 +136,7 @@ if __name__ == "__main__":
     signboard_location_data = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
 
     # 웹캠 읽어오기
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(2)
     time.sleep(2)
 
     is_in_mission = False

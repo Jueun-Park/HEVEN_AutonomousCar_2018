@@ -27,11 +27,17 @@ class Lidar:
 
         self.frame = None
 
-    def data_handling_loop(self):  # 데이터 받아서 저장하는 메서드
+        self.stop_fg = False
+
         self.sock_lidar = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_lidar.connect((self.HOST, self.PORT))
         self.sock_lidar.send(str.encode(self.MESG))
 
+        receiving_thread = threading.Thread(target=self.data_handling_loop)  # 데이터 받는 루프
+        receiving_thread.start()
+        time.sleep(2)
+
+    def data_handling_loop(self):  # 데이터 받아서 저장하는 메서드
         while True:
             data = str(self.sock_lidar.recv(self.BUFF))
             # 라이다에게 데이터 요청 신호를 보냈을 때, 요청을 잘 받았다는 응답을 한 줄 받은 후에 데이터를 받기 시작함
@@ -41,11 +47,13 @@ class Lidar:
             temp = data.split(' ')[116:477]
             self.data_list = [int(item, 16) for item in temp]
 
-    def initiate(self):  # 루프 시작
-        receiving_thread = threading.Thread(target=self.data_handling_loop)  # 데이터 받는 루프
-        receiving_thread.start()
+            if self.stop_fg is True: break
+        self.sock_lidar.send(str.encode(chr(2) + 'sEN LMDscandata 0' + chr(3)))
+        self.sock_lidar.close()
+
+    def stop(self):
+        self.stop_fg = True
 
 
 if __name__ == "__main__":
     current_lidar = Lidar()
-    current_lidar.initiate()
