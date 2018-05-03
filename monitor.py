@@ -3,7 +3,32 @@ import numpy as np
 
 
 class Monitor:
-    def concatenate(self, f1, f2, mode='h'):
+    @classmethod
+    def imstatus(cls, gear, speed, steer, brake):
+        from serialpacket import SerialPacket
+        f = np.zeros((240, 400, 3), dtype=np.uint8)
+
+        gear_str = ''
+        if gear == SerialPacket.GEAR_FORWARD: gear_str = 'D'
+        elif gear == SerialPacket.GEAR_NEUTRAL: gear_str = 'N'
+        elif gear == SerialPacket.GEAR_BACKWARD: gear_str = 'R'
+
+        speed_str = '{:6.2f}'.format(speed / 10) + 'kph'
+
+        steer_direction_str = 'L' if steer < 0 else 'R'
+        if steer == 0: steer_direction_str = 'S'
+        steer_str = steer_direction_str + '{:5.2f}'.format(abs(steer / 71)) + 'deg'
+
+        brake_str = '{:6.2f}'.format(brake / 200) + 'brake'
+
+        f = cv2.putText(f, gear_str, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+        f = cv2.putText(f, speed_str, (0, 110), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+        f = cv2.putText(f, steer_str, (0, 170), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+        f = cv2.putText(f, brake_str, (0, 230), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+        return f
+
+    @classmethod
+    def concatenate(cls, f1, f2, mode='h'):
         if f1 is None: return f2
         if f2 is None: return f1
         f, g = f1, f2
@@ -25,21 +50,23 @@ class Monitor:
             return False
         return res
 
-    def show(self, *frames):
+    @classmethod
+    def show(cls, *frames):
         for i in range(len(frames)):
             if frames[i] is None: continue
             cv2.imshow(str(i), frames[i])
 
+
 if __name__ == '__main__':
     import videostream
-    video = videostream.WebcamVideoStream(0, 640, 480)
+    video = videostream.WebcamVideoStream(0, 100, 200)
     video.start()
-    monitor = Monitor()
     while True:
         ret, frame = video.read()
         final = cv2.flip(frame, 1)
-        final = final[200:300, 100:500]
-        result = monitor.concatenate(frame, final, 'v')
-        monitor.show(result)
+        final = final[:50, :100]
+        result = Monitor.concatenate(frame, final, 'v')
+        result = Monitor.concatenate(result, Monitor.imstatus(0, 0, 0, 100), 'h')
+        Monitor.show(result)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     video.release()
