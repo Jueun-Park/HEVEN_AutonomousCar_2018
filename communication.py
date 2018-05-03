@@ -37,6 +37,7 @@ class PlatformSerial:
         self.write_packet.brake = brake
 
     def status(self):
+        gear = self.read_packet.gear
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = (self.read_packet.brake - SerialPacket.BRAKE_NOBRAKE) / \
@@ -45,7 +46,7 @@ class PlatformSerial:
         print(self.read_packet.get_attr(mode='a'))
         print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
         print()
-        return speed, steer, brake
+        return gear, speed, steer, brake
 
 import time
 def t_move():
