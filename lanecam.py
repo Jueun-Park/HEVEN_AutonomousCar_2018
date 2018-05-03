@@ -129,9 +129,9 @@ class LaneCam:
             row_sum = np.sum(filtered_L[0:300, 200:300], axis=1)
             start_point = np.argmax(row_sum)
 
-            # 차선의 실마리를 찾을 때, 길이가 17850 / 255 = 70픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
+            # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
             # 차선이 없는 것으로 간주함
-            if (row_sum[start_point] > 17850):
+            if (row_sum[start_point] > 7650):
                 self.left_current_points = np.array([0] * 10)
                 self.left_current_points[0] = start_point
 
@@ -224,9 +224,9 @@ class LaneCam:
             row_sum = np.sum(filtered_R[0:300, 200:300], axis=1)
             start_point = np.argmax(row_sum)
 
-            # 차선의 실마리를 찾을 때, 길이가 17850 / 255 = 70픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
+            # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
             # 차선이 없는 것으로 간주함
-            if (row_sum[start_point] > 17850):
+            if (row_sum[start_point] > 7650):
                 self.right_current_points = np.array([0] * 10)
                 self.right_current_points[0] = start_point
 
@@ -389,9 +389,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        t = time.time()
         lane_cam.data_loop()
-        print(time.time() - t)
         monitor.show(*lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()
