@@ -63,8 +63,14 @@ class MotionPlanner:
     def getFrame(self):
         return self.lanecam.getFrame() + (self.motion_planner_frame.read(), )
 
-    def loop(self):
-        self.lanecam.data_loop()
+    def motion_plan(self):
+        pass
+
+    def lane_handling(self):
+        pass
+
+    def static_obs_handling(self):
+        self.lanecam.default_loop()
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
@@ -159,24 +165,24 @@ class MotionPlanner:
                 self.distance = 10
 
             self.motion_planner_frame.write(color)
-            #cv2.imshow('color', color)
 
-        #if cv2.waitKey(1) & 0xFF == ord('q'): break
-        #if self.stop_fg is True: break
-        #print(time.time() - t)
-        #self.lidar.stop()
-        #self.lanecam.stop()
-        # pycuda dealloc
-        #context.pop()
-        #context = None
-        #from pycuda.tools import clear_context_caches
-        #clear_context_caches()
-        # pycuda dealloc end
+    def stopline_handling(self):
+        pass
+
+    def parkingline_handling(self):
+        pass
+
+    def Uturn_handling(self):
+        pass
+
+    def moving_obs_handling(self):
+        pass
 
     def stop(self):
         self.stop_fg = True
         self.lidar.stop()
         self.lanecam.stop()
+
         # pycuda dealloc
         global context
         context.pop()
@@ -192,7 +198,7 @@ if __name__ == "__main__" :
     monitor = Monitor()
     while True:
         t = time.time()
-        motion_plan.loop()
+        motion_plan.static_obs_handling()
         print(time.time() - t)
         monitor.show(*motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break

@@ -60,16 +60,17 @@ class LaneCam:
         self.left_current_points = np.array([0] * 10)
         self.right_current_points = np.array([0] * 10)
 
-        # 차선과 닮은 이차함수의 계수 세 개를 담음
+        # 차선과 닮은 이차함수의 계수 세 개를 담을 변수
         self.left_coefficients = None
         self.right_coefficients = None
 
+        # 정지선 정보를 담을 변수
+        self.stopline_info = None
+
+        # 주차 공간 정보를 담을 변수
+        self.parkingline_info = None
+
         time.sleep(1)
-
-        #self.stop_fg = False
-
-        #self.thread = threading.Thread(target=self.data_loop)
-        #self.thread.start()
 
     def getFrame(self):
         return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read())
@@ -105,10 +106,7 @@ class LaneCam:
         transposed = cv2.flip(cv2.transpose(cropped), 0)
         return transposed
 
-    def data_loop(self):
-        #time.sleep(1)  # 웹캠이 처음에 보내는 쓰레기 값을 흘려버리기 위해 1초정도 기다림
-
-        #while True:
+    def default_loop(self):
         # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
         left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
         right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
@@ -122,7 +120,6 @@ class LaneCam:
         both = np.vstack((right_frame, left_frame))
         both_final = cv2.flip(cv2.transpose(both), 1)
         self.lane_cam_raw_frame.write(both_final)
-        #cv2.imshow('both_final', both_final)
 
         # ---------------------------------- 여기부터 왼쪽 차선 박스 쌓기 영역 ----------------------------------
         if self.left_previous_points is None:
@@ -365,18 +362,16 @@ class LaneCam:
 
         else: self.right_coefficients = None
 
-        #print('left: ', self.left_coefficients, '   right: ', self.right_coefficients)
-
         filtered_both = np.vstack((filtered_R, filtered_L))
         final = cv2.flip(cv2.transpose(filtered_both), 1)
         self.lane_cam_frame.write(final)
 
-            #if self.stop_fg is True: break
-            #cv2.imshow('lane_cam_frame', final)
-            #if cv2.waitKey(1) & 0xFF == ord('q'): break
+    def stopline_loop(self):
+        pass
 
-        #self.video_left.release()
-        #self.video_right.release()
+    def parkingline_loop(self):
+        right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
+        filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
 
     def stop(self):
         self.stop_fg = True
@@ -389,7 +384,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        lane_cam.data_loop()
+        lane_cam.default_loop()
         monitor.show(*lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()
