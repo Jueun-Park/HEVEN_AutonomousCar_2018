@@ -443,7 +443,6 @@ class LaneCam:
 
 
     def stop(self):
-        self.stop_fg = True
         self.video_left.release()
         self.video_right.release()
 
