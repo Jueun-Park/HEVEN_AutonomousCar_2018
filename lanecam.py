@@ -374,7 +374,6 @@ class LaneCam:
         filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
 
     def stop(self):
-        self.stop_fg = True
         self.video_left.release()
         self.video_right.release()
 
