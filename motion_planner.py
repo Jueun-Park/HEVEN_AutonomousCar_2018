@@ -78,8 +78,6 @@ class MotionPlanner:
         previous_data = None
         previous_target = None
 
-        #while True:
-        #t = time.time()
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
 
@@ -200,6 +198,6 @@ if __name__ == "__main__" :
 
     while True:
         motion_plan.static_obs_handling()
-        monitor.show(*motion_plan.getFrame())
+        monitor.show('obstacle_avoidance', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()
