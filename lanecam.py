@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import threading
+import random
 import time
 import videostream
 
@@ -32,7 +32,7 @@ class LaneCam:
     lower_yellow = np.array([0, 70, 120], dtype=np.uint8)
     upper_yellow = np.array([179, 255, 255], dtype=np.uint8)
 
-    lower_white = np.array([202, 208, 202], dtype=np.uint8)
+    lower_white = np.array([187, 193, 187], dtype=np.uint8)
     upper_white = np.array([255, 255, 255], dtype=np.uint8)
 
     # 질량 중심 찾기 박스 너비
@@ -370,8 +370,77 @@ class LaneCam:
         pass
 
     def parkingline_loop(self):
-        right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
-        filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
+        parking_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
+        filtered_R = cv2.inRange(parking_frame, self.lower_white, self.upper_white)[252:452, 0:503]
+
+        lines = cv2.HoughLinesP(filtered_R, 1, np.pi / 360, 80, 10, 10)
+        t1 = time.time()
+
+        while True:
+            rand = random.sample(range(0, len(lines)), 2)
+
+            for x1, y1, x2, y2 in lines[rand[0]]: v1 = (x1 - x2, y2 - y1)
+            for x1, y1, x2, y2 in lines[rand[1]]: v2 = (x1 - x2, y2 - y1)
+
+            magnitude_1 = np.sqrt(v1[0] ** 2 + v1[1] ** 2)
+            magnitude_2 = np.sqrt(v2[0] ** 2 + v2[1] ** 2)
+            dot_product = v1[0] * v2[0] + v1[1] * v2[1]
+
+            cos_theta = dot_product / (magnitude_1 * magnitude_2)
+            if cos_theta > 1: cos_theta = 1
+            theta = np.rad2deg(np.arccos(cos_theta))
+
+            if theta > 55 and min(magnitude_1, magnitude_2) > 30:
+                break
+
+            if (time.time() - t1) >= 0.01:
+                v1 = None
+                v2 = None
+                break
+
+        if v1 is not None and v2 is not None:
+            theta1 = np.arctan2(v1[1], v1[0])
+            theta2 = np.arctan2(v2[1], v2[0])
+
+            if theta1 <= -np.deg2rad(90): theta1 += np.deg2rad(180)
+            elif theta1 > np.deg2rad(120): theta1 -= np.deg2rad(180)
+
+            if theta2 <= -np.deg2rad(90): theta2 += np.deg2rad(180)
+            elif theta2 > np.deg2rad(120): theta2 -= np.deg2rad(180)
+
+            middle = (theta1 + theta2) / 2
+
+            lane_points = lines[rand[0]]
+            parkline_points = lines[rand[1]]
+
+            A = np.array([[lane_points[0][2] - lane_points[0][0], parkline_points[0][0] - parkline_points[0][2]],
+                          [lane_points[0][1] - lane_points[0][3], parkline_points[0][3] - parkline_points[0][1]]])
+
+            b = np.array([parkline_points[0][0] - lane_points[0][0], lane_points[0][1] - parkline_points[0][1]])
+
+            x, y = 0, 0
+
+            try:
+                solution = np.linalg.solve(A, b)
+
+                x = int(lane_points[0][0] + solution[0] * (lane_points[0][2] - lane_points[0][0]))
+                y = 200 - int(200 - lane_points[0][1] + solution[0] * (lane_points[0][1] - lane_points[0][3])) + 252
+
+                probe_start_x, probe_start_y = int(x + 300 * np.cos(middle)), int(y - 300 * np.sin(middle))
+
+                cv2.circle(parking_frame, (x, y + 252), 7, (0, 255, 0), -1)
+                cv2.line(parking_frame, (x, y + 252), (probe_start_x, probe_start_y + 252), (255, 0, 0), 2)
+
+            except:
+                pass
+
+            self.parkingline_info = (x, y, middle)
+
+        else:
+            self.parkingline_info = None
+
+        # parking_frame을 모니터에 넘겨줘야 함.
+
 
     def stop(self):
         self.video_left.release()
