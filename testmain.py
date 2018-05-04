@@ -9,6 +9,8 @@ platform = PlatformSerial('COM3')
 motion = MotionPlanner()
 control = Control()
 
+monitor = Monitor()
+
 import cv2
 while True:
     platform.recv()
@@ -23,8 +25,8 @@ while True:
     platform.send()
 
     frames = motion.getFrame()
-    frame = Monitor.concatenates(frames[0], frames[1], mode='v')
-    Monitor.show(frame, frames[2], Monitor.imstatus(*platform.status()))
+    frame = Monitor.concatenates(frames[0], Monitor.imstatus(*platform.status()), frames[1], mode='h')
+    monitor.show('1', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         motion.stop()

@@ -23,10 +23,12 @@ class LaneCam:
 
     crop_L = [[210, 510], [262, 562]]
     crop_R = [[151, 451], [0, 300]]
+    crop_R_parking = [[252, 452], [0, 503]]
     output_L = (563, 511)
     output_R = (503, 452)
     xreadParam_L = crop_L, camera_matrix_L, distortion_coefficients_L, Bird_view_matrix_L, output_L
     xreadParam_R = crop_R, camera_matrix_R, distortion_coefficients_R, Bird_view_matrix_R, output_R
+    xreadparam_R_parking = crop_R_parking, camera_matrix_R, distortion_coefficients_R, Bird_view_matrix_R, output_R
 
     # HSV 을 이용한 차선 추출에 필요한 값들
     lower_yellow = np.array([0, 70, 120], dtype=np.uint8)
@@ -42,11 +44,13 @@ class LaneCam:
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
         self.video_left = videostream.WebcamVideoStream(1, 800, 448)
         self.video_right = videostream.WebcamVideoStream(0, 800, 448)
-        self.video_left.start('left.avi')
-        self.video_right.start('right.avi')
+        self.video_left.start()
+        self.video_right.start()
 
         self.lane_cam_raw_frame = videostream.VideoStream()
         self.lane_cam_frame = videostream.VideoStream()
+        self.parkingline_frame = videostream.VideoStream()
+
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -73,7 +77,7 @@ class LaneCam:
         time.sleep(1)
 
     def getFrame(self):
-        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read())
+        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(), self.parkingline_frame.read())
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -99,6 +103,11 @@ class LaneCam:
         undistorted = cv2.undistort(src, camera_matrix, distortion_matrix, None, None)[10:438, 10:790]
         dst = cv2.warpPerspective(undistorted, transform_matrix, output_size)
         return dst
+
+    def frm_pretreatment_parking(self, ret, frame, crop, *preParam):
+        dst = self.pretreatment(frame, *preParam)
+        cropped = dst[crop[0][0]:crop[0][1], crop[1][0]:crop[1][1]]
+        return cropped
 
     def frm_pretreatment(self, ret, frame, crop, *preParam):
         dst = self.pretreatment(frame, *preParam)
@@ -370,13 +379,18 @@ class LaneCam:
         pass
 
     def parkingline_loop(self):
-        parking_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
-        filtered_R = cv2.inRange(parking_frame, self.lower_white, self.upper_white)[252:452, 0:503]
+        parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)
+        filtered_R = cv2.inRange(parking_frame, self.lower_white, self.upper_white)
 
-        lines = cv2.HoughLinesP(filtered_R, 1, np.pi / 360, 80, 10, 10)
+        lines = cv2.HoughLinesP(filtered_R, 1, np.pi / 360, 40, 10, 10)
         t1 = time.time()
 
         while True:
+            if lines is None or len(lines) <= 1:
+                v1 = None
+                v2 = None
+                break
+
             rand = random.sample(range(0, len(lines)), 2)
 
             for x1, y1, x2, y2 in lines[rand[0]]: v1 = (x1 - x2, y2 - y1)
@@ -390,7 +404,7 @@ class LaneCam:
             if cos_theta > 1: cos_theta = 1
             theta = np.rad2deg(np.arccos(cos_theta))
 
-            if theta > 55 and min(magnitude_1, magnitude_2) > 30:
+            if (50 < theta < 70 or 110 < theta < 130) and min(magnitude_1, magnitude_2) > 40:
                 break
 
             if (time.time() - t1) >= 0.01:
@@ -418,29 +432,29 @@ class LaneCam:
 
             b = np.array([parkline_points[0][0] - lane_points[0][0], lane_points[0][1] - parkline_points[0][1]])
 
-            x, y = 0, 0
+            x, y = None, None
 
             try:
                 solution = np.linalg.solve(A, b)
 
                 x = int(lane_points[0][0] + solution[0] * (lane_points[0][2] - lane_points[0][0]))
-                y = 200 - int(200 - lane_points[0][1] + solution[0] * (lane_points[0][1] - lane_points[0][3])) + 252
+                y = 200 - int(200 - lane_points[0][1] + solution[0] * (lane_points[0][1] - lane_points[0][3]))
 
                 probe_start_x, probe_start_y = int(x + 300 * np.cos(middle)), int(y - 300 * np.sin(middle))
 
-                cv2.circle(parking_frame, (x, y + 252), 7, (0, 255, 0), -1)
-                cv2.line(parking_frame, (x, y + 252), (probe_start_x, probe_start_y + 252), (255, 0, 0), 2)
+                cv2.circle(parking_frame, (x, y), 7, (0, 255, 0), -1)
+                cv2.line(parking_frame, (x, y), (probe_start_x, probe_start_y), (255, 0, 0), 2)
 
             except:
                 pass
 
-            self.parkingline_info = (x, y, middle)
+            self.parkingline_info = (x, 200 - y, middle)
 
         else:
             self.parkingline_info = None
 
         # parking_frame을 모니터에 넘겨줘야 함.
-
+        self.parkingline_frame.write(parking_frame)
 
     def stop(self):
         self.video_left.release()
@@ -452,7 +466,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        lane_cam.default_loop()
-        monitor.show(*lane_cam.getFrame())
+        lane_cam.parkingline_loop()
+        monitor.show('1', *lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()

@@ -170,7 +170,8 @@ class MotionPlanner:
         pass
 
     def parkingline_handling(self):
-        pass
+        self.lanecam.parkingline_loop()
+        parking_line = self.lanecam.parkingline_info
 
     def Uturn_handling(self):
         pass
@@ -196,10 +197,9 @@ if __name__ == "__main__" :
     from monitor import Monitor
     motion_plan = MotionPlanner()
     monitor = Monitor()
+
     while True:
-        t = time.time()
         motion_plan.static_obs_handling()
-        print(time.time() - t)
         monitor.show(*motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()
