@@ -15,7 +15,7 @@ while True:
     control.read(*platform.read())
 
     platform.status()
-    motion.loop()
+    motion.static_obs_handling()
     if motion.target_angle is not None and motion.distance is not None:
         control.mission(10, (motion.distance, motion.target_angle), None)
 
