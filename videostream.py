@@ -77,23 +77,23 @@ class WebcamVideoStream:
             ret, frame = self.stream.read()
             if frame is None:
                 print('[WebcamVideoStream] No Frame')
-                return
+                break
             with self.frame_lock:
                 self.ret, self.frame = ret, frame
             if self.stop_fg is True:
-                return
+                break
 
     def updatewrite(self):
         while True:
             ret, frame = self.stream.read()
             if frame is None:
                 print('[WebcamVideoStream] No Frame')
-                return
+                break
             self.out.write(frame)
             with self.frame_lock:
                 self.ret, self.frame = ret, frame
             if self.stop_fg is True:
-                return
+                break
 
     def read(self):
         with self.frame_lock:
