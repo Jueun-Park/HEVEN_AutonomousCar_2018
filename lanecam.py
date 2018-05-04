@@ -448,7 +448,7 @@ class LaneCam:
             except:
                 pass
 
-            self.parkingline_info = (x, 200 - y, middle)
+            self.parkingline_info = (x, 200 - y, middle, min(theta1, theta2), max(theta1, theta2))
 
         else:
             self.parkingline_info = None
