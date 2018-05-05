@@ -64,6 +64,8 @@ class LaneCam:
         self.left_current_points = np.array([0] * 10)
         self.right_current_points = np.array([0] * 10)
 
+        self.filtered_both = None
+
         # 차선과 닮은 이차함수의 계수 세 개를 담을 변수
         self.left_coefficients = None
         self.right_coefficients = None
@@ -114,6 +116,20 @@ class LaneCam:
         cropped = dst[crop[0][0]:crop[0][1], crop[1][0]:crop[1][1]]
         transposed = cv2.flip(cv2.transpose(cropped), 0)
         return transposed
+
+    def make_filtered_frame(self):
+        left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
+        right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
+        left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
+
+        # HSV, RGB 필터링으로 영상을 이진화 함
+        filtered_L = cv2.inRange(left_hsv, self.lower_yellow, self.upper_yellow)
+        filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
+
+        filtered_both = np.vstack((filtered_R, filtered_L))
+        final = cv2.flip(cv2.transpose(filtered_both), 1)
+
+        self.filtered_both = final
 
     def default_loop(self):
         # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
@@ -373,6 +389,7 @@ class LaneCam:
 
         filtered_both = np.vstack((filtered_R, filtered_L))
         final = cv2.flip(cv2.transpose(filtered_both), 1)
+
         self.lane_cam_frame.write(final)
 
     def stopline_loop(self):

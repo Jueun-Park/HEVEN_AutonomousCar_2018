@@ -17,9 +17,8 @@ while True:
     control.read(*platform.read())
 
     platform.status()
-    motion.static_obs_handling()
-    if motion.target_angle is not None and motion.distance is not None:
-        control.mission(10, (motion.distance, motion.target_angle), None)
+    motion.motion_plan()
+    control.mission(motion.motion)
 
     platform.write(*control.write())
     platform.send()

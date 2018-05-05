@@ -59,8 +59,11 @@ class MotionPlanner:
     def getFrame(self):
         return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), )
 
-    def motion_plan(self):
-        pass
+    def motion_plan(self, mission_num):
+        if mission_num == 0: self.lane_handling()
+        # 남은 것: 유턴, 동적, 정지선
+        elif mission_num == 1: self.parkingline_handling()
+        elif mission_num == 4: self.static_obs_handling()
 
     def lane_handling(self):
         self.lanecam.default_loop()
@@ -75,6 +78,9 @@ class MotionPlanner:
             self.motion = (0, None, None)
 
     def static_obs_handling(self):
+        self.lanecam.make_filtered_frame()
+        lane_image = self.lanecam.filtered_both
+
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
@@ -89,7 +95,7 @@ class MotionPlanner:
         for angle in range(0, 361):
             r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
-            if 2 <= r <= RAD + 50:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+            if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                 # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
                 x = -r * np.cos(np.radians(0.5 * angle))
