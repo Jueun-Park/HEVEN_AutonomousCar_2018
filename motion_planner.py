@@ -81,8 +81,8 @@ class MotionPlanner:
 
     def static_obs_handling(self):
         self.lanecam.default_loop()
-        self.lanecam.make_filtered_frame()
-        lane_image = self.lanecam.filtered_both
+        #self.lanecam.make_filtered_frame()
+        #lane_image = self.lanecam.filtered_both
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
