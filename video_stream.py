@@ -54,7 +54,7 @@ class VideoWriteStream(VideoStream):
         self.stop()
 
 
-class WebcamVideoStream:
+class WebCamVideoStream:
     def __init__(self, src, width, height):
         self.src = src
         self.width = width
@@ -73,7 +73,7 @@ class WebcamVideoStream:
     def start(self, filesrc=None, fps=60.0):
         if filesrc is not None:
             self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (self.width, self.height))
-            self.thread = threading.Thread(target=self.updatewrite)
+            self.thread = threading.Thread(target=self.update_write)
             self.writing = True
         self.thread.start()
 
@@ -81,18 +81,18 @@ class WebcamVideoStream:
         while True:
             ret, frame = self.stream.read()
             if frame is None:
-                print('[WebcamVideoStream] No Frame')
+                print('[WebCamVideoStream] No Frame')
                 break
             with self.frame_lock:
                 self.ret, self.frame = ret, frame
             if self.stop_fg is True:
                 break
 
-    def updatewrite(self):
+    def update_write(self):
         while True:
             ret, frame = self.stream.read()
             if frame is None:
-                print('[WebcamVideoStream] No Frame')
+                print('[WebCamVideoStream] No Frame')
                 break
             self.out.write(frame)
             with self.frame_lock:
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     # grame = numpy.zeros((480, 640, 3), dtype=numpy.uint8)
     import time
 
-    cap = WebcamVideoStream(0, 640, 480)
+    cap = WebCamVideoStream(0, 640, 480)
     cap.start('1.avi')
     fin = VideoWriteStream('2.avi')
     t = time.time()

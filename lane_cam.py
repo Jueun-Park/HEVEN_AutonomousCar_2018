@@ -48,8 +48,8 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left = video_stream.WebcamVideoStream(1, 800, 448)
-        self.video_right = video_stream.WebcamVideoStream(0, 800, 448)
+        self.video_left = video_stream.WebCamVideoStream(1, 800, 448)
+        self.video_right = video_stream.WebCamVideoStream(0, 800, 448)
         self.video_left.start()
         self.video_right.start()
 

@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     # import communication
     # platform = communication.PlatformSerial('COM3')
-    video = video_stream.WebcamVideoStream(0, 100, 200)
+    video = video_stream.WebCamVideoStream(0, 100, 200)
     video.start()
     monitor = Monitor()
     while True:
