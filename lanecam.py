@@ -345,59 +345,59 @@ class LaneCam:
         self.right_previous_points = self.right_current_points
 
         # ---------------------------------- 여기까지 오른쪽 차선 박스 쌓기 영역 ----------------------------------
+        if usage == 0:
+            if self.left_current_points is not None:
+                xs_valid = []
+                ys_L_valid = []
 
-        if self.left_current_points is not None:
-            xs_valid = []
-            ys_L_valid = []
+                for i in range(0, 10):
+                    temp = self.left_current_points[i]
+                    if temp != -1:
+                        xs_valid.append(-30 * i)
+                        ys_L_valid.append(-1 * temp)
+                        cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
+                                 150)
 
-            for i in range(0, 10):
-                temp = self.left_current_points[i]
-                if temp != -1:
-                    xs_valid.append(-30 * i)
-                    ys_L_valid.append(-1 * temp)
-                    cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
-                             150)
+                self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
 
-            self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
+                xs_plot = np.array([1 * i for i in range(-299, 1)])
+                ys_plot_L = np.array(
+                    [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for v in
+                     xs_plot])
 
-            xs_plot = np.array([1 * i for i in range(-299, 1)])
-            ys_plot_L = np.array(
-                [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for v in
-                 xs_plot])
+                transformed_x = xs_plot + 299
+                transformed_y_L = 0 - ys_plot_L
 
-            transformed_x = xs_plot + 299
-            transformed_y_L = 0 - ys_plot_L
+                for i in range(0, 300):
+                    cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
 
-            for i in range(0, 300):
-                cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
+            else:
+                self.left_coefficients = None
 
-        else:
-            self.left_coefficients = None
+            if self.right_current_points is not None:
+                xs_valid = []
+                ys_R_valid = []
 
-        if self.right_current_points is not None:
-            xs_valid = []
-            ys_R_valid = []
+                for i in range(0, 10):
+                    temp = self.right_current_points[i]
+                    if temp != -1:
+                        xs_valid.append(-30 * i)
+                        ys_R_valid.append(300 - temp)
+                        cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
+                                 150)
 
-            for i in range(0, 10):
-                temp = self.right_current_points[i]
-                if temp != -1:
-                    xs_valid.append(-30 * i)
-                    ys_R_valid.append(300 - temp)
-                    cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
-                             150)
+                self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
 
-            self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
+                xs_plot = np.array([1 * i for i in range(-299, 1)])
+                ys_plot_R = np.array(
+                    [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2 for v
+                     in xs_plot])
 
-            xs_plot = np.array([1 * i for i in range(-299, 1)])
-            ys_plot_R = np.array(
-                [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2 for v
-                 in xs_plot])
+                transformed_x = xs_plot + 299
+                transformed_y_R = 299 - ys_plot_R
 
-            transformed_x = xs_plot + 299
-            transformed_y_R = 299 - ys_plot_R
-
-            for i in range(0, 300):
-                cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
+                for i in range(0, 300):
+                    cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
 
         else:
             self.right_coefficients = None
