@@ -1,7 +1,10 @@
-# 경로 설정
+# 경로 설정 프로그램
+# 김홍빈
 # input: 1. numpy array (from lidar)
 #        2. numpy array (from lane_cam)
-# output: 차선 center 위치, 기울기, 곡률이 담긴 numpy array
+# output: 차선 center 위치, 기울기, 곡률이 담긴 numpy array (for default driving)
+#         그 외 미션 주행에 필요한 각 정보들
+
 
 import pycuda.driver as drv
 import numpy as np
@@ -9,9 +12,9 @@ from pycuda.compiler import SourceModule
 import cv2
 from parabola import Parabola
 from lidar import Lidar
-from lanecam import LaneCam
+from lane_cam import LaneCam
 import time
-import videostream
+import video_stream
 
 
 class MotionPlanner:
@@ -30,8 +33,8 @@ class MotionPlanner:
 
         self.motion = None
 
-        self.motion_planner_frame = videostream.VideoStream()
-        self.parking_lidar = videostream.VideoStream()
+        self.motion_planner_frame = video_stream.VideoStream()
+        self.parking_lidar = video_stream.VideoStream()
 
 
         # pycuda alloc

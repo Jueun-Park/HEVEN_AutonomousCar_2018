@@ -1,3 +1,4 @@
+# !작년 학습 모델로 만들었고 현재 이 프로그램은 잘 안 됨!
 # 카메라 통신 및 표지판 인식
 # input: sign_cam
 # output: 표지판 종류 (to car_control)

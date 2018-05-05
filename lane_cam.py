@@ -1,8 +1,14 @@
+# 차선 인식
+# 김홍빈
+# input: 캠 이미지 (from video_stream)
+# output: 차선 근사 이차함수의 계수 세 개, 정지선 정보, 주차 공간 정보 (to motion_planner)
+
+
 import cv2
 import numpy as np
 import random
 import time
-import videostream
+import video_stream
 
 
 class LaneCam:
@@ -42,14 +48,14 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left = videostream.WebcamVideoStream(1, 800, 448)
-        self.video_right = videostream.WebcamVideoStream(0, 800, 448)
+        self.video_left = video_stream.WebCamVideoStream(1, 800, 448)
+        self.video_right = video_stream.WebCamVideoStream(0, 800, 448)
         self.video_left.start()
         self.video_right.start()
 
-        self.lane_cam_raw_frame = videostream.VideoStream()
-        self.lane_cam_frame = videostream.VideoStream()
-        self.parkingline_frame = videostream.VideoStream()
+        self.lane_cam_raw_frame = video_stream.VideoStream()
+        self.lane_cam_frame = video_stream.VideoStream()
+        self.parkingline_frame = video_stream.VideoStream()
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
