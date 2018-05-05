@@ -45,7 +45,7 @@ class Control:
 
         self.mission_num = 0  # (일반 주행 모드)
 
-        self.default_mode = 1
+        self.default_mode = 0
         self.obs_mode = 1
 
         self.default_y_dis = 0.1  # (임의의 값 / 1m)
@@ -86,6 +86,7 @@ class Control:
     def do_mission(self, first, second):
 
         if self.mission_num == 0:
+            if first is None: return
             self.cross_track_error = first[0] / 100
             self.linear = first[1]
             self.cul = first[2] / 100
@@ -131,7 +132,7 @@ class Control:
 
     def __default__(self):
         self.steer = 0
-        self.speed = 54
+        self.speed = 108
         self.gear = 0
         self.brake = 0
 
@@ -150,7 +151,7 @@ class Control:
             self.velocity = (self.speed_platform*100)/3600
             self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.05
+        self.adjust = 0.3
 
         steer_now = (self.theta_1 + self.theta_2)
         steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now))
@@ -168,7 +169,7 @@ class Control:
 
     def __default2__(self):
         self.steer = 0
-        self.speed = 54
+        self.speed = 108
         self.gear = 0
         self.brake = 0
 
@@ -196,7 +197,7 @@ class Control:
             self.velocity = (self.speed_platform*100)/3600
             self.theta_error = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.05
+        self.adjust = 0.3
         self.correction_default = 1
 
         steer_now = (self.theta_line + self.theta_error)
@@ -425,14 +426,6 @@ class Control:
         self.brake = 0
 
         self.change_mission = 0
-
-        self.obs_y = self.obs_uturn[1] / 100
-
-        if abs(self.obs_y) < self.car_front:
-            self.speed = 0
-
-            if self.usit == 0:
-                self.usit = 1
 
         if self.usit == 1:
             self.speed = 36

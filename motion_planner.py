@@ -70,14 +70,16 @@ class MotionPlanner:
 
         if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
-            path = Parabola(*path_coefficients)
+            path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motion = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
+            print(self.motion)
 
         else:
             self.motion = (0, None, None)
 
     def static_obs_handling(self):
+        self.lanecam.default_loop()
         self.lanecam.make_filtered_frame()
         lane_image = self.lanecam.filtered_both
 
@@ -168,7 +170,7 @@ class MotionPlanner:
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 self.motion = (4, (10, target), None)
-
+            if color is None: print(1); return
             self.motion_planner_frame.write(color)
 
     def stopline_handling(self):
@@ -232,6 +234,7 @@ class MotionPlanner:
             self.parking_lidar.write(current_frame)
 
         else: self.motion = (1, False, None)
+        print(self.motion)
 
     def Uturn_handling(self):
         pass

@@ -41,10 +41,10 @@ class PlatformSerial:
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = self.read_packet.brake / 200
-        print('[READ]')
-        print(self.read_packet.get_attr(mode='a'))
-        print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
-        print()
+        #print('[READ]')
+        #print(self.read_packet.get_attr(mode='a'))
+        #print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
+        #print()
         return gear, speed, steer, brake
 
 import time

@@ -57,11 +57,6 @@ if __name__ == '__main__':
     platform = PlatformSerial(port)
     control = Control()
     while True:
-        platform.recv()
-        platform.print_status()
-        t_stop()
-        platform.read()
-        platform.send()
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
             platform.recv()
             platform.print_status()
