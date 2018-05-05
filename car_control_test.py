@@ -58,8 +58,8 @@ class Control:
         self.cul = 0
         self.parking_time1 = 0
         self.parking_time2 = 0
-        self.corner = 0
         self.place = 0
+        self.park_position = 0
         self.obs_exist = 0
         self.count = 0
         self.obs_uturn = 0
@@ -98,6 +98,8 @@ class Control:
                 self.__default2__()
 
         elif self.mission_num == 1:
+            self.place = first
+            self.park_position = second
 
             self.__parking__()
 
@@ -317,6 +319,9 @@ class Control:
         self.brake = 0
 
         self.change_mission = 0
+
+        if self.psit == 0:
+            
 
         if self.psit == 1:
             self.speed = 36

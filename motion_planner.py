@@ -20,6 +20,7 @@ class MotionPlanner:
 
     def __init__(self): #, lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = Lidar() #lidar_instance
+        time.sleep(1)
         self.lanecam = LaneCam() #lanecam_instance
         self.signcam = None #signcam_instance
 
@@ -112,6 +113,9 @@ class MotionPlanner:
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
+        color = None
+        target = None
+
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(self.RANGE + 1,1,1))
             data_transposed = np.transpose(data)
@@ -171,7 +175,8 @@ class MotionPlanner:
 
                 self.motion = (4, (10, target), None)
             if color is None: print(1); return
-            self.motion_planner_frame.write(color)
+
+        self.motion_planner_frame.write(color)
 
     def stopline_handling(self):
         pass
