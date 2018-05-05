@@ -70,14 +70,18 @@ class MotionPlanner:
 
         if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
-            path = Parabola(*path_coefficients)
+            path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motion = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
 
         else:
             self.motion = (0, None, None)
 
-    def static_obs_handling(self, is_lane_required):
+    def static_obs_handling(self):
+        self.lanecam.default_loop()
+        self.lanecam.make_filtered_frame()
+        lane_image = self.lanecam.filtered_both
+
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
@@ -104,11 +108,6 @@ class MotionPlanner:
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
-
-        if is_lane_required:
-            self.lanecam.default_loop()
-            if self.lanecam.left_current_points is not None and self.lanecam.right_current_points is not None:
-                pass
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
