@@ -3,13 +3,26 @@ import struct
 
 
 class SerialPacket(object):
-    START_BYTES = [0x53, 0x54, 0x58]; END_BYTES = [0x0D, 0x0A]
-    AORM_MANUAL = 0x00; AORM_AUTO = 0x01; AORM_DEFAULT = AORM_AUTO
-    ESTOP_OFF = 0x00; ESTOP_ON = 0x01; ESTOP_DEFAULT = ESTOP_OFF
-    GEAR_FORWARD = 0x00; GEAR_NEUTRAL = 0x01; GEAR_BACKWARD = 0x02; GEAR_DEFAULT = GEAR_FORWARD
+    START_BYTES = [0x53, 0x54, 0x58];
+    END_BYTES = [0x0D, 0x0A]
+    AORM_MANUAL = 0x00;
+    AORM_AUTO = 0x01;
+    AORM_DEFAULT = AORM_AUTO
+    ESTOP_OFF = 0x00;
+    ESTOP_ON = 0x01;
+    ESTOP_DEFAULT = ESTOP_OFF
+    GEAR_FORWARD = 0x00;
+    GEAR_NEUTRAL = 0x01;
+    GEAR_BACKWARD = 0x02;
+    GEAR_DEFAULT = GEAR_FORWARD
     SPEED_MIN = 0
-    STEER_MAXLEFT = -2000; STEER_STRAIGHT = 0; STEER_MAXRIGHT = 2000
-    BRAKE_NOBRAKE = 1; BRAKE_FULLBRAKE = 33; BRAKE_DEFAULT = BRAKE_NOBRAKE; BRAKE_MAXBRAKE = 200
+    STEER_MAXLEFT = -2000;
+    STEER_STRAIGHT = 0;
+    STEER_MAXRIGHT = 2000
+    BRAKE_NOBRAKE = 1;
+    BRAKE_FULLBRAKE = 33;
+    BRAKE_DEFAULT = BRAKE_NOBRAKE;
+    BRAKE_MAXBRAKE = 200
 
     def __init__(self, data=None, start_bytes=START_BYTES,
                  aorm=AORM_DEFAULT, estop=ESTOP_DEFAULT, gear=GEAR_DEFAULT,
@@ -81,18 +94,21 @@ class SerialPacket(object):
 
     def write_bytes(self):
         try:
-            b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
+            b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed,
+                            self.steer, self.brake, self.alive, bytes(self.end_bytes))
         except:
             print('[SerialPacket| WRITE ERROR]')
             print('-Set to default value]')
             self.default()
-            b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.alive, bytes(self.end_bytes))
+            b = struct.pack('!3sBBBHhBB2s', bytes(self.start_bytes), self.aorm, self.estop, self.gear, self.speed,
+                            self.steer, self.brake, self.alive, bytes(self.end_bytes))
         return b
 
     def verify(self):
         if (self.start_bytes != SerialPacket.START_BYTES).any(): return False
         if (self.end_bytes != SerialPacket.END_BYTES).any(): return False
         return True
+
 
 '''
 if __name__ == '__main__':

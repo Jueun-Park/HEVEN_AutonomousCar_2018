@@ -1,6 +1,11 @@
-import numpy as np
+# 표지판이 있는 위치를 자른 이미지 반환
+# input: 캠 이미지
+# output: 표지판 후보 이미지
+# 개발: 이아영, 김윤진
+
+
 import cv2
-import time
+
 
 def shape_detect(img):
     sign = []
@@ -39,6 +44,7 @@ def shape_detect(img):
 def main():
     Shape_detection = shape_detect(img)
     print(Shape_detection)
+
 
 if __name__ == "__main__":
     # open cam

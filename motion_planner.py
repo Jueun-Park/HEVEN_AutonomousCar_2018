@@ -13,16 +13,20 @@ from lanecam import LaneCam
 import time
 import videostream
 
+
 class MotionPlanner:
     OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
     PARKING_RADIUS = 500
     RANGE = 110
 
-    def __init__(self): #, lidar_instance, lanecam_instance, signcam_instance):
-        self.lidar = Lidar() #lidar_instance
+    def __init__(self):  # , lidar_instance, lanecam_instance, signcam_instance):
+        self.lidar = Lidar()  # lidar_instance
         time.sleep(1)
-        self.lanecam = LaneCam() #lanecam_instance
-        self.signcam = None #signcam_instance
+        self.lanecam = LaneCam()  # lanecam_instance
+        self.signcam = None  # signcam_instance
+
+        self.previous_target = None
+        self.previous_data = None
 
         self.motion = None
 
@@ -58,13 +62,16 @@ class MotionPlanner:
         # pycuda alloc end
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), )
+        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read())
 
     def motion_plan(self, mission_num):
-        if mission_num == 0: self.lane_handling()
+        if mission_num == 0:
+            self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
-        elif mission_num == 1: self.parkingline_handling()
-        elif mission_num == 4: self.static_obs_handling()
+        elif mission_num == 1:
+            self.parkingline_handling()
+        elif mission_num == 4:
+            self.static_obs_handling()
 
     def lane_handling(self):
         self.lanecam.default_loop()
@@ -81,8 +88,8 @@ class MotionPlanner:
 
     def static_obs_handling(self):
         self.lanecam.default_loop()
-        #self.lanecam.make_filtered_frame()
-        #lane_image = self.lanecam.filtered_both
+        # self.lanecam.make_filtered_frame()
+        # lane_image = self.lanecam.filtered_both
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
@@ -109,7 +116,7 @@ class MotionPlanner:
                 points[angle][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(current_frame, tuple(point), 75, 255, -1)  # 캔버스에 점 찍기
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
@@ -117,7 +124,8 @@ class MotionPlanner:
         target = None
 
         if current_frame is not None:
-            self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(self.RANGE + 1,1,1))
+            self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)),
+                      block=(self.RANGE + 1, 1, 1))
             data_transposed = np.transpose(data)
 
             for i in range(0, self.RANGE + 1):
@@ -135,7 +143,7 @@ class MotionPlanner:
 
                 for i in range(0, len(relative_position)):
                     if abs(relative_position[i]) == minimum_distance:
-                        target = int(90 - AUX_RANGE + relative_position[i])
+                        target = int(90 + relative_position[i])
 
             else:
                 target = int(np.argmax(data_transposed[1]) + AUX_RANGE)
@@ -155,9 +163,10 @@ class MotionPlanner:
                     r += 1
 
             if target >= 0:
-                if previous_data is not None and abs(
-                        previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
-                    target = previous_target
+                # if self.previous_data is not None and abs(
+                #       self.previous_data[self.previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 5:
+                #  if data[target - AUX_RANGE][1] != 500:
+                #     target = self.previous_target
 
                 x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
@@ -165,8 +174,8 @@ class MotionPlanner:
 
                 self.motion = (4, (data_transposed[1][target - AUX_RANGE], target), None)
 
-                previous_data = data
-                previous_target = target
+                self.previous_data = data
+                self.previous_target = target
 
             else:
                 x_target = RAD + int(100 * np.cos(np.radians(int(-target)))) - 1
@@ -219,7 +228,8 @@ class MotionPlanner:
                     if current_frame[temp_y][temp_x] != 0:
                         obstacle_detected = True
 
-                except: pass
+                except:
+                    pass
 
                 r += 1
 
@@ -230,15 +240,18 @@ class MotionPlanner:
 
             if not obstacle_detected:
                 self.motion = (
-                1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
+                    1, True,
+                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
 
             else:
                 self.motion = (
-                1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
+                    1, False,
+                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
 
             self.parking_lidar.write(current_frame)
 
-        else: self.motion = (1, False, None)
+        else:
+            self.motion = (1, False, None)
         print(self.motion)
 
     def Uturn_handling(self):
@@ -261,13 +274,13 @@ class MotionPlanner:
         # pycuda dealloc end
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     from monitor import Monitor
     motion_plan = MotionPlanner()
     monitor = Monitor()
 
     while True:
-        motion_plan.parkingline_handling()
+        motion_plan.static_obs_handling()
         monitor.show('parking', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()
