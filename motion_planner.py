@@ -20,6 +20,7 @@ class MotionPlanner:
 
     def __init__(self): #, lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = Lidar() #lidar_instance
+        time.sleep(1)
         self.lanecam = LaneCam() #lanecam_instance
         self.signcam = None #signcam_instance
 
@@ -73,6 +74,7 @@ class MotionPlanner:
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motion = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
+            print(self.motion)
 
         else:
             self.motion = (0, None, None)
@@ -112,6 +114,7 @@ class MotionPlanner:
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
         color = None
+        target = None
 
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(self.RANGE + 1,1,1))
@@ -125,7 +128,6 @@ class MotionPlanner:
             color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
             count = np.sum(data_transposed[0])
-            target = None
 
             if count <= self.RANGE - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
@@ -172,7 +174,7 @@ class MotionPlanner:
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 self.motion = (4, (10, target), None)
-
+            if color is None: print(1); return
 
         self.motion_planner_frame.write(color)
 
@@ -237,6 +239,7 @@ class MotionPlanner:
             self.parking_lidar.write(current_frame)
 
         else: self.motion = (1, False, None)
+        print(self.motion)
 
     def Uturn_handling(self):
         pass

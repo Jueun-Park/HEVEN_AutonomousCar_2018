@@ -26,6 +26,7 @@ while True:
 
     frames = motion.getFrame()
     frame = Monitor.concatenates(frames[0], frames[1], mode='v')
+    print(frames)
     monitor.show('1', frame, frames[2])
     monitor.show('2', Monitor.imstatus(*platform.status()))
 
