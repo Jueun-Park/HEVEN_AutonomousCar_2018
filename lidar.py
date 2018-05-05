@@ -1,6 +1,7 @@
 # 라이다 통신 및 해석(장애물 추출)
+# 김홍빈
 # input: LiDAR
-# output: numpy array? (to path_planner)
+# output: theta 에 따른 장애물 거리 (to motion_planner)
 
 import math
 import socket

@@ -1,3 +1,7 @@
+# 주행 중 모니터링 프로그램
+# 김진웅
+
+
 import cv2
 import numpy as np
 
@@ -132,11 +136,11 @@ class Monitor:
 
 if __name__ == '__main__':
     import time
-    import videostream
+    import video_stream
 
     # import communication
     # platform = communication.PlatformSerial('COM3')
-    video = videostream.WebcamVideoStream(0, 100, 200)
+    video = video_stream.WebcamVideoStream(0, 100, 200)
     video.start()
     monitor = Monitor()
     while True:

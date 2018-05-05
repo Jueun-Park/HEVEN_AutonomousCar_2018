@@ -1,3 +1,9 @@
+# 차량 조향/속도 제어 프로그램
+# 박준혁
+# input: communication.py, motion_planner.py, lane_cam.py 등에서 주는 차가 앞으로 가는 데 필요한 모든 정보
+# output: 통신에 보낼 조향/속도 정보
+
+
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 # self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}

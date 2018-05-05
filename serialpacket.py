@@ -1,3 +1,8 @@
+# 통신 코드를 위한 시리얼 패킷 API
+# 패킷 세부 형식(byte array)은 플랫폼 안내 책자 참조
+# 김진웅
+
+
 import numpy as np
 import struct
 

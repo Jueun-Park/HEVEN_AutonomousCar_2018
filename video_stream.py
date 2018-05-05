@@ -1,3 +1,7 @@
+# 캠 영상 백그라운드에서 실시간으로 받는 프로그램
+# 김진웅
+
+
 import cv2
 import threading
 

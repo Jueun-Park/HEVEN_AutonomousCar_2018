@@ -1,3 +1,9 @@
+# 플랫폼-프로세서 간 통신 프로그램
+# 김진웅
+# input: (from car_control)
+# output: (to car_control)
+
+
 from serialpacket import SerialPacket
 import serial
 
