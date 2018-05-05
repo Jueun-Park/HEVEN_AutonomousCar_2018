@@ -391,7 +391,7 @@ class LaneCam:
         final = cv2.flip(cv2.transpose(filtered_both), 1)
 
         self.lane_cam_frame.write(final)
- 
+
     def stopline_loop(self):
         pass
 

@@ -111,6 +111,8 @@ class MotionPlanner:
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
+        color = None
+
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)), block=(self.RANGE + 1,1,1))
             data_transposed = np.transpose(data)
@@ -123,6 +125,7 @@ class MotionPlanner:
             color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
             count = np.sum(data_transposed[0])
+            target = None
 
             if count <= self.RANGE - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
@@ -170,7 +173,8 @@ class MotionPlanner:
 
                 self.motion = (4, (10, target), None)
 
-            self.motion_planner_frame.write(color)
+
+        self.motion_planner_frame.write(color)
 
     def stopline_handling(self):
         pass
