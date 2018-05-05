@@ -51,7 +51,6 @@ class LaneCam:
         self.lane_cam_frame = videostream.VideoStream()
         self.parkingline_frame = videostream.VideoStream()
 
-
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
         self.right_frame = None
@@ -168,15 +167,19 @@ class LaneCam:
                     center_of_mass = self.findCenterofMass(small_box)
 
                     # 박스가 비어 있는 경우 -1을 저장
-                    if center_of_mass == -1: self.left_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.left_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
                         # 질량중심 결과가 전체 영상을 벗어나지 않았을 때만 저장하고
-                        if 0 <= location < 300: self.left_current_points[i] = location
+                        if 0 <= location < 300:
+                            self.left_current_points[i] = location
                         # 벗어나면 -1을 저장함
-                        else: self.left_current_points[i] = -1
+                        else:
+                            self.left_current_points[i] = -1
 
-            else: self.left_current_points = None
+            else:
+                self.left_current_points = None
 
         else:
             for i in range(0, 10):
@@ -191,12 +194,15 @@ class LaneCam:
                     small_box = filtered_L[y1:y2, x1:x2]
                     center_of_mass = self.findCenterofMass(small_box)
 
-                    if center_of_mass == -1: self.left_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.left_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
 
-                        if 0 <= location < 300: self.left_current_points[i] = location
-                        else: self.left_current_points[i] = -1
+                        if 0 <= location < 300:
+                            self.left_current_points[i] = location
+                        else:
+                            self.left_current_points[i] = -1
 
                 else:
                     if i == 0:
@@ -208,7 +214,8 @@ class LaneCam:
                         small_box = filtered_L[y1:y2, x1:x2]
                         center_of_mass = self.findCenterofMass(small_box)
 
-                        if center_of_mass == -1: self.left_current_points[0] = -1
+                        if center_of_mass == -1:
+                            self.left_current_points[0] = -1
                         else:
                             location = reference + center_of_mass
 
@@ -263,15 +270,19 @@ class LaneCam:
                     center_of_mass = self.findCenterofMass(small_box)
 
                     # 박스가 비어 있는 경우 -1을 저장
-                    if center_of_mass == -1: self.right_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.right_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
                         # 질량중심 결과가 전체 영상을 벗어나지 않았을 때만 저장하고
-                        if 0 <= location < 300: self.right_current_points[i] = location
+                        if 0 <= location < 300:
+                            self.right_current_points[i] = location
                         # 벗어나면 -1을 저장함
-                        else: self.right_current_points[i] = -1
+                        else:
+                            self.right_current_points[i] = -1
 
-            else: self.right_current_points = None
+            else:
+                self.right_current_points = None
 
         else:
             for i in range(0, 10):
@@ -286,12 +297,15 @@ class LaneCam:
                     small_box = filtered_R[y1:y2, x1:x2]
                     center_of_mass = self.findCenterofMass(small_box)
 
-                    if center_of_mass == -1: self.right_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.right_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
 
-                        if 0 <= location < 300: self.right_current_points[i] = location
-                        else: self.right_current_points[i] = -1
+                        if 0 <= location < 300:
+                            self.right_current_points[i] = location
+                        else:
+                            self.right_current_points[i] = -1
 
                 else:
                     if i == 0:
@@ -303,7 +317,8 @@ class LaneCam:
                         small_box = filtered_L[y1:y2, x1:x2]
                         center_of_mass = self.findCenterofMass(small_box)
 
-                        if center_of_mass == -1: self.right_current_points[0] = -1
+                        if center_of_mass == -1:
+                            self.right_current_points[0] = -1
                         else:
                             location = reference + center_of_mass
 
@@ -346,13 +361,15 @@ class LaneCam:
                 if temp != -1:
                     xs_valid.append(-30 * i)
                     ys_L_valid.append(-1 * temp)
-                    cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH), 150)
+                    cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
+                             150)
 
             self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
 
             xs_plot = np.array([1 * i for i in range(-299, 1)])
             ys_plot_L = np.array(
-                [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for v in xs_plot])
+                [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for v in
+                 xs_plot])
 
             transformed_x = xs_plot + 299
             transformed_y_L = 0 - ys_plot_L
@@ -360,7 +377,8 @@ class LaneCam:
             for i in range(0, 300):
                 cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
 
-        else: self.left_coefficients = None
+        else:
+            self.left_coefficients = None
 
         if self.right_current_points is not None:
             xs_valid = []
@@ -371,13 +389,15 @@ class LaneCam:
                 if temp != -1:
                     xs_valid.append(-30 * i)
                     ys_R_valid.append(300 - temp)
-                    cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH), 150)
+                    cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
+                             150)
 
             self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
 
             xs_plot = np.array([1 * i for i in range(-299, 1)])
             ys_plot_R = np.array(
-                [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2 for v in xs_plot])
+                [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2 for v
+                 in xs_plot])
 
             transformed_x = xs_plot + 299
             transformed_y_R = 299 - ys_plot_R
@@ -385,7 +405,8 @@ class LaneCam:
             for i in range(0, 300):
                 cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
 
-        else: self.right_coefficients = None
+        else:
+            self.right_coefficients = None
 
         filtered_both = np.vstack((filtered_R, filtered_L))
         final = cv2.flip(cv2.transpose(filtered_both), 1)
@@ -433,11 +454,15 @@ class LaneCam:
             theta1 = np.arctan2(v1[1], v1[0])
             theta2 = np.arctan2(v2[1], v2[0])
 
-            if theta1 <= -np.deg2rad(90): theta1 += np.deg2rad(180)
-            elif theta1 > np.deg2rad(120): theta1 -= np.deg2rad(180)
+            if theta1 <= -np.deg2rad(90):
+                theta1 += np.deg2rad(180)
+            elif theta1 > np.deg2rad(120):
+                theta1 -= np.deg2rad(180)
 
-            if theta2 <= -np.deg2rad(90): theta2 += np.deg2rad(180)
-            elif theta2 > np.deg2rad(120): theta2 -= np.deg2rad(180)
+            if theta2 <= -np.deg2rad(90):
+                theta2 += np.deg2rad(180)
+            elif theta2 > np.deg2rad(120):
+                theta2 -= np.deg2rad(180)
 
             middle = (theta1 + theta2) / 2
 
@@ -480,6 +505,7 @@ class LaneCam:
 
 if __name__ == "__main__":
     from monitor import Monitor
+
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:

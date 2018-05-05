@@ -7,7 +7,6 @@ import math
 
 
 class Control:
-
     car_front = 0.28  # 수정 바람 - 차량 정지 시간
 
     def __init__(self):
@@ -113,7 +112,7 @@ class Control:
             self.__uturn__()
 
         elif self.mission_num == 7:
-            self.stop_line = first/100
+            self.stop_line = first / 100
 
             self.__cross__()
 
@@ -150,7 +149,7 @@ class Control:
         if self.speed_platform == 0:
             self.theta_2 = 0
         else:
-            self.velocity = (self.speed_platform*100)/3600
+            self.velocity = (self.speed_platform * 100) / 3600
             self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
         self.adjust = 0.3
@@ -196,7 +195,7 @@ class Control:
         if self.speed_platform == 0:
             self.theta_error = 0
         else:
-            self.velocity = (self.speed_platform*100)/3600
+            self.velocity = (self.speed_platform * 100) / 3600
             self.theta_error = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
         self.adjust = 0.3
@@ -340,10 +339,10 @@ class Control:
                 self.pt1 = self.ENC1
             self.pt2 = self.ENC1
 
-            if (self.pt2 - self.pt1) < self.go+15:
+            if (self.pt2 - self.pt1) < self.go + 15:
                 self.steer = 0
 
-            elif self.go+15 <= (self.pt2 - self.pt1) < self.go + 215:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
+            elif self.go + 15 <= (self.pt2 - self.pt1) < self.go + 215:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
                 self.steer = 1970
 
             if (self.pt2 - self.pt1) >= self.go + 215:
@@ -375,7 +374,7 @@ class Control:
         elif self.psit == 3:
             self.speed = 0
             self.steer = 0
-            self.gear =0
+            self.gear = 0
             self.brake = 0
 
             if self.parking_time1 == 0:

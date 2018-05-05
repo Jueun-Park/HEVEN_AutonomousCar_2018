@@ -29,11 +29,13 @@ class Monitor:
         f = np.zeros((400, 280, 3), dtype=np.uint8)
         position = 1
         for color in self.color_buf:
-            f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[0][0], color[0][1], color[0][2]), (0, 18 * position), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
+            f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[0][0], color[0][1], color[0][2]), (0, 18 * position),
+                            cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
             position += 1
         position = 1
         for color in self.color_buf:
-            f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[1][0], color[1][1], color[1][2]), (150, 18 * position), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
+            f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[1][0], color[1][1], color[1][2]), (150, 18 * position),
+                            cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
             position += 1
         return f
 
@@ -41,7 +43,8 @@ class Monitor:
     def imcolor(cls, color):
         f = np.zeros((60, 450, 3), dtype=np.uint8)
         if color is not None:
-            f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[0], color[1], color[2]), (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+            f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[0], color[1], color[2]), (0, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
         return f
 
     @classmethod
@@ -50,9 +53,12 @@ class Monitor:
         f = np.zeros((240, 400, 3), dtype=np.uint8)
 
         gear_str = ''
-        if gear == SerialPacket.GEAR_FORWARD: gear_str = 'D'
-        elif gear == SerialPacket.GEAR_NEUTRAL: gear_str = 'N'
-        elif gear == SerialPacket.GEAR_BACKWARD: gear_str = 'R'
+        if gear == SerialPacket.GEAR_FORWARD:
+            gear_str = 'D'
+        elif gear == SerialPacket.GEAR_NEUTRAL:
+            gear_str = 'N'
+        elif gear == SerialPacket.GEAR_BACKWARD:
+            gear_str = 'R'
 
         speed_str = '{:6.2f}'.format(speed) + 'kph'
 
@@ -127,21 +133,23 @@ class Monitor:
 if __name__ == '__main__':
     import time
     import videostream
-    #import communication
-    #platform = communication.PlatformSerial('COM3')
+
+    # import communication
+    # platform = communication.PlatformSerial('COM3')
     video = videostream.WebcamVideoStream(0, 100, 200)
     video.start()
     monitor = Monitor()
     while True:
-        #platform.recv()
-        #platform.send()
+        # platform.recv()
+        # platform.send()
         ret, frame = video.read()
         final = cv2.flip(frame, 1)
         final = final[:50, :100]
         result = monitor.concatenate(frame, final, 'v')
-        #result = Monitor.concatenate(result, Monitor.imstatus(*platform.status()), 'h')
+        # result = Monitor.concatenate(result, Monitor.imstatus(*platform.status()), 'h')
         monitor.show('1', result, color_picker=True)
-        color_frame = monitor.concatenate(monitor.imcolor(monitor.color_rgv), monitor.imcolor(monitor.color_hsv), mode='v')
+        color_frame = monitor.concatenate(monitor.imcolor(monitor.color_rgv), monitor.imcolor(monitor.color_hsv),
+                                          mode='v')
         monitor.show('color-picker', color_frame, monitor.imcolorbuf())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     video.release()

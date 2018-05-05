@@ -41,27 +41,35 @@ class PlatformSerial:
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = self.read_packet.brake / 200
-        #print('[READ]')
-        #print(self.read_packet.get_attr(mode='a'))
-        #print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
-        #print()
+        # print('[READ]')
+        # print(self.read_packet.get_attr(mode='a'))
+        # print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
+        # print()
         return gear, speed, steer, brake
 
+
 import time
+
+
 def t_move():
     platform.write(SerialPacket.GEAR_FORWARD, 40, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
+
 
 def t_back():
     platform.write(SerialPacket.GEAR_BACKWARD, 60, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
 
+
 def t_stop():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 60)
+
 
 def t_neutral():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
 
+
 def t_left():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXLEFT, SerialPacket.BRAKE_NOBRAKE)
+
 
 def t_right():
     platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)

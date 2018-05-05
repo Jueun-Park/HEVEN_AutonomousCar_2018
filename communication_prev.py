@@ -164,15 +164,15 @@ class PlatformSerial:
         '''
 
     def test_communication_main(self):
-        #read_thread = threading.Thread(target=self._read())
+        # read_thread = threading.Thread(target=self._read())
         self._read()
         self._write()
-        #write_thread = threading.Thread(target=self._write())
-        #test_write_thread = threading.Thread(target=self.test_write_to_platform())
+        # write_thread = threading.Thread(target=self._write())
+        # test_write_thread = threading.Thread(target=self.test_write_to_platform())
 
-        #read_thread.start()
-        #write_thread.start()
-        #test_write_thread.start()
+        # read_thread.start()
+        # write_thread.start()
+        # test_write_thread.start()
 
 
 if __name__ == '__main__':
@@ -186,4 +186,4 @@ if __name__ == '__main__':
         platform.test_communication_main()
         t2 = time.time()
         print('time ', t2 - t1)
-        #time.sleep(0.2)
+        # time.sleep(0.2)

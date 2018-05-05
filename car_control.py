@@ -7,7 +7,6 @@ import math
 
 
 class Control:
-
     car_front = 0.28  # 수정 바람 - 차량 정지 시간
 
     def __init__(self):
@@ -106,7 +105,7 @@ class Control:
             self.__uturn__()
 
         elif self.mission_num == 7:
-            self.stop_line = first/100
+            self.stop_line = first / 100
 
             self.__cross__()
 
@@ -132,7 +131,7 @@ class Control:
         if abs(self.theta_1) < 15 and abs(self.cross_track_error) < 0.27:
             k = 0.5
 
-        self.velocity = (self.speed_platform*100)/3600
+        self.velocity = (self.speed_platform * 100) / 3600
 
         self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 

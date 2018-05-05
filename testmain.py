@@ -5,7 +5,6 @@ from car_control_test import Control
 from monitor import Monitor
 import time
 
-
 motion = MotionPlanner()
 control = Control()
 platform = PlatformSerial('COM4')
@@ -13,11 +12,13 @@ platform = PlatformSerial('COM4')
 monitor = Monitor()
 
 import cv2
+
 while True:
     platform.recv()
     control.read(*platform.read())
 
     platform.status()
+
     motion.motion_plan(1)
     control.mission(*motion.motion)
 
