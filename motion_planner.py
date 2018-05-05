@@ -77,7 +77,7 @@ class MotionPlanner:
             self.static_obs_handling()
 
     def lane_handling(self):
-        self.lanecam.default_loop()
+        self.lanecam.default_loop(0)
 
         if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
@@ -90,7 +90,7 @@ class MotionPlanner:
             self.motion = (0, None, None)
 
     def static_obs_handling(self):
-        self.lanecam.default_loop()
+        self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
 

@@ -122,7 +122,7 @@ class LaneCam:
         transposed = cv2.flip(cv2.transpose(cropped), 0)
         return transposed
 
-    def default_loop(self):
+    def default_loop(self, usage):
         # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
         left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
         right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
@@ -236,7 +236,7 @@ class LaneCam:
                             else:
                                 self.left_current_points[i] = -1
 
-        if np.count_nonzero(self.left_current_points == -1) >= 5: self.left_current_points = None
+        if np.count_nonzero(self.left_current_points == -1) >= 5 and usage == 0: self.left_current_points = None
         self.left_previous_points = self.left_current_points
         # ---------------------------------- 여기까지 왼쪽 차선 박스 쌓기 영역 ----------------------------------
 
@@ -339,7 +339,7 @@ class LaneCam:
                             else:
                                 self.right_current_points[i] = -1
 
-        if np.count_nonzero(self.right_current_points == -1) >= 5: self.right_current_points = None
+        if np.count_nonzero(self.right_current_points == -1) >= 5 and usage == 0: self.right_current_points = None
         self.right_previous_points = self.right_current_points
 
         # ---------------------------------- 여기까지 오른쪽 차선 박스 쌓기 영역 ----------------------------------
