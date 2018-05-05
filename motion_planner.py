@@ -91,14 +91,11 @@ class MotionPlanner:
 
     def static_obs_handling(self):
         self.lanecam.default_loop()
-        # self.lanecam.make_filtered_frame()
-        # lane_image = self.lanecam.filtered_both
+        left_lane_points = self.lanecam.left_current_points
+        right_lane_points = self.lanecam.right_current_points
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
-
-        previous_data = None
-        previous_target = None
 
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
@@ -120,6 +117,17 @@ class MotionPlanner:
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 75, 255, -1)  # 캔버스에 점 찍기
+
+        if left_lane_points is not None:
+            for i in range(0, len(left_lane_points)):
+                if left_lane_points[i] != -1:
+                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 75, 255, -1)
+
+        if right_lane_points is not None:
+            for i in range(0, len(right_lane_points)):
+                if right_lane_points[i] != -1:
+                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 75, 255, -1)
+
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
