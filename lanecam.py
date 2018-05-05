@@ -237,6 +237,7 @@ class LaneCam:
                                 self.left_current_points[i] = -1
 
         if np.count_nonzero(self.left_current_points == -1) >= 5 and usage == 0: self.left_current_points = None
+        if np.count_nonzero(self.left_current_points == -1) >= 9 and usage == 1: self.left_current_points = None
         self.left_previous_points = self.left_current_points
         # ---------------------------------- 여기까지 왼쪽 차선 박스 쌓기 영역 ----------------------------------
 
@@ -340,6 +341,7 @@ class LaneCam:
                                 self.right_current_points[i] = -1
 
         if np.count_nonzero(self.right_current_points == -1) >= 5 and usage == 0: self.right_current_points = None
+        if np.count_nonzero(self.right_current_points == -1) >= 9 and usage == 1: self.right_current_points = None
         self.right_previous_points = self.right_current_points
 
         # ---------------------------------- 여기까지 오른쪽 차선 박스 쌓기 영역 ----------------------------------
