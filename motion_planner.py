@@ -77,10 +77,7 @@ class MotionPlanner:
         else:
             self.motion = (0, None, None)
 
-    def static_obs_handling(self):
-        self.lanecam.make_filtered_frame()
-        lane_image = self.lanecam.filtered_both
-
+    def static_obs_handling(self, is_lane_required):
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
@@ -107,6 +104,11 @@ class MotionPlanner:
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
+
+        if is_lane_required:
+            self.lanecam.default_loop()
+            if self.lanecam.left_current_points is not None and self.lanecam.right_current_points is not None:
+                pass
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
