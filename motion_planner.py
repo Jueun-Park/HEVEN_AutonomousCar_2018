@@ -18,7 +18,7 @@ import video_stream
 
 
 class MotionPlanner:
-    OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
+    OBSTACLE_RADIUS = 300  # 원일 경우 반지름, 사각형일 경우 한 변
     PARKING_RADIUS = 500
     RANGE = 110
 
@@ -121,12 +121,12 @@ class MotionPlanner:
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 75, 255, -1)
+                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 75, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
                 if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 75, 255, -1)
+                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 75, 100, -1)
 
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
