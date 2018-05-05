@@ -12,7 +12,7 @@ from pycuda.compiler import SourceModule
 import cv2
 from parabola import Parabola
 from lidar import Lidar
-from lane_cam import LaneCam
+from lanecam import LaneCam
 import time
 import video_stream
 
