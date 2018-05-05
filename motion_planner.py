@@ -24,6 +24,9 @@ class MotionPlanner:
         self.lanecam = LaneCam() #lanecam_instance
         self.signcam = None #signcam_instance
 
+        self.previous_target = None
+        self.previous_data = None
+
         self.motion = None
 
         self.motion_planner_frame = videostream.VideoStream()
@@ -58,7 +61,7 @@ class MotionPlanner:
         # pycuda alloc end
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), )
+        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read())
 
     def motion_plan(self, mission_num):
         if mission_num == 0: self.lane_handling()
@@ -81,8 +84,8 @@ class MotionPlanner:
 
     def static_obs_handling(self):
         self.lanecam.default_loop()
-        self.lanecam.make_filtered_frame()
-        lane_image = self.lanecam.filtered_both
+        #self.lanecam.make_filtered_frame()
+        #lane_image = self.lanecam.filtered_both
 
         RAD = np.int32(self.OBSTACLE_RADIUS)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
@@ -109,7 +112,7 @@ class MotionPlanner:
                 points[angle][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 65, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(current_frame, tuple(point), 75, 255, -1)  # 캔버스에 점 찍기
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
@@ -133,9 +136,10 @@ class MotionPlanner:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
                 minimum_distance = int(min(abs(relative_position)))
 
+
                 for i in range(0, len(relative_position)):
                     if abs(relative_position[i]) == minimum_distance:
-                        target = int(90 - AUX_RANGE + relative_position[i])
+                        target = int(90 + relative_position[i])
 
             else:
                 target = int(np.argmax(data_transposed[1]) + AUX_RANGE)
@@ -155,9 +159,10 @@ class MotionPlanner:
                     r += 1
 
             if target >= 0:
-                if previous_data is not None and abs(
-                        previous_data[previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 10:
-                    target = previous_target
+                #if self.previous_data is not None and abs(
+                 #       self.previous_data[self.previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 5:
+                  #  if data[target - AUX_RANGE][1] != 500:
+                   #     target = self.previous_target
 
                 x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
@@ -165,8 +170,8 @@ class MotionPlanner:
 
                 self.motion = (4, (data_transposed[1][target - AUX_RANGE], target), None)
 
-                previous_data = data
-                previous_target = target
+                self.previous_data = data
+                self.previous_target = target
 
             else:
                 x_target = RAD + int(100 * np.cos(np.radians(int(-target)))) - 1
@@ -267,7 +272,7 @@ if __name__ == "__main__" :
     monitor = Monitor()
 
     while True:
-        motion_plan.parkingline_handling()
+        motion_plan.static_obs_handling()
         monitor.show('parking', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()

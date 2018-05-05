@@ -18,7 +18,7 @@ while True:
     control.read(*platform.read())
 
     platform.status()
-    motion.motion_plan(4)
+    motion.motion_plan(1)
     control.mission(*motion.motion)
 
     platform.write(*control.write())
@@ -26,8 +26,8 @@ while True:
 
     frames = motion.getFrame()
     frame = Monitor.concatenates(frames[0], frames[1], mode='v')
-    print(frames)
-    monitor.show('1', frame, frames[2])
+
+    monitor.show('1', frame, frames[2], frames[4])
     monitor.show('2', Monitor.imstatus(*platform.status()))
 
     if cv2.waitKey(1) & 0xFF == ord('q'):

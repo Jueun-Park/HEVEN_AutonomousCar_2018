@@ -40,8 +40,8 @@ class Control:
         self.pt7 = 0
         self.pt8 = 0
 
-        self.usit = 1
-        self.psit = 1
+        self.usit = 0
+        self.psit = 0
 
         self.mission_num = 0  # (일반 주행 모드)
 
@@ -258,7 +258,7 @@ class Control:
             self.theta_obs = self.theta_obs * (-1)
 
         self.adjust = 0.10
-        self.correction = 1.1
+        self.correction = 1.3
 
         steer_final = (self.adjust * self.steer_past) + (1 - self.adjust) * self.theta_obs * 1.387 * self.correction
 
@@ -314,28 +314,39 @@ class Control:
 
     def __parking__(self):
         self.steer = 0
-        self.speed = 0
+        self.speed = 36
         self.gear = 0
         self.brake = 0
 
         self.change_mission = 0
 
         if self.psit == 0:
-            
+            if self.place == False:
+                self.steer = 0
+                self.speed = 36
+                self.gear = 0
+                self.brake = 0
+
+            elif self.place == True:
+                self.speed = 0
+                self.brake = 60
+                if self.speed_platform == 0:
+                    self.go = self.park_position[0] / 1.7
+                    self.psit = 1
 
         if self.psit == 1:
             self.speed = 36
             if self.pt1 == 0:
-                self.pt1 = self.ENC1[0]
-            self.pt2 = self.ENC1[0]
+                self.pt1 = self.ENC1
+            self.pt2 = self.ENC1
 
-            if (self.pt2 - self.pt1) < 100:
+            if (self.pt2 - self.pt1) < self.go+15:
                 self.steer = 0
 
-            elif 100 <= (self.pt2 - self.pt1) < 280:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
+            elif self.go+15 <= (self.pt2 - self.pt1) < self.go + 215:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
                 self.steer = 1970
 
-            if (self.pt2 - self.pt1) >= 290:
+            if (self.pt2 - self.pt1) >= self.go + 215:
                 self.steer = 0
                 self.speed = 0
                 self.brake = 60
@@ -345,8 +356,8 @@ class Control:
 
         elif self.psit == 2:
             if self.pt3 == 0:
-                self.pt3 = self.ENC1[0]
-            self.pt4 = self.ENC1[0]
+                self.pt3 = self.ENC1
+            self.pt4 = self.ENC1
 
             if (self.pt4 - self.pt3) < 100:
                 self.speed = 36
@@ -362,8 +373,10 @@ class Control:
                     self.psit = 3
 
         elif self.psit == 3:
-            self.speed_for_write = 0
-            self.steer_for_write = 0
+            self.speed = 0
+            self.steer = 0
+            self.gear =0
+            self.brake = 0
 
             if self.parking_time1 == 0:
                 self.parking_time1 = time.time()
@@ -374,13 +387,13 @@ class Control:
                 self.psit = 4
 
         elif self.psit == 4:
-            self.gear = 1
+            self.gear = 2
             self.speed = 36
             self.brake = 0
 
             if self.pt5 == 0:
-                self.pt5 = self.ENC1[0]
-            self.pt6 = self.ENC1[0]
+                self.pt5 = self.ENC1
+            self.pt6 = self.ENC1
 
             if abs(self.pt6 - self.pt5) < 100:
                 self.speed = 36
@@ -396,20 +409,20 @@ class Control:
                     self.psit = 5
 
         elif self.psit == 5:
-            self.gear = 1
+            self.gear = 2
             self.speed = 36
             self.brake = 0
 
             if self.pt7 == 0:
-                self.pt7 = self.ENC1[0]
-            self.pt8 = self.ENC1[0]
+                self.pt7 = self.ENC1
+            self.pt8 = self.ENC1
 
-            if abs(self.pt8 - self.pt7) < 185:
+            if abs(self.pt8 - self.pt7) < 200:
                 self.speed = 36
                 self.steer = 1970
                 self.brake = 0
 
-            if abs(self.pt8 - self.pt7) >= 185:
+            if abs(self.pt8 - self.pt7) >= 200:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0
