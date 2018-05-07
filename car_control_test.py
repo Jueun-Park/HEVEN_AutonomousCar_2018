@@ -57,8 +57,6 @@ class Control:
 
         #######################################
         self.speed_platform = 0
-        self.speed_read = 0
-        self.speed_write = 0
         self.ENC1 = 0
         self.cross_track_error = 0
         self.linear = 0
