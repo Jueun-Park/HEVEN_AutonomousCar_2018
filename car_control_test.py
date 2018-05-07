@@ -45,8 +45,8 @@ class Control:
         self.pt7 = 0
         self.pt8 = 0
 
-        self.usit = 0
-        self.psit = 0
+        self.u_sit = 0
+        self.p_sit = 0
 
         self.mission_num = 0  # (일반 주행 모드)
 
@@ -68,7 +68,6 @@ class Control:
         self.park_linear = 0
         self.obs_exist = 0
         self.count = 0
-        self.obs_uturn = 0
         self.stop_line = 0
         self.obs_r = 0
         self.obs_theta = 0
@@ -93,7 +92,8 @@ class Control:
     def do_mission(self, first, second):
 
         if self.mission_num == 0:
-            if first is None: return
+            if first is None:
+                return
             self.cross_track_error = first[0] / 100
             self.linear = first[1]
             self.cul = first[2] / 100
@@ -119,7 +119,7 @@ class Control:
         elif self.mission_num == 6:
             self.turn_distance = first / 100
 
-            self.__uturn__()
+            self.__turn__()
 
         elif self.mission_num == 7:
             self.stop_line = first / 100
@@ -343,7 +343,7 @@ class Control:
 
         self.change_mission = 0
 
-        if self.psit == 0:
+        if self.p_sit == 0:
             if self.place is False:
                 self.steer = 0
                 self.speed = 36
@@ -356,9 +356,9 @@ class Control:
                 if self.speed_platform == 0:
                     self.go = self.park_position[0] / 1.7
                     self.park_theta = self.park_linear
-                    self.psit = 1
+                    self.p_sit = 1
 
-        elif self.psit == 1:
+        elif self.p_sit == 1:
             self.speed = 54
             if self.pt1 == 0:
                 self.pt1 = self.ENC1
@@ -384,9 +384,9 @@ class Control:
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.psit = 2
+                    self.p_sit = 2
 
-        elif self.psit == 2:
+        elif self.p_sit == 2:
             if self.pt3 == 0:
                 self.pt3 = self.ENC1
             self.pt4 = self.ENC1
@@ -402,9 +402,9 @@ class Control:
                 self.speed = 0
 
                 if self.speed_platform == 0:
-                    self.psit = 3
+                    self.p_sit = 3
 
-        elif self.psit == 3:
+        elif self.p_sit == 3:
             self.gear = 2
             self.speed = 0
             self.steer = 0
@@ -416,9 +416,9 @@ class Control:
             self.parking_time2 = time.time()
 
             if (self.parking_time2 - self.parking_time1) > 10:
-                self.psit = 4
+                self.p_sit = 4
 
-        elif self.psit == 4:
+        elif self.p_sit == 4:
             self.gear = 2
             self.speed = 54
             self.brake = 0
@@ -438,9 +438,9 @@ class Control:
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.psit = 5
+                    self.p_sit = 5
 
-        elif self.psit == 5:
+        elif self.p_sit == 5:
             self.gear = 2
             self.speed = 54
             self.brake = 0
@@ -460,16 +460,16 @@ class Control:
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.psit = 6
+                    self.p_sit = 6
 
-        elif self.psit == 6:
+        elif self.p_sit == 6:
             self.gear = 0
             self.speed = 54
             self.steer = 0
             self.brake = 0
             self.change_mission = 1
 
-    def __uturn__(self):
+    def __turn__(self):
         self.steer = 0
         self.speed = 36
         self.gear = 0
@@ -477,16 +477,16 @@ class Control:
 
         self.change_mission = 0
 
-        if self.usit == 0:
+        if self.u_sit == 0:
             if self.turn_distance < 4.5:
                 self.steer = 0
                 self.speed = 0
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.usit = 2
+                    self.u_sit = 2
 
-        elif self.usit == 1:
+        elif self.u_sit == 1:
             self.speed = 36
             if self.ct1 == 0:
                 self.ct1 = self.ENC1[0]
@@ -501,9 +501,9 @@ class Control:
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.usit = 2
+                    self.u_sit = 2
 
-        elif self.usit == 2:
+        elif self.u_sit == 2:
             if self.ct3 == 0:
                 self.ct3 = self.ENC1[0]
             self.ct4 = self.ENC1[0]
@@ -519,9 +519,9 @@ class Control:
                 self.speed = 0
 
                 if self.speed_platform == 0:
-                    self.usit = 3
+                    self.u_sit = 3
 
-        elif self.usit == 3:
+        elif self.u_sit == 3:
             self.steer = 0
             self.speed = 36
             self.brake = 0
