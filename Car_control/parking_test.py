@@ -180,13 +180,13 @@ class PlatformSerial:
                 self.f.write("\nstraight_1  ")
                 self.f.write(data)
 
-            elif 100 <= (self.ct2 - self.ct1) < 280:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
+            elif 100 <= (self.ct2 - self.ct1) < 290:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
                 self.steer_for_write = 1970
 
                 self.f.write("\nturn right  ")
                 self.f.write(data)
 
-            if (self.ct2 - self.ct1) >= 280:
+            if (self.ct2 - self.ct1) >= 290:
                 self.steer_for_write = 1970
                 self.speed_for_write = 0
                 self.brake_for_write = 60
@@ -203,7 +203,7 @@ class PlatformSerial:
                 self.ct3 = self.ENC1[0]
             self.ct4 = self.ENC1[0]
 
-            if (self.ct4 - self.ct3) < 50:
+            if (self.ct4 - self.ct3) < 120:
                 self.speed_for_write = 36
                 self.steer_for_write = 0
                 self.brake_for_write = 0
@@ -211,7 +211,7 @@ class PlatformSerial:
                 self.f.write("\nstraight_2  ")
                 self.f.write(data)
 
-            if (self.ct4 - self.ct3) >= 50:
+            if (self.ct4 - self.ct3) >= 120:
                 self.steer_for_write = 0
                 self.brake_for_write = 60
                 self.speed_for_write = 0
@@ -246,7 +246,7 @@ class PlatformSerial:
                 self.ct5 = self.ENC1[0]
             self.ct6 = self.ENC1[0]
 
-            if abs(self.ct6 - self.ct5) < 50:
+            if abs(self.ct6 - self.ct5) < 120:
                 self.speed_for_write = 36
                 self.steer_for_write = 0
                 self.brake_for_write = 0
@@ -254,7 +254,7 @@ class PlatformSerial:
                 self.f.write("\nback_straight  ")
                 self.f.write(data)
 
-            if abs(self.ct6 - self.ct5) >= 50:
+            if abs(self.ct6 - self.ct5) >= 120:
                 self.steer_for_write = 0
                 self.brake_for_write = 60
                 self.speed_for_write = 0
@@ -276,7 +276,7 @@ class PlatformSerial:
                 self.ct7 = self.ENC1[0]
             self.ct8 = self.ENC1[0]
 
-            if abs(self.ct8 - self.ct7) < 180:
+            if abs(self.ct8 - self.ct7) < 190:
                 self.speed_for_write = 36
                 self.steer_for_write = 1970
                 self.brake_for_write = 0
@@ -284,7 +284,7 @@ class PlatformSerial:
                 self.f.write("\nback_turn_right  ")
                 self.f.write(data)
 
-            if abs(self.ct8 - self.ct7) >= 180:
+            if abs(self.ct8 - self.ct7) >= 190:
                 self.steer_for_write = 1970
                 self.brake_for_write = 60
                 self.speed_for_write = 0

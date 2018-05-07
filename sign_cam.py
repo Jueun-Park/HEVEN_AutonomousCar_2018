@@ -1,3 +1,4 @@
+# !작년 학습 모델로 만들었고 현재 이 프로그램은 잘 안 됨!
 # 카메라 통신 및 표지판 인식
 # input: sign_cam
 # output: 표지판 종류 (to car_control)
@@ -6,6 +7,7 @@
 import cv2
 import numpy as np
 import time
+from shape_detection import shape_detect
 
 # Sign Boards
 try:
@@ -56,6 +58,40 @@ def is_in_this_mission(ndarray):
         return False
 
 
+# mode dictionary (mission_name: mode_no)
+modes = {'DEFAULT': 0,
+         'PARKING': 1,
+         'STATIC_OBS': 2,
+         'MOVING_OBS': 3,
+         'S_CURVE': 4,
+         'NARROW': 5,
+         'U_TURN': 6,
+         'CROSS_WALK': 7, }
+
+# mission name dictionary (mode_no: mission_name)
+mission_name_dic = {0: 'DEFAULT',
+                    1: 'PARKING',
+                    2: 'STATIC_OBS',
+                    3: 'MOVING_OBS',
+                    4: 'S_CURVE',
+                    5: 'NARROW',
+                    6: 'U_TURN',
+                    7: 'CROSS_WALK', }
+
+# 표지판 감지기 인스턴스들 생성 (mode_no: sign_detector)
+detector_dic = {0: None,
+                1: SignDetector(parking_cascade, 1.3, 5),
+                2: None,
+                3: SignDetector(moving_cascade, 1.03, 5),
+                4: None,
+                5: None,
+                6: SignDetector(u_turn_cascade, 1.06, 5),
+                7: None, }
+
+# 표지판 감지한 위치 담는 딕셔너리 (mode_no: location_data_array)
+signboard_location_data = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+
+
 def process_one_frame_sign(frame, is_in_mission):
     if is_in_mission:
         pass
@@ -65,10 +101,7 @@ def process_one_frame_sign(frame, is_in_mission):
     # 그래픽카드로 돌려보자? 쿠다 깔려 있어야 하는 듯?
     # frame = cv2.UMat(frame)
 
-    # 이미지 중 표지판이 있는 곳 확인
-    # 아직 구현 안 됨
-
-    for mode_no in detector_dic:  # 표지판을 인식해라 감지기들이여.
+    for mode_no in detector_dic:  # 감지기들이 표지판 인식
         if detector_dic[mode_no]:
             # 각 미션에 해당하는 표지판 감지기가 위치 어레이를 반환하면 data dictionary 에 담는다.
             signboard_location_data[mode_no] = detector_dic[mode_no].detect(frame)
@@ -102,49 +135,21 @@ def process_one_frame_sign(frame, is_in_mission):
 
 # TEST CODE
 if __name__ == "__main__":
-    # mode dictionary (mission_name: mode_no)
-    modes = {'DEFAULT': 0,
-             'PARKING': 1,
-             'STATIC_OBS': 2,
-             'MOVING_OBS': 3,
-             'S_CURVE': 4,
-             'NARROW': 5,
-             'U_TURN': 6,
-             'CROSS_WALK': 7, }
-
-    # mission name dictionary (mode_no: mission_name)
-    mission_name_dic = {0: 'DEFAULT',
-                        1: 'PARKING',
-                        2: 'STATIC_OBS',
-                        3: 'MOVING_OBS',
-                        4: 'S_CURVE',
-                        5: 'NARROW',
-                        6: 'U_TURN',
-                        7: 'CROSS_WALK', }
-
-    # 표지판 감지기 인스턴스들 생성 (mode_no: sign_detector)
-    detector_dic = {0: None,
-                    1: SignDetector(parking_cascade, 1.3, 5),
-                    2: None,
-                    3: SignDetector(moving_cascade, 1.03, 5),
-                    4: None,
-                    5: None,
-                    6: SignDetector(u_turn_cascade, 1.06, 5),
-                    7: None, }
-
-    # 표지판 감지한 위치 담는 딕셔너리 (mode_no: location_data_array)
-    signboard_location_data = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
 
     # 웹캠 읽어오기
-    cam = cv2.VideoCapture(2)
+    cam = cv2.VideoCapture(0)
     time.sleep(2)
 
     is_in_mission = False
     # 영상 처리
     while (True):
         frame_okay, frame = cam.read()  # 한 프레임을 가져오자.
-        process_one_frame_sign(frame, is_in_mission)
+        # 이미지 중 표지판이 있는 곳 확인
+        img_list = shape_detect(frame)
+        for img in img_list:
+            process_one_frame_sign(img, is_in_mission)
 
         if cv2.waitKey(1) & 0xff == ord('q'):
             cam.release()
             cv2.destroyAllWindows()
+            break

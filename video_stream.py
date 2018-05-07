@@ -1,3 +1,7 @@
+# 캠 영상 백그라운드에서 실시간으로 받는 프로그램
+# 김진웅
+
+
 import cv2
 import threading
 
@@ -30,7 +34,8 @@ class VideoWriteStream(VideoStream):
     def initWrite(self, frame):
         isColor = False
         if frame.ndim == 3: isColor = True
-        self.out = cv2.VideoWriter(self.filesrc, cv2.VideoWriter_fourcc(*'DIVX'), self.fps, (len(frame[0]), len(frame)), isColor)
+        self.out = cv2.VideoWriter(self.filesrc, cv2.VideoWriter_fourcc(*'DIVX'), self.fps, (len(frame[0]), len(frame)),
+                                   isColor)
         self.initWrite = (lambda x: None)
 
     def write(self, frame):
@@ -49,7 +54,7 @@ class VideoWriteStream(VideoStream):
         self.stop()
 
 
-class WebcamVideoStream:
+class WebCamVideoStream:
     def __init__(self, src, width, height):
         self.src = src
         self.width = width
@@ -68,7 +73,7 @@ class WebcamVideoStream:
     def start(self, filesrc=None, fps=60.0):
         if filesrc is not None:
             self.out = cv2.VideoWriter(filesrc, cv2.VideoWriter_fourcc(*'DIVX'), fps, (self.width, self.height))
-            self.thread = threading.Thread(target=self.updatewrite)
+            self.thread = threading.Thread(target=self.update_write)
             self.writing = True
         self.thread.start()
 
@@ -76,18 +81,18 @@ class WebcamVideoStream:
         while True:
             ret, frame = self.stream.read()
             if frame is None:
-                print('[WebcamVideoStream] No Frame')
+                print('[WebCamVideoStream] No Frame')
                 break
             with self.frame_lock:
                 self.ret, self.frame = ret, frame
             if self.stop_fg is True:
                 break
 
-    def updatewrite(self):
+    def update_write(self):
         while True:
             ret, frame = self.stream.read()
             if frame is None:
-                print('[WebcamVideoStream] No Frame')
+                print('[WebCamVideoStream] No Frame')
                 break
             self.out.write(frame)
             with self.frame_lock:
@@ -116,7 +121,8 @@ class WebcamVideoStream:
 if __name__ == "__main__":
     # grame = numpy.zeros((480, 640, 3), dtype=numpy.uint8)
     import time
-    cap = WebcamVideoStream(0, 640, 480)
+
+    cap = WebCamVideoStream(0, 640, 480)
     cap.start('1.avi')
     fin = VideoWriteStream('2.avi')
     t = time.time()
