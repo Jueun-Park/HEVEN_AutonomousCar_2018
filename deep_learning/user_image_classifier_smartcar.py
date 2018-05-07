@@ -1,13 +1,15 @@
 from matplotlib import pyplot as plt
-
+import sys
 import numpy as np
 import os
 import tensorflow as tf
 
+sys.path.insert(0, 'C:/Users/Administrator/Desktop/slim')
+
 from nets import inception
 from preprocessing import inception_preprocessing
 
-checkpoints_dir = 'C:/Users/Jonkim/Desktop/dataset/train_inception_v1_smartcar_FineTune_logs/all'
+checkpoints_dir = 'C:/Users/Administrator/Desktop/dataset/train_inception_v1_smartcar_FineTune_logs/all'
 
 slim = tf.contrib.slim
 
@@ -15,13 +17,14 @@ image_size = inception.inception_v1.default_image_size
 
 with tf.Graph().as_default():
 
+    images_dir = 'C:/Users/Administrator/Desktop/slim/user_images'
     user_images = [] 
     user_processed_images = [] 
 
-    image_files = os.listdir("./user_images") 
+    image_files = os.listdir(images_dir)
 
     for i in image_files:
-        image_input = tf.read_file("./user_images" +"/"+ i)
+        image_input = tf.read_file(images_dir +"/"+ i)
         image = tf.image.decode_jpeg(image_input, channels=3)
         user_images.append(image)
         processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
@@ -41,7 +44,7 @@ with tf.Graph().as_default():
         init_fn(sess)
         np_images, probabilities = sess.run([user_images, probabilities])
     
-    names = os.listdir("C:/Users/Jonkim/Desktop/dataset/smartcar/smartcar_photos")
+    names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
     
 
     for files in range(len(image_files)):
