@@ -1,7 +1,7 @@
 # HEVEN_AutonomousCar_2018
 2018 International Student Car Competition: Autonomous Car SKKU Team. HEVEN
 
-[국제대학생창작자동차경진대회 공식 홈페이지](http://kasa.kr/cev/)
+[국제 대학생 창작자동차 경진대회(International Student Car Competition) 공식 홈페이지](http://kasa.kr/cev/)
 
 [위키 작성법(마크다운 문서)](https://gist.github.com/ihoneymon/652be052a0727ad59601)
 
