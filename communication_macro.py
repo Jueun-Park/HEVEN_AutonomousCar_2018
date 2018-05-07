@@ -48,20 +48,11 @@ class PlatformSerial:
         print()
 
 
-def t_stop():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 60)
-
-
 if __name__ == '__main__':
     port = 'COM7'
     platform = PlatformSerial(port)
     control = Control()
     while True:
-        platform.recv()
-        platform.print_status()
-        t_stop()
-        platform.read()
-        platform.send()
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
             platform.recv()
             platform.print_status()
