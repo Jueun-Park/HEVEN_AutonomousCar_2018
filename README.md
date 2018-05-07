@@ -7,7 +7,7 @@
 |Category|Role|Program Name|
 |:--------|:--------|:--------|
 |**Perception**|LiDAR Mapper|```lidar.py```|
-|"|Cam Video Stream Control|```videostream.py```|
+|"|Cam Video Stream Control|```video_stream.py```|
 |"|Lane Detector|```lane_cam.py```|
 |"|Sign Detector|```shape_detection.py```<br>```sign_cam.py```|
 |**Planning**|Motion & Prticular Condition Planner|```parabola.py```<br>```motion_planner.py```|
