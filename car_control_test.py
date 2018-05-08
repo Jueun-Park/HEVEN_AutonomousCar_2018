@@ -7,13 +7,14 @@
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 # self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}
+# car_front = 0.28
 
 import time
 import math
 
 
 class Control:
-    car_front = 0.28  # 수정 바람 - 차량 정지 시간
+    car_front = 0.28
 
     def __init__(self):
         self.gear = 0
@@ -24,36 +25,12 @@ class Control:
         self.velocity = 0
         self.steer_past = 0
 
-        self.t1 = 0
-        self.t2 = 0
-
-        self.ct1 = 0
-        self.ct2 = 0
-
-        self.ct3 = 0
-        self.ct4 = 0
-
-        self.st1 = 0
-        self.st2 = 0
-
-        self.pt1 = 0
-        self.pt2 = 0
-        self.pt3 = 0
-        self.pt4 = 0
-        self.pt5 = 0
-        self.pt6 = 0
-        self.pt7 = 0
-        self.pt8 = 0
-
-        self.u_sit = 0
-        self.p_sit = 0
-
         self.mission_num = 0  # (일반 주행 모드)
 
         self.default_mode = 0
         self.obs_mode = 1
 
-        self.default_y_dis = 0.1  # (임의의 값 / 1m)
+        self.change_mission = 0
 
         #######################################
         self.speed_platform = 0
@@ -72,8 +49,32 @@ class Control:
         self.obs_r = 0
         self.obs_theta = 0
         self.turn_distance = 0
+
+        self.t1 = 0
+        self.t2 = 0
+
+        self.ct1 = 0
+        self.ct2 = 0
+        self.ct3 = 0
+        self.ct4 = 0
+
+        self.st1 = 0
+        self.st2 = 0
+
+        self.pt1 = 0
+        self.pt2 = 0
+        self.pt3 = 0
+        self.pt4 = 0
+        self.pt5 = 0
+        self.pt6 = 0
+        self.pt7 = 0
+        self.pt8 = 0
+
+        self.u_sit = 0
+        self.p_sit = 0
+
+        self.default_y_dis = 0.1  # (임의의 값 / 1m)
         #######################################
-        self.change_mission = 0
 
     def read(self, speed, enc):
         #######################################
