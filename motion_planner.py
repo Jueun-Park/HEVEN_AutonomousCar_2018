@@ -175,7 +175,8 @@ class MotionPlanner:
 
             if target >= 0:
                 if self.previous_data is not None and abs(
-                      self.previous_data[self.previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 5 and data[target - AUX_RANGE][1] != RAD - 1:
+                      self.previous_data[self.previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 5 and \
+                        data[target - AUX_RANGE][1] != RAD - 1:
                     target = self.previous_target
 
                 x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
