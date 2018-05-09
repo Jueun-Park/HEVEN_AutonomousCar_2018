@@ -42,7 +42,7 @@ class Control:
         self.parking_time2 = 0
         self.place = 0
         self.park_position = 0
-        self.park_linear = 0
+        self.park_theta = 0
         self.obs_exist = 0
         self.count = 0
         self.stop_line = 0
@@ -108,8 +108,8 @@ class Control:
         elif self.mission_num == 1:
             self.place = first
             if second is not None:
-                self.park_position = second[0]
-                self.park_linear = second[1]
+                self.park_position = second[1]
+                self.park_theta = (second[2] - 90)
 
             self.__parking__()
 
@@ -356,8 +356,8 @@ class Control:
                 self.speed = 0
                 self.brake = 60
                 if self.speed_platform == 0:
-                    self.go = self.park_position[0] / 1.7
-                    self.park_theta = self.park_linear
+                    self.go = self.park_position / 1.7
+                    self.park_theta_edit = self.park_theta
                     self.p_sit = 1
 
         elif self.p_sit == 1:
@@ -367,10 +367,9 @@ class Control:
             self.pt2 = self.ENC1
 
             #############################################
-            self.park_theta_edit = math.degrees(math.atan(self.park_theta))
             self.edit_enc = self.park_theta_edit / 3.33
 
-            if self.park_theta > 0:
+            if self.park_theta_edit > 0:
                 self.edit_enc = self.edit_enc * (-1)
             #############################################
 
