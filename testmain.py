@@ -1,17 +1,19 @@
+#######################Module#####################
 from communication import PlatformSerial
 from motion_planner import MotionPlanner
 from car_control_test import Control
 
 from monitor import Monitor
 import time
-
+import cv2
+#####################instance#####################
 motion = MotionPlanner()
 control = Control()
-platform = PlatformSerial('COM4')
+platform = PlatformSerial('COM6')
 
 monitor = Monitor()
+#################################################
 
-import cv2
 
 while True:
     platform.recv()
@@ -19,8 +21,10 @@ while True:
 
     platform.status()
 
-    motion.motion_plan(4)
+    motion.motion_plan(1)
     control.mission(*motion.motion)
+
+    print(control.p_sit)
 
     platform.write(*control.write())
     platform.send()

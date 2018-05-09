@@ -81,6 +81,9 @@ class LaneCam:
         # 주차 공간 정보를 담을 변수
         self.parkingline_info = None
 
+        # 주차 공간 인식 횟수를 담을 변수
+        self.parking_count = 0
+
         time.sleep(1)
 
     def getFrame(self):
@@ -437,6 +440,7 @@ class LaneCam:
             theta = np.rad2deg(np.arccos(cos_theta))
 
             if (50 < theta < 70 or 110 < theta < 130) and min(magnitude_1, magnitude_2) > 40:
+                self.parking_count += 1
                 break
 
             if (time.time() - t1) >= 0.01:
@@ -484,7 +488,9 @@ class LaneCam:
             except:
                 pass
 
-            self.parkingline_info = (x, 200 - y, middle, min(theta1, theta2), max(theta1, theta2))
+            if self.parking_count == 5:
+                self.parkingline_info = (x, 200 - y, middle, min(theta1, theta2), max(theta1, theta2))
+                self.parking_count = 0
 
         else:
             self.parkingline_info = None
