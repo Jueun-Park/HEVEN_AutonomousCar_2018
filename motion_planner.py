@@ -35,6 +35,7 @@ class MotionPlanner:
 
         self.motion_planner_frame = video_stream.VideoStream()
         self.parking_lidar = video_stream.VideoStream()
+        self.moving_obs_frame = video_stream.VideoStream()
 
 
         # pycuda alloc
@@ -65,7 +66,7 @@ class MotionPlanner:
         # pycuda alloc end
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read())
+        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), self.moving_obs_frame)
 
     def motion_plan(self, mission_num):
         if mission_num == 0:
@@ -194,7 +195,8 @@ class MotionPlanner:
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 self.motion = (4, (10, target), None)
-            if color is None: print(1); return
+
+            if color is None: return
 
         self.motion_planner_frame.write(color)
 
@@ -250,18 +252,14 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                self.motion = (
-                    1, True,
-                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motion = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
             else:
-                self.motion = (
-                    1, False,
-                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motion = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
         else:
             self.motion = (1, False, None)
-        print(self.motion)
+
         self.parking_lidar.write(current_frame)
 
 
@@ -269,7 +267,33 @@ class MotionPlanner:
         pass
 
     def moving_obs_handling(self):
-        pass
+        self.lanecam.default_loop(0)
+
+        RAD = 300
+        AUX_RANGE = np.int32((180 - self.RANGE) / 2)
+
+        lidar_raw_data = self.lidar.data_list
+        current_frame = np.zeros((RAD, RAD * 2), np.uint8)
+
+        points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
+
+        for angle in range(0, 361):
+            r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
+
+            if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+
+                # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
+                x = -r * np.cos(np.radians(0.5 * angle))
+                y = r * np.sin(np.radians(0.5 * angle))
+
+                # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
+                points[angle][0] = round(x) + RAD
+                points[angle][1] = RAD - round(y)
+
+        for point in points:  # 장애물들에 대하여
+            cv2.circle(current_frame, tuple(point), 25, 255, -1)  # 캔버스에 점 찍기
+
+        self.moving_obs_frame.write(current_frame)
 
     def stop(self):
         self.stop_fg = True

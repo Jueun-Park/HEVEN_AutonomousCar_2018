@@ -30,7 +30,7 @@ while True:
     frames = motion.getFrame()
     frame = Monitor.concatenates(frames[0], frames[1], mode='v')
 
-    monitor.show('1', frame, frames[2], frames[3])
+    monitor.show('1', frame, frames[2], frames[3], frames[5])
     monitor.show('2', Monitor.imstatus(*platform.status()))
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
