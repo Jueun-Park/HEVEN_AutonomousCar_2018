@@ -367,7 +367,7 @@ class Control:
             self.pt2 = self.ENC1
 
             #############################################
-            self.edit_enc = self.park_theta_edit / 3.33
+            self.edit_enc = abs(self.park_theta_edit) / 3.33
 
             if self.park_theta_edit > 0:
                 self.edit_enc = self.edit_enc * (-1)
