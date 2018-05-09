@@ -107,8 +107,9 @@ class Control:
 
         elif self.mission_num == 1:
             self.place = first
-            self.park_position = second[0]
-            self.park_linear = second[1]
+            if second is not None:
+                self.park_position = second[0]
+                self.park_linear = second[1]
 
             self.__parking__()
 
