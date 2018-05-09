@@ -263,7 +263,6 @@ class MotionPlanner:
 
         else:
             self.motion = (1, False, None)
-        print(self.motion)
 
 
     def Uturn_handling(self):
