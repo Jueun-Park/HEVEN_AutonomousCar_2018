@@ -231,7 +231,7 @@ class MotionPlanner:
             r = 0
             obstacle_detected = False
 
-            while not obstacle_detected and r <= 300:
+            while not obstacle_detected and r <= 10:
                 temp_x = RAD + parking_line[0] + int(r * np.cos(parking_line[2]))
                 temp_y = int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))
 
@@ -252,16 +252,16 @@ class MotionPlanner:
             if not obstacle_detected:
                 self.motion = (
                     1, True,
-                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
+                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
             else:
                 self.motion = (
                     1, False,
-                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
+                    (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
         else:
             self.motion = (1, False, None)
-
+        print(self.motion)
         self.parking_lidar.write(current_frame)
 
 
