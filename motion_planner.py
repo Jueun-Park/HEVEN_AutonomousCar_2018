@@ -231,7 +231,7 @@ class MotionPlanner:
             r = 0
             obstacle_detected = False
 
-            while not obstacle_detected and r <= 10:
+            while not obstacle_detected and r <= 300:
                 temp_x = RAD + parking_line[0] + int(r * np.cos(parking_line[2]))
                 temp_y = int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))
 
@@ -291,7 +291,7 @@ if __name__ == "__main__":
     monitor = Monitor()
 
     while True:
-        motion_plan.parkingline_handling()
+        motion_plan.static_obs_handling()
         monitor.show('parking', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()

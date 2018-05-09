@@ -21,10 +21,8 @@ while True:
 
     platform.status()
 
-    motion.motion_plan(1)
+    motion.motion_plan(4)
     control.mission(*motion.motion)
-
-    print(control.p_sit)
 
     platform.write(*control.write())
     platform.send()
