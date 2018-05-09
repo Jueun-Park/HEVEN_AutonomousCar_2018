@@ -490,7 +490,9 @@ class LaneCam:
 
             print("parking line detection count: ", self.parking_count)
 
-            self.parkingline_info = (x, 200 - y, middle, min(theta1, theta2), max(theta1, theta2))
+            if self.parking_count == 5:
+                self.parkingline_info = (x, 200 - y, middle, min(theta1, theta2), max(theta1, theta2))
+                self.parking_count = 0
 
         else:
             self.parkingline_info = None
