@@ -5,7 +5,7 @@
 
 
 import cv2
-
+global count
 
 def shape_detect(img):
     sign = []
@@ -18,15 +18,13 @@ def shape_detect(img):
         edges = cv2.Canny(img6, 90, 180, apertureSize=3)
         ret, thresh = cv2.threshold(edges, 127, 255, 0)
         image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         for cnt in contours:
 
             (x, y, w, h) = cv2.boundingRect(cnt)
-
             # cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-            le = max(w, h) + 10
+            le = max(w, h)
 
-            if w > 120 and h > 120:
+            if w > 60 and h > 60:
                 x_1 = int(x + (w - le) / 2)
                 x_2 = int(x + (w + le) / 2)
                 y_1 = int(y + (h - le) / 2)
@@ -36,8 +34,11 @@ def shape_detect(img):
                 height, width = img_trim.shape[:2]
 
                 if -5 < (height - width) < 5:
+                    name = "./image_files/image" + "_" + str(count) + ".png"
                     img_trim_resize = cv2.resize(img_trim, (32, 32))
                     sign.append(img_trim_resize)
+                    cv2.imwrite(name, img_trim_resize)
+
     return sign
 
 
@@ -48,13 +49,14 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture(0)
-
+    cam = cv2.VideoCapture('C:\\Users\Administrator\PycharmProjects\Lane_logging\sign_logging.avi')
+    count = 0
     if not cam.isOpened():
         print("cam open failed")
     while True:
         s, img = cam.read()
         main()
+        count += 1
         cv2.imshow('cam', img)
 
         if cv2.waitKey(30) & 0xff == 27:

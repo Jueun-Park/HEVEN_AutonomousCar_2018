@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('C:\\Users\Administrator\PycharmProjects\Lane_logging\sign_logging_2.avi')
 
 def nothing(x):
     pass
