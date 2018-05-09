@@ -21,7 +21,7 @@ while True:
 
     platform.status()
 
-    motion.motion_plan(4)
+    motion.motion_plan(5)
     control.mission(*motion.motion)
 
     platform.write(*control.write())

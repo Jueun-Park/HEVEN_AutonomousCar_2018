@@ -24,7 +24,7 @@ class MotionPlanner:
 
     def __init__(self):  # , lidar_instance, lanecam_instance, signcam_instance):
         self.lidar = Lidar()  # lidar_instance
-        time.sleep(1)
+        time.sleep(2)
         self.lanecam = LaneCam()  # lanecam_instance
         self.signcam = None  # signcam_instance
 
@@ -66,7 +66,7 @@ class MotionPlanner:
         # pycuda alloc end
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), self.moving_obs_frame)
+        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), self.moving_obs_frame.read())
 
     def motion_plan(self, mission_num):
         if mission_num == 0:
@@ -76,6 +76,8 @@ class MotionPlanner:
             self.parkingline_handling()
         elif mission_num == 4:
             self.static_obs_handling()
+        elif mission_num == 5:
+            self.moving_obs_handling()
 
     def lane_handling(self):
         self.lanecam.default_loop(0)
@@ -315,7 +317,7 @@ if __name__ == "__main__":
     monitor = Monitor()
 
     while True:
-        motion_plan.static_obs_handling()
+        motion_plan.moving_obs_handling()
         monitor.show('parking', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()
