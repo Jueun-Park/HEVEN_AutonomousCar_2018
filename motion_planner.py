@@ -206,28 +206,28 @@ class MotionPlanner:
         self.lanecam.parkingline_loop()
         parking_line = self.lanecam.parkingline_info
 
+        lidar_raw_data = self.lidar.data_list
+        current_frame = np.zeros((RAD, RAD * 2), np.uint8)
+
+        points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
+
+        for angle in range(0, 361):
+            r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
+
+            if 2 <= r <= RAD + 50:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+
+                # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
+                x = -r * np.cos(np.radians(0.5 * angle))
+                y = r * np.sin(np.radians(0.5 * angle))
+
+                # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
+                points[angle][0] = round(x) + RAD
+                points[angle][1] = RAD - round(y)
+
+        for point in points:  # 장애물들에 대하여
+            cv2.circle(current_frame, tuple(point), 30, 255, -1)  # 캔버스에 점 찍기
+
         if parking_line is not None:
-            lidar_raw_data = self.lidar.data_list
-            current_frame = np.zeros((RAD, RAD * 2), np.uint8)
-
-            points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
-
-            for angle in range(0, 361):
-                r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
-
-                if 2 <= r <= RAD + 50:  # 라이다 바로 앞 1cm 의 노이즈는 무시
-
-                    # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
-                    x = -r * np.cos(np.radians(0.5 * angle))
-                    y = r * np.sin(np.radians(0.5 * angle))
-
-                    # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
-                    points[angle][0] = round(x) + RAD
-                    points[angle][1] = RAD - round(y)
-
-            for point in points:  # 장애물들에 대하여
-                cv2.circle(current_frame, tuple(point), 30, 255, -1)  # 캔버스에 점 찍기
-
             r = 0
             obstacle_detected = False
 
@@ -259,10 +259,10 @@ class MotionPlanner:
                     1, False,
                     (parking_line[0], parking_line[1], np.rad2deg(parking_line[3]), np.rad2deg(parking_line[4])))
 
-            self.parking_lidar.write(current_frame)
-
         else:
             self.motion = (1, False, None)
+
+        self.parking_lidar.write(current_frame)
 
 
     def Uturn_handling(self):
