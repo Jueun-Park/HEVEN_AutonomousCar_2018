@@ -84,6 +84,13 @@ class Monitor:
         return f
     # platform status #
 
+    # mission status #
+    def immission(self, mission_num, control_status):
+        f = np.zeros((240, 400, 3), dtype=np.uint8)
+
+        return f
+    # mission status #
+
     # monitor status #
     def immonitor(self):
         f = np.full((100, 200, 3), 50, dtype=np.uint8)
