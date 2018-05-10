@@ -428,9 +428,37 @@ class LaneCam:
 
         lines = cv2.HoughLinesP(filtered_both, 1, np.pi / 360, 40, 10, 10)
 
-        for i in range(0, len(lines)):
-            for x1, y1, x2, y2 in lines[i]:
-                cv2.line(both, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        t1 = time.time()
+
+        while True:
+            if lines is None: break
+
+            rand = random.randint(0, len(lines) - 1)
+
+            for x1, y1, x2, y2 in lines[rand]:
+                slope = ((y2 - y1) / (x1 - x2)) if (x1 != x2) else 10000
+                length = np.sqrt((y2 - y1) ** 2 + (x1 - x2) ** 2)
+
+            if abs(slope) < 0.2 and length > 100:
+                stop_line = lines[rand]
+                break
+
+            if (time.time() - t1) >= 0.01:
+                stop_line = None
+                break
+
+        if stop_line is not None:
+            for x1, y1, x2, y2 in stop_line:
+                a = ((y2 - y1) / (x1 - x2))
+                b = 300 - y1 - a * x1
+                distance = abs(300 * a + b) / np.sqrt(a ** 2 + 1)
+                self.stopline_info = distance
+
+                cv2.line(both, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
+                         (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
+
+        else:
+            self.stopline_info = None
 
     def parkingline_loop(self):
         parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)

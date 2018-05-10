@@ -277,8 +277,9 @@ class MotionPlanner:
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
 
+        MOVING_OBS_RANGE = 90
         RAD = np.int32(300)
-        AUX_RANGE = np.int32((180 - self.RANGE) / 2)
+        AUX_RANGE = np.int32((180 - np.int32(MOVING_OBS_RANGE)) / 2)
 
         lidar_raw_data = self.lidar.data_list
         moving_obs_frame = np.zeros((RAD, RAD * 2), np.uint8)
@@ -301,13 +302,13 @@ class MotionPlanner:
         for point in points:  # 장애물들에 대하여
             cv2.circle(moving_obs_frame, tuple(point), 25, 255, -1)  # 캔버스에 점 찍기
 
-        data = np.zeros((self.RANGE + 1, 2), np.int)
+        data = np.zeros((MOVING_OBS_RANGE + 1, 2), np.int)
 
         if moving_obs_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(moving_obs_frame), drv.In(np.int32(RAD * 2)),
-                      block=(self.RANGE + 1, 1, 1))
+                      block=(MOVING_OBS_RANGE + 1, 1, 1))
 
-            for i in range(0, self.RANGE + 1):
+            for i in range(0, MOVING_OBS_RANGE + 1):
                 x = RAD + int(round(data[i][1] * np.cos(np.radians(i + AUX_RANGE)))) - 1
                 y = RAD - int(round(data[i][1] * np.sin(np.radians(i + AUX_RANGE)))) - 1
                 cv2.line(moving_obs_frame, (RAD, RAD), (x, y), 255)
@@ -316,7 +317,6 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            print("collision count: ", collision_count, "   minimum dist: ", minimum_dist)
 
         self.moving_obs_frame.write(moving_obs_frame)
 
