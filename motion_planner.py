@@ -68,7 +68,8 @@ class MotionPlanner:
         # pycuda alloc end
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), self.moving_obs_frame.read())
+        return self.lanecam.getFrame() + (self.motion_planner_frame.read(),
+                                          self.parking_lidar.read(), self.moving_obs_frame.read())
 
     def getmotionparam(self):
         return self.motionparam
