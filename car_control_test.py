@@ -43,8 +43,6 @@ class Control:
         self.obs_exist = 0
         self.count = 0
         self.stop_line = 0
-        self.obs_r = 0
-        self.obs_theta = 0
         self.turn_distance = 0
 
         self.t1 = 0
@@ -123,10 +121,7 @@ class Control:
             self.__cross__()
 
         else:
-            self.obs_r = first[0] / 100
-            self.obs_theta = first[1]
-
-            self.__obs__()
+            self.__obs__(first[0] / 100, first[1])
 
     def write(self):
         return self.gear, self.speed, self.steer, self.brake
@@ -138,6 +133,9 @@ class Control:
         return self.change_mission
 
     def __default__(self, cross_track_error, linear):
+        gear = 0
+        speed = 108
+        brake = 0
         self.change_mission = 0
 
         tan_value = linear * (-1)
@@ -160,23 +158,25 @@ class Control:
             adjust = 0.4
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
-
-        self.steer = steer_final * 71
-
         self.steer_past = steer_final
 
-        if self.steer > 1970:
-            self.steer = 1970
+        steer = steer_final * 71
+        if steer > 1970:
+            steer = 1970
             self.steer_past = 27.746
-        elif self.steer < -1970:
-            self.steer = -1970
+        elif steer < -1970:
+            steer = -1970
             self.steer_past = -27.746
 
-        self.speed = 108
-        self.gear = 0
-        self.brake = 0
+        self.gear = gear
+        self.speed = speed
+        self.steer = steer
+        self.brake = brake
 
     def __default2__(self, cross_track_error, linear, cul):
+        gear = 0
+        speed = 108
+        brake = 0
         self.change_mission = 0
 
         tan_value_1 = abs(linear)
@@ -208,88 +208,92 @@ class Control:
         steer_now = (theta_line + theta_error)
         steer_final = (adjust * self.steer_past) + (1 - adjust) * steer_now * 1.387
 
-        self.steer = steer_final * 71 * correction_default
-
         self.steer_past = steer_final
 
-        if self.steer > 1970:
-            self.steer = 1970
+        steer = steer_final * 71 * correction_default
+        if steer > 1970:
+            steer = 1970
             self.steer_past = 27.746
-        elif self.steer < -1970:
-            self.steer = -1970
+        elif steer < -1970:
+            steer = -1970
             self.steer_past = -27.746
 
-        self.speed = 108
-        self.gear = 0
-        self.brake = 0
+        self.gear = gear
+        self.speed = speed
+        self.steer = steer
+        self.brake = brake
 
-    def __obs__(self):
-        self.steer = 0
-        self.gear = 0
-        self.brake = 0
+    def __obs__(self, obs_r, obs_theta):
+        gear = 0
+        brake = 0
 
         if self.mission_num == 2:
-            self.speed = 36
-            self.correction = 1.3
-            self.adjust = 0.10
-
+            speed = 36
+            correction = 1.3
+            adjust = 0.10
         elif self.mission_num == 4:  # 실험값 보정하기
-            self.speed = 18
-            self.correction = 1.3
-            self.adjust = 0.10
-
+            speed = 18
+            correction = 1.3
+            adjust = 0.10
         elif self.mission_num == 5:  # 실험값 보정하기
-            self.speed = 54
-            self.correction = 1.3
-            self.adjust = 0.3
+            speed = 54
+            correction = 1.3
+            adjust = 0.3
+        else:
+            print("MISSION NUMBER ERROR")
+            speed = 0
+            correction = 0.0
+            adjust = 0.0
 
         self.change_mission = 0
 
-        cal_theta = math.radians(abs(self.obs_theta - 90))
-        self.cos_theta = math.cos(cal_theta)
-        self.sin_theta = math.sin(cal_theta)
+        cal_theta = math.radians(abs(obs_theta - 90))
+        cos_theta = math.cos(cal_theta)
+        sin_theta = math.sin(cal_theta)
 
-        if (self.obs_theta - 90) == 0:
-            self.theta_obs = 0
-
-        elif self.obs_theta == -35:
-            self.theta_obs = 27
-
-        elif self.obs_theta == -145:
-            self.theta_obs = -27
-
+        if (obs_theta - 90) == 0:
+            theta_obs = 0
+        elif obs_theta == -35:
+            theta_obs = 27
+        elif obs_theta == -145:
+            theta_obs = -27
         else:
             if self.obs_mode == 0:
-                self.cul_obs = (self.obs_r + 2.08 * self.cos_theta) / (2 * self.sin_theta)
+                cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
 
                 # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
-                self.theta_obs = math.degrees(math.atan(1.04 / (self.cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
-
+                theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
             elif self.obs_mode == 1:
-                self.cul_obs = (self.obs_r + (2.08 * self.cos_theta)) / (2 * self.sin_theta)
-                self.theta_cal = math.atan((1.04 + (self.obs_r * self.cos_theta)) / self.cul_obs)
+                cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+                theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs)
 
-                self.son_obs = (self.cul_obs * math.sin(self.theta_cal)) - (self.obs_r * self.cos_theta)
-                self.mother_obs = (self.cul_obs * math.cos(self.theta_cal)) + 0.4925
+                son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
+                mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
 
-                self.theta_obs = math.degrees(math.atan(abs(self.son_obs / self.mother_obs)))
+                theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
+            else:
+                theta_obs = 0
 
-        if (self.obs_theta - 90) > 0:
-            self.theta_obs = self.theta_obs * (-1)
+        if (obs_theta - 90) > 0:
+            theta_obs = theta_obs * (-1)
 
-        steer_final = (self.adjust * self.steer_past) + (1 - self.adjust) * self.theta_obs * 1.387 * self.correction
-
-        self.steer = steer_final * 71
+        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * 1.387 * correction
 
         self.steer_past = steer_final
 
-        if self.steer > 1970:
-            self.steer = 1970
+        steer = steer_final * 71
+        if steer > 1970:
+            steer = 1970
             self.steer_past = 27.746
-        elif self.steer < -1970:
-            self.steer = -1970
+        elif steer < -1970:
+            steer = -1970
             self.steer_past = -27.746
+
+        self.gear = gear
+        self.speed = speed
+        self.steer = steer
+        self.brake = brake
 
     def __moving__(self):
         self.steer = 0
