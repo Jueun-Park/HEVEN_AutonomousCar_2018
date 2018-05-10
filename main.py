@@ -2,70 +2,39 @@
 # interpreted by python 3.6
 # 하위 프로그램
 
+#######################Module#####################
+from communication import PlatformSerial
+from motion_planner import MotionPlanner
+from car_control_test import Control
 
-#module
-import lidarstart
-import threading
-from multiprocessing import Process
-import lane_cam
+from monitor import Monitor
+import time
+import cv2
+#####################instance#####################
+motion = MotionPlanner()
+control = Control()
+platform = PlatformSerial('COM6')
 
-
-# cpu 병렬 처리
-
-def main():
-
-    #lane_detection_thread=threading.Thread(target=lane_cam_noclass) 미완성
-    #lidarstart_thread=Process(target=lidarstart.lidarstart)
-    #lane_cam_Process=Process(target=lane_cam)
-
-    #sign_cam=threading.Thread(target=signmain.main())
-    #sign_cam_cros=threading.Thread(target=sign_cam2.crosswalk_detect())
-    #sign_cam_thread = threading.Thread(target=sign_cam.main())
-    #communicationstart_thread=threading.Thread(target=communicationstart.communicationstart())
-    #lidarstart_thread.start()
-    #lane_cam_Process.start()
-
-    #sign_cam.start()
-
-    #sign_cam_cros.start()
+monitor = Monitor()
+#################################################
 
 
+while True:
+    control.read(*platform.read())
 
+    platform.status()
 
+    motion.motion_plan(5)
+    control.mission(*motion.motionparam)
 
-    #communicationstart_thread.start()
+    platform.write(*control.write())
 
+    frames = motion.getFrame()
+    frame = Monitor.concatenates(frames[0], frames[1], mode='v')
 
+    monitor.show('1', frame, frames[2], frames[3], frames[5])
+    monitor.show('2', Monitor.imstatus(*platform.status()))
 
-
-
-
-
-    '''
-    Matrix_thread = threading.Thread(target=matrix_Comb())
-    AS_thread = threading.Thread(target=astar_Comb())
-    # IMU_thread = threading.Thread(target = read_IMU())
-    PFread_thread = threading.Thread(target=read_PF())
-    # GPS_thread = threading.Thread(target = read_GPS())
-    STEER_thread = threading.Thread(target=steer_Comb())
-    PFwrite_thread = threading.Thread(target=write_PF())
-    Show_thread = threading.Thread(target=show_Path())
-    Obs_thread = threading.Thread(target=front_Detect())
-    # U_thread = threading.Thread(target = uturn_detect())
-    '''
-
-
-# 센서 값 받기
-# 라이다
-# 차선 비전
-# 표지판 비전
-
-# 플래닝
-# 제어
-
-# 통신
-
-if __name__ == "__main__":
-    main()
-
-
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        motion.stop()
+        break
