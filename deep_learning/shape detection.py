@@ -13,7 +13,7 @@ if not cap.read():
 if cap.read():
     count_2 = 0
     while True:
-        # time.sleep(0.3)
+        time.sleep(0.3)
         count_2 +=1
         ret, img = cap.read()
 
@@ -28,28 +28,26 @@ if cap.read():
             count = 0
             for cnt in contours:
                 (x, y, w, h) = cv2.boundingRect(cnt)
-                le = max(w,h)
+                le = max(w,h)+10
 
-                if w>60 and h>60:
+                if w>40 and h>40:
                     x_1 = int (x+(w-le)/2 -5)
                     x_2 = int (x+(w+le)/2 +5)
                     y_1 = int (y+(h-le)/2 -5)
                     y_2 = int (y+(h+le)/2 +5)
-                    # cv2.rectangle(edges, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                     img_trim = img[y_1 : y_2 , x_1 :x_2]
                     height, width = img_trim.shape[:2]
                     limit = height - width
 
                     if limit > -5 and limit < 5:
                         if x_1 >0 and y_1 > 0:
-
-                            name = "./images/AM10/g" \
-                                   "/R" + str(count) + "_" + str(count_2) + "_"+ str(height) +".png"
+                            cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
+                            name = "./images/" + str(count) + "_" + str(count_2) + "_"+ str(height) +".png"
                             img_trim = cv2.resize(img_trim, (32,32))
                             cv2.imwrite(name,img_trim)
                 count += 1
 
-        cv2.imshow('img', edges)
+        cv2.imshow('img', img)
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
     cap.release()
