@@ -6,7 +6,7 @@
 
 from serialpacket import SerialPacket
 import serial
-
+import threading
 
 class PlatformSerial:
     def __init__(self, platform_port):
@@ -17,6 +17,22 @@ class PlatformSerial:
             print('[PlatformSerial| INIT ERROR: ', e, ']')
         self.read_packet = SerialPacket()
         self.write_packet = SerialPacket()
+
+        self.stop_fg = False
+        self.threading = threading.Thread(target=self.communicate)
+        self.threading.start()
+
+    def restart(self):
+        self.stop_fg = True
+        self.threading.join()
+        self.threading.start()
+
+    def communicate(self):
+        while True:
+            self.recv()
+            self.send()
+            if self.stop_fg is True: break
+        self.stop_fg = False
 
     def send(self):
         self.write_packet.alive = self.read_packet.alive
