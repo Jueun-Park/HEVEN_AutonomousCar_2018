@@ -28,7 +28,7 @@ class Control:
         self.mission_num = 0  # (일반 주행 모드)
 
         self.default_mode = 0
-        self.obs_mode = 1
+        self.obs_mode = 1  # 일반 회피 모드
 
         self.change_mission = 0
 
@@ -40,7 +40,6 @@ class Control:
         self.place = 0
         self.park_position = 0
         self.park_theta = 0
-        self.obs_exist = 0
         self.count = 0
         self.stop_line = 0
         self.turn_distance = 0
@@ -106,9 +105,7 @@ class Control:
             self.__parking__()
 
         elif self.mission_num == 3:
-            self.obs_exist = first
-
-            self.__moving__()
+            self.__moving__(first)
 
         elif self.mission_num == 6:
             self.turn_distance = first / 100
@@ -273,6 +270,7 @@ class Control:
 
                 theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
             else:
+                print("OBS MODE ERROR")
                 theta_obs = 0
 
         if (obs_theta - 90) > 0:
@@ -295,24 +293,27 @@ class Control:
         self.steer = steer
         self.brake = brake
 
-    def __moving__(self):
-        self.steer = 0
-        self.speed = 36
-        self.gear = 0
-        self.brake = 0
+    def __moving__(self, obs_exist):
+        steer = 0
+        gear = 0
 
         self.change_mission = 0
 
-        if self.obs_exist is True:
-            self.speed = 0
-            self.brake = 60
+        if obs_exist is True:
+            speed = 0
+            brake = 60
             if self.count == 0:
                 self.count += 1
         else:
-            self.speed = 36
-
+            speed = 36
+            brake = 0
             if self.count > 0:
                 self.change_mission = 1
+
+        self.gear = gear
+        self.speed = speed
+        self.steer = steer
+        self.brake = brake
 
     def __cross__(self):
         self.steer = 0
