@@ -15,10 +15,10 @@ from lidar import Lidar
 from lanecam import LaneCam
 import time
 import video_stream
-
+from keycam import KeyCam
 
 class MotionPlanner:
-    OBSTACLE_RADIUS = 300  # 원일 경우 반지름, 사각형일 경우 한 변
+    OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
     PARKING_RADIUS = 500
     RANGE = 110
 
@@ -26,7 +26,9 @@ class MotionPlanner:
         self.lidar = Lidar()  # lidar_instance
         time.sleep(2)
         self.lanecam = LaneCam()  # lanecam_instance
-        self.signcam = None  # signcam_instance
+        self.signcam = KeyCam()  # signcam_instance
+
+        self.mission_num = 0
 
         self.previous_target = None
         self.previous_data = None
@@ -68,15 +70,19 @@ class MotionPlanner:
     def getFrame(self):
         return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), self.moving_obs_frame.read())
 
-    def motion_plan(self, mission_num):
-        if mission_num == 0:
+    def getmotionparam(self):
+        return self.motionparam
+
+    def plan_motion(self):
+        self.mission_num = self.signcam.get_mission()
+        if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
-        elif mission_num == 1:
+        elif self.mission_num == 1:
             self.parkingline_handling()
-        elif mission_num == 4:
+        elif self.mission_num == 4:
             self.static_obs_handling()
-        elif mission_num == 5:
+        elif self.mission_num == 5:
             self.moving_obs_handling()
 
     def lane_handling(self):
@@ -120,7 +126,7 @@ class MotionPlanner:
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 75, 255, -1)  # 캔버스에 점 찍기
-
+        '''
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
@@ -130,7 +136,7 @@ class MotionPlanner:
             for i in range(0, len(right_lane_points)):
                 if right_lane_points[i] != -1:
                     cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 75, 100, -1)
-
+        '''
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
@@ -318,6 +324,7 @@ class MotionPlanner:
         self.stop_fg = True
         self.lidar.stop()
         self.lanecam.stop()
+        #self.signcam.stop()
 
         # pycuda dealloc
         global context
@@ -334,7 +341,8 @@ if __name__ == "__main__":
     monitor = Monitor()
 
     while True:
-        motion_plan.moving_obs_handling()
+        motion_plan.plan_motion()
+
         monitor.show('parking', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()

@@ -153,14 +153,13 @@ class Monitor:
     def show(self, wname, *frames, color_picker=False):
         wname_org = wname
         for i in range(len(frames)):
-            wname = wname + ('-{}'.format(i) if i != 0 else '')
+            wname = wname_org + ('-{}'.format(i) if i != 0 else '')
             if wname not in self.windows_str: self.windows_str.append(wname)
             if frames[i] is None: self.windows_is[wname] = False; continue
             self.windows_is[wname] = True
             cv2.imshow(wname, frames[i])
             if color_picker is True:
                 self.initSetMouseCallback(wname, self.color_picker, frames[i])
-            wname = wname_org
 
 
 if __name__ == '__main__':

@@ -20,21 +20,25 @@ monitor = Monitor()
 
 
 while True:
+    t = time.time()
     control.read(*platform.read())
 
     platform.status()
 
-    motion.motion_plan(5)
-    control.mission(*motion.motionparam)
+    motion.plan_motion()
+    #control.mission(*motion.getmotionparam())
 
     platform.write(*control.write())
 
     frames = motion.getFrame()
-    frame = Monitor.concatenates(frames[0], frames[1], mode='v')
+    frame = monitor.concatenate(frames[0], frames[1], mode='v')
 
-    monitor.show('1', frame, frames[2], frames[3], frames[5])
-    monitor.show('2', Monitor.imstatus(*platform.status()))
+    monitor.show('1', *frames)
+    monitor.show('status', monitor.imstatus(*platform.status()))
+    monitor.show('monitor', monitor.immonitor())
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         motion.stop()
+        platform.stop()
         break
+    print(time.time() - t)
