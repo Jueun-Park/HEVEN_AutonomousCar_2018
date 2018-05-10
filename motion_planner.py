@@ -31,7 +31,7 @@ class MotionPlanner:
         self.previous_target = None
         self.previous_data = None
 
-        self.motion = None
+        self.motionparam = None
 
         self.motion_planner_frame = video_stream.VideoStream()
         self.parking_lidar = video_stream.VideoStream()
@@ -86,11 +86,11 @@ class MotionPlanner:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-            self.motion = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
-            print(self.motion)
+            self.motionparam = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
+            print(self.motionparam)
 
         else:
-            self.motion = (0, None, None)
+            self.motionparam = (0, None, None)
 
     def static_obs_handling(self):
         self.lanecam.default_loop(1)
@@ -186,7 +186,7 @@ class MotionPlanner:
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion = (4, (data_transposed[1][target - AUX_RANGE], target), None)
+                self.motionparam = (4, (data_transposed[1][target - AUX_RANGE], target), None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -196,7 +196,7 @@ class MotionPlanner:
                 y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion = (4, (10, target), None)
+                self.motionparam = (4, (10, target), None)
 
             if color is None: return
 
@@ -254,13 +254,13 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                self.motion = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motionparam = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
             else:
-                self.motion = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motionparam = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
         else:
-            self.motion = (1, False, None)
+            self.motionparam = (1, False, None)
 
         self.parking_lidar.write(current_frame)
 
