@@ -16,7 +16,6 @@ modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
 
 class Lidar:
     RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
-    NOISE_THRESHOLD = 3000  # 노이즈 분류 기준
 
     def __init__(self):
         self.HOST = '169.254.248.220'

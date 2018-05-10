@@ -22,7 +22,7 @@ class MotionPlanner:
     PARKING_RADIUS = 500
     RANGE = 110
 
-    def __init__(self):  # , lidar_instance, lanecam_instance, signcam_instance):
+    def __init__(self):
         self.lidar = Lidar()  # lidar_instance
         time.sleep(2)
         self.lanecam = LaneCam()  # lanecam_instance
@@ -275,7 +275,7 @@ class MotionPlanner:
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
         lidar_raw_data = self.lidar.data_list
-        current_frame = np.zeros((RAD, RAD * 2), np.uint8)
+        moving_obs_frame = np.zeros((RAD, RAD * 2), np.uint8)
 
         points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
@@ -293,9 +293,9 @@ class MotionPlanner:
                 points[angle][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 25, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(moving_obs_frame, tuple(point), 25, 255, -1)  # 캔버스에 점 찍기
 
-        self.moving_obs_frame.write(current_frame)
+        self.moving_obs_frame.write(moving_obs_frame)
 
     def stop(self):
         self.stop_fg = True
