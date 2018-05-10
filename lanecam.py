@@ -56,6 +56,7 @@ class LaneCam:
         self.lane_cam_raw_frame = video_stream.VideoStream()
         self.lane_cam_frame = video_stream.VideoStream()
         self.parkingline_frame = video_stream.VideoStream()
+        self.stopline_frame = video_stream.VideoStream()
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -411,7 +412,29 @@ class LaneCam:
         self.lane_cam_frame.write(final)
 
     def stopline_loop(self):
-        pass
+        # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
+        left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
+        right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
+        left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
+
+        # HSV, RGB 필터링으로 영상을 이진화 함
+        filtered_L = cv2.inRange(left_hsv, self.lower_yellow, self.upper_yellow)
+        filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
+
+        filtered_both = np.vstack((filtered_R, filtered_L))
+        filtered_both = cv2.flip(cv2.transpose(filtered_both), 1)
+
+        both = np.vstack((right_frame, left_frame))
+        both = cv2.flip((cv2.transpose(both)), 1)
+
+        lines = cv2.HoughLinesP(filtered_both, 1, np.pi / 360, 40, 10, 10)
+
+        for i in range(0, len(lines)):
+            for x1, y1, x2, y2 in lines[i]:
+                cv2.line(both, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+        self.stopline_frame.write(both)
+
 
     def parkingline_loop(self):
         parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)
@@ -509,7 +532,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        lane_cam.parkingline_loop()
+        lane_cam.stopline_loop()
         monitor.show('1', *lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()
