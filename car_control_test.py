@@ -17,6 +17,9 @@ class Control:
     car_front = 0.28
 
     def __init__(self):
+        self.speed_platform = 0
+        self.enc = 0
+
         self.gear = 0
         self.speed = 0
         self.steer = 0
@@ -30,8 +33,6 @@ class Control:
         self.change_mission = 0
         #######################################
         self.steer_past = 0
-        self.speed_platform = 0
-        self.ENC1 = 0
         self.parking_time1 = 0
         self.parking_time2 = 0
         self.count = 0
@@ -63,7 +64,7 @@ class Control:
         #######################################
         # communication.py 에서 데이터 받아오기#
         self.speed_platform = speed
-        self.ENC1 = enc
+        self.enc = enc
         #######################################
 
     def mission(self, mission_num, first, second):
@@ -345,8 +346,8 @@ class Control:
         elif self.p_sit == 1:
             speed = 54
             if self.pt1 == 0:
-                self.pt1 = self.ENC1
-            self.pt2 = self.ENC1
+                self.pt1 = self.enc
+            self.pt2 = self.enc
 
             #############################################
             self.edit_enc = abs(self.park_theta_edit) / 3.33
@@ -371,8 +372,8 @@ class Control:
 
         elif self.p_sit == 2:
             if self.pt3 == 0:
-                self.pt3 = self.ENC1
-            self.pt4 = self.ENC1
+                self.pt3 = self.enc
+            self.pt4 = self.enc
 
             if (self.pt4 - self.pt3) < 50:
                 speed = 54
@@ -407,8 +408,8 @@ class Control:
             brake = 0
 
             if self.pt5 == 0:
-                self.pt5 = self.ENC1
-            self.pt6 = self.ENC1
+                self.pt5 = self.enc
+            self.pt6 = self.enc
 
             if abs(self.pt6 - self.pt5) < 50:
                 speed = 54
@@ -429,8 +430,8 @@ class Control:
             brake = 0
 
             if self.pt7 == 0:
-                self.pt7 = self.ENC1
-            self.pt8 = self.ENC1
+                self.pt7 = self.enc
+            self.pt8 = self.enc
 
             if abs(self.pt8 - self.pt7) < 200:
                 speed = 54
@@ -477,8 +478,8 @@ class Control:
         elif self.u_sit == 1:
             speed = 36
             if self.ct1 == 0:
-                self.ct1 = self.ENC1
-            self.ct2 = self.ENC1
+                self.ct1 = self.enc
+            self.ct2 = self.enc
 
             if (self.ct2 - self.ct1) < 665:
                 steer = -1970
@@ -493,8 +494,8 @@ class Control:
 
         elif self.u_sit == 2:
             if self.ct3 == 0:
-                self.ct3 = self.ENC1
-            self.ct4 = self.ENC1
+                self.ct3 = self.enc
+            self.ct4 = self.enc
 
             if (self.ct4 - self.ct3) < 175:
                 speed = 36
