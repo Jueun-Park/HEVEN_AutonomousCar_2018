@@ -88,7 +88,8 @@ class LaneCam:
         time.sleep(1)
 
     def getFrame(self):
-        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(), self.parkingline_frame.read(), self.stopline_frame.read())
+        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(),
+                self.parkingline_frame.read(), self.stopline_frame.read())
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -459,6 +460,8 @@ class LaneCam:
 
         else:
             self.stopline_info = None
+
+        self.stopline_frame.write(both)
 
     def parkingline_loop(self):
         parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)
