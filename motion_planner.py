@@ -271,7 +271,7 @@ class MotionPlanner:
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
 
-        RAD = 300
+        RAD = np.int32(300)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
         lidar_raw_data = self.lidar.data_list
