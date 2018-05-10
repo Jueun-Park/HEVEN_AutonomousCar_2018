@@ -88,7 +88,7 @@ class LaneCam:
         time.sleep(1)
 
     def getFrame(self):
-        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(), self.parkingline_frame.read())
+        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(), self.parkingline_frame.read(), self.stopline_frame.read())
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -415,10 +415,9 @@ class LaneCam:
         # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
         left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
         right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
-        left_hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
 
         # HSV, RGB 필터링으로 영상을 이진화 함
-        filtered_L = cv2.inRange(left_hsv, self.lower_yellow, self.upper_yellow)
+        filtered_L = cv2.inRange(left_frame, self.lower_white, self.upper_white)
         filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
 
         filtered_both = np.vstack((filtered_R, filtered_L))
@@ -432,9 +431,6 @@ class LaneCam:
         for i in range(0, len(lines)):
             for x1, y1, x2, y2 in lines[i]:
                 cv2.line(both, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-        self.stopline_frame.write(both)
-
 
     def parkingline_loop(self):
         parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)
