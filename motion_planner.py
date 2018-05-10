@@ -295,6 +295,17 @@ class MotionPlanner:
         for point in points:  # 장애물들에 대하여
             cv2.circle(moving_obs_frame, tuple(point), 25, 255, -1)  # 캔버스에 점 찍기
 
+        data = np.zeros((self.RANGE + 1, 2), np.int)
+
+        if moving_obs_frame is not None:
+            self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(moving_obs_frame), drv.In(np.int32(RAD * 2)),
+                      block=(self.RANGE + 1, 1, 1))
+
+            for i in range(0, self.RANGE + 1):
+                x = RAD + int(round(data[i][1] * np.cos(np.radians(i + AUX_RANGE)))) - 1
+                y = RAD - int(round(data[i][1] * np.sin(np.radians(i + AUX_RANGE)))) - 1
+                cv2.line(moving_obs_frame, (RAD, RAD), (x, y), 255)
+
         self.moving_obs_frame.write(moving_obs_frame)
 
     def stop(self):
