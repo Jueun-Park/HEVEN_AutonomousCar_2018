@@ -63,11 +63,14 @@ class PlatformSerial:
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = self.read_packet.brake / 200
-        # print('[READ]')
-        # print(self.read_packet.get_attr(mode='a'))
-        # print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
-        # print()
+        print('[READ]')
+        print(self.read_packet.get_attr(mode='a'))
+        print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
+        print()
         return gear, speed, steer, brake
+
+    def stop(self):
+        self.stop_fg = True
 
 
 import time
@@ -98,22 +101,18 @@ def t_right():
 
 
 if __name__ == '__main__':
-    platform = PlatformSerial('COM3')
+    platform = PlatformSerial('COM6')
     while True:
-        platform.recv()
         platform.status()
         t_stop()
-        platform.send()
+        '''
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
             t = time.time()
             while time.time() - t < 2:
-                platform.recv()
                 platform.status()
                 t_move()
-                platform.send()
             t = time.time()
             while time.time() - t < 2:
-                platform.recv()
                 platform.status()
                 t_stop()
-                platform.send()
+        '''

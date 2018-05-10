@@ -1,8 +1,7 @@
 import numpy as np
 import cv2
-import time
 
-cap = cv2.VideoCapture('C:/Users/LG/Downloads/sign_logging.avi')
+cap = cv2.VideoCapture('C:\\Users\Administrator\PycharmProjects\Lane_logging\sign_logging.avi')
 cap.set(3, 800)
 cap.set(4, 448)
 
@@ -20,7 +19,6 @@ if not cap.read():
 if cap.read():
     count_2 = 0
     while True:
-        time.sleep(0.1)
         count_2 +=1
         ret, img = cap.read()
 
@@ -41,7 +39,7 @@ if cap.read():
                 (x, y, w, h) = cv2.boundingRect(cnt)
                 le = max(w,h)
 
-                if w>30 and h>30:
+                if w>60 and h>60:
 
                     x_1 = int (x+(w-le)/2 -5)
                     x_2 = int (x+(w+le)/2 +5)

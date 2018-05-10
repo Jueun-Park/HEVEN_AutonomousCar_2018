@@ -15,10 +15,10 @@ from lidar import Lidar
 from lanecam import LaneCam
 import time
 import video_stream
-
+from keycam import KeyCam
 
 class MotionPlanner:
-    OBSTACLE_RADIUS = 300  # 원일 경우 반지름, 사각형일 경우 한 변
+    OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
     PARKING_RADIUS = 500
     RANGE = 110
 
@@ -26,17 +26,19 @@ class MotionPlanner:
         self.lidar = Lidar()  # lidar_instance
         time.sleep(2)
         self.lanecam = LaneCam()  # lanecam_instance
-        self.signcam = None  # signcam_instance
+        self.signcam = KeyCam()  # signcam_instance
+
+        self.mission_num = 0
 
         self.previous_target = None
         self.previous_data = None
 
-        self.motion = None
+        self.motionparam = None
 
         self.motion_planner_frame = video_stream.VideoStream()
         self.parking_lidar = video_stream.VideoStream()
         self.moving_obs_frame = video_stream.VideoStream()
-
+        self.uturn_frame = video_stream.VideoStream()
 
         # pycuda alloc
         drv.init()
@@ -66,18 +68,28 @@ class MotionPlanner:
         # pycuda alloc end
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(), self.parking_lidar.read(), self.moving_obs_frame.read())
+        return self.lanecam.getFrame() + (self.motion_planner_frame.read(),
+                                          self.parking_lidar.read(), self.moving_obs_frame.read())
 
-    def motion_plan(self, mission_num):
-        if mission_num == 0:
+    def getmotionparam(self):
+        return self.motionparam
+
+    def plan_motion(self):
+        self.mission_num = self.signcam.get_mission()
+
+        if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
-        elif mission_num == 1:
+        elif self.mission_num == 1:
             self.parkingline_handling()
-        elif mission_num == 4:
-            self.static_obs_handling()
-        elif mission_num == 5:
+        elif self.mission_num == 3:
             self.moving_obs_handling()
+        elif self.mission_num == 4:
+            self.static_obs_handling()
+        elif self.mission_num == 6:
+            self.Uturn_handling()
+        elif self.mission_num == 7:
+            self.stopline_handling()
 
     def lane_handling(self):
         self.lanecam.default_loop(0)
@@ -86,11 +98,11 @@ class MotionPlanner:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-            self.motion = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
-            print(self.motion)
+            self.motionparam = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
+            print(self.motionparam)
 
         else:
-            self.motion = (0, None, None)
+            self.motionparam = (0, None, None)
 
     def static_obs_handling(self):
         self.lanecam.default_loop(1)
@@ -130,7 +142,6 @@ class MotionPlanner:
             for i in range(0, len(right_lane_points)):
                 if right_lane_points[i] != -1:
                     cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 75, 100, -1)
-
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
@@ -186,7 +197,7 @@ class MotionPlanner:
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion = (4, (data_transposed[1][target - AUX_RANGE], target), None)
+                self.motionparam = (4, (data_transposed[1][target - AUX_RANGE], target), None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -196,14 +207,15 @@ class MotionPlanner:
                 y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion = (4, (10, target), None)
+                self.motionparam = (4, (10, target), None)
 
             if color is None: return
 
         self.motion_planner_frame.write(color)
 
     def stopline_handling(self):
-        pass
+        self.lanecam.stopline_loop()
+        self.motionparam = (7, self.lanecam.stopline_info, None)
 
     def parkingline_handling(self):
         RAD = self.PARKING_RADIUS
@@ -254,25 +266,71 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                self.motion = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motionparam = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
             else:
-                self.motion = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motionparam = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
 
         else:
-            self.motion = (1, False, None)
+            self.motionparam = (1, False, None)
 
         self.parking_lidar.write(current_frame)
 
-
     def Uturn_handling(self):
-        pass
+        self.lanecam.default_loop(0)
+
+        UTURN_RANGE = 90
+        RAD = np.int32(300)
+        AUX_RANGE = np.int32((180 - np.int32(UTURN_RANGE)) / 2)
+
+        lidar_raw_data = self.lidar.data_list
+        uturn_frame = np.zeros((RAD, RAD * 2), np.uint8)
+
+        points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
+
+        for angle in range(0, 361):
+            r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
+
+            if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+
+                # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
+                x = -r * np.cos(np.radians(0.5 * angle))
+                y = r * np.sin(np.radians(0.5 * angle))
+
+                # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
+                points[angle][0] = round(x) + RAD
+                points[angle][1] = RAD - round(y)
+
+        for point in points:  # 장애물들에 대하여
+            cv2.circle(uturn_frame, tuple(point), 15, 255, -1)  # 캔버스에 점 찍기
+
+        data = np.zeros((UTURN_RANGE + 1, 2), np.int)
+
+        minimum_dist = None
+
+        if uturn_frame is not None:
+            self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(uturn_frame),
+                      drv.In(np.int32(RAD * 2)),
+                      block=(UTURN_RANGE + 1, 1, 1))
+
+            for i in range(0, UTURN_RANGE + 1):
+                x = RAD + int(round(data[i][1] * np.cos(np.radians(i + AUX_RANGE)))) - 1
+                y = RAD - int(round(data[i][1] * np.sin(np.radians(i + AUX_RANGE)))) - 1
+                cv2.line(uturn_frame, (RAD, RAD), (x, y), 255)
+
+            data_transposed = data.transpose()
+
+            minimum_dist = np.min(data_transposed[1])
+
+        self.motionparam = (6, minimum_dist, None)
+        self.uturn_frame.write(uturn_frame)
 
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
 
+        MOVING_OBS_RANGE = 90
         RAD = np.int32(300)
-        AUX_RANGE = np.int32((180 - self.RANGE) / 2)
+        AUX_RANGE = np.int32((180 - np.int32(MOVING_OBS_RANGE)) / 2)
 
         lidar_raw_data = self.lidar.data_list
         moving_obs_frame = np.zeros((RAD, RAD * 2), np.uint8)
@@ -295,13 +353,13 @@ class MotionPlanner:
         for point in points:  # 장애물들에 대하여
             cv2.circle(moving_obs_frame, tuple(point), 25, 255, -1)  # 캔버스에 점 찍기
 
-        data = np.zeros((self.RANGE + 1, 2), np.int)
+        data = np.zeros((MOVING_OBS_RANGE + 1, 2), np.int)
 
         if moving_obs_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(moving_obs_frame), drv.In(np.int32(RAD * 2)),
-                      block=(self.RANGE + 1, 1, 1))
+                      block=(MOVING_OBS_RANGE + 1, 1, 1))
 
-            for i in range(0, self.RANGE + 1):
+            for i in range(0, MOVING_OBS_RANGE + 1):
                 x = RAD + int(round(data[i][1] * np.cos(np.radians(i + AUX_RANGE)))) - 1
                 y = RAD - int(round(data[i][1] * np.sin(np.radians(i + AUX_RANGE)))) - 1
                 cv2.line(moving_obs_frame, (RAD, RAD), (x, y), 255)
@@ -310,7 +368,10 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            print("collision count: ", collision_count, "   minimum dist: ", minimum_dist)
+            if collision_count > 50 and minimum_dist < 110:
+                self.motionparam = (3, False, None)
+
+            else: self.motionparam = (3, True, None)
 
         self.moving_obs_frame.write(moving_obs_frame)
 
@@ -318,6 +379,7 @@ class MotionPlanner:
         self.stop_fg = True
         self.lidar.stop()
         self.lanecam.stop()
+        #self.signcam.stop()
 
         # pycuda dealloc
         global context
@@ -334,7 +396,8 @@ if __name__ == "__main__":
     monitor = Monitor()
 
     while True:
-        motion_plan.moving_obs_handling()
+        motion_plan.plan_motion()
+
         monitor.show('parking', *motion_plan.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     motion_plan.stop()

@@ -56,6 +56,7 @@ class LaneCam:
         self.lane_cam_raw_frame = video_stream.VideoStream()
         self.lane_cam_frame = video_stream.VideoStream()
         self.parkingline_frame = video_stream.VideoStream()
+        self.stopline_frame = video_stream.VideoStream()
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -87,7 +88,8 @@ class LaneCam:
         time.sleep(1)
 
     def getFrame(self):
-        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(), self.parkingline_frame.read())
+        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(),
+                self.parkingline_frame.read(), self.stopline_frame.read())
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -411,7 +413,55 @@ class LaneCam:
         self.lane_cam_frame.write(final)
 
     def stopline_loop(self):
-        pass
+        # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
+        left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
+        right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
+
+        # HSV, RGB 필터링으로 영상을 이진화 함
+        filtered_L = cv2.inRange(left_frame, self.lower_white, self.upper_white)
+        filtered_R = cv2.inRange(right_frame, self.lower_white, self.upper_white)
+
+        filtered_both = np.vstack((filtered_R, filtered_L))
+        filtered_both = cv2.flip(cv2.transpose(filtered_both), 1)
+
+        both = np.vstack((right_frame, left_frame))
+        both = cv2.flip((cv2.transpose(both)), 1)
+
+        lines = cv2.HoughLinesP(filtered_both, 1, np.pi / 360, 40, 10, 10)
+
+        t1 = time.time()
+
+        while True:
+            if lines is None: break
+
+            rand = random.randint(0, len(lines) - 1)
+
+            for x1, y1, x2, y2 in lines[rand]:
+                slope = ((y2 - y1) / (x1 - x2)) if (x1 != x2) else 10000
+                length = np.sqrt((y2 - y1) ** 2 + (x1 - x2) ** 2)
+
+            if abs(slope) < 0.2 and length > 100:
+                stop_line = lines[rand]
+                break
+
+            if (time.time() - t1) >= 0.01:
+                stop_line = None
+                break
+
+        if stop_line is not None:
+            for x1, y1, x2, y2 in stop_line:
+                a = ((y2 - y1) / (x1 - x2))
+                b = 300 - y1 - a * x1
+                distance = abs(300 * a + b) / np.sqrt(a ** 2 + 1)
+                self.stopline_info = distance
+
+                cv2.line(both, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
+                         (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
+
+        else:
+            self.stopline_info = None
+
+        self.stopline_frame.write(both)
 
     def parkingline_loop(self):
         parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)
@@ -509,7 +559,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        lane_cam.parkingline_loop()
+        lane_cam.stopline_loop()
         monitor.show('1', *lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()
