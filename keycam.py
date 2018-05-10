@@ -4,26 +4,26 @@ import keyboard
 class KeyCam:
     def __init__(self):
         self.mission_num = 0
-        self.stop_fg = False
-        self.threading = threading.Thread(target=self.keylook)
-        self.threading.start()
+        keyboard.on_press(self.keylook)
 
     def get_mission(self):
         return self.mission_num
 
-    def keylook(self):
-        while True:
-            for i in range(0, 9):
-                if keyboard.is_pressed(str(i)): self.mission_num = i; break
-            if self.stop_fg is True: break
+    def keylook(self, e):
+        c = e.name
+        if c == '0': self.mission_num = 0
+        elif c == '1': self.mission_num = 1
+        elif c == '2': self.mission_num = 2
+        elif c == '3': self.mission_num = 3
+        elif c == '4': self.mission_num = 4
+        elif c == '5': self.mission_num = 5
+        elif c == '6': self.mission_num = 6
+        elif c == '7': self.mission_num = 7
 
-    def stop(self):
-        self.stop_fg = True
 
 if __name__ == "__main__":
+    import time
     k = KeyCam()
+    keyboard.hook(k.keylook)
     while True:
-        n = k.get_mission()
-        print(n)
-        if n == 8: break
-    k.stop()
+        print(k.get_mission())
