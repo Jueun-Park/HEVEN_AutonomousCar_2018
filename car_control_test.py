@@ -85,14 +85,11 @@ class Control:
         self.mission_num = mission_num
 
     def do_mission(self, first, second):
-
         if self.mission_num == 0:
             if first is None:
                 return
-
             if self.default_mode == 0:
                 self.__default__(first[0] / 100, first[1])
-
             elif self.default_mode == 1:
                 self.__default2__(first[0] / 100, first[1], first[2] / 100)
 
@@ -113,9 +110,7 @@ class Control:
             self.__turn__()
 
         elif self.mission_num == 7:
-            self.stop_line = first / 100
-
-            self.__cross__()
+            self.__cross__(first / 100)
 
         else:
             self.__obs__(first[0] / 100, first[1])
@@ -315,25 +310,31 @@ class Control:
         self.steer = steer
         self.brake = brake
 
-    def __cross__(self):
-        self.steer = 0
-        self.speed = 36
-        self.gear = 0
-        self.brake = 0
+    def __cross__(self, stop_line):
+        steer = 0
+        speed = 36
+        gear = 0
+        brake = 0
 
         self.change_mission = 0
 
-        if abs(self.stop_line) < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(stop_line) < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
 
             if (self.t2 - self.t1) < 3.0:
-                self.speed = 0
-                self.brake = 60
+                speed = 0
+                brake = 60
             else:
-                self.speed = 54
+                speed = 54
+                brake = 0
                 self.change_mission = 1
+
+        self.gear = gear
+        self.speed = speed
+        self.steer = steer
+        self.brake = brake
 
     def __parking__(self):
         self.steer = 0
