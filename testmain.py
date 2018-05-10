@@ -1,30 +1,37 @@
+#######################Module#####################
 from communication import PlatformSerial
 from motion_planner import MotionPlanner
 from car_control_test import Control
 
 from monitor import Monitor
 import time
-
-platform = PlatformSerial('COM3')
+import cv2
+#####################instance#####################
 motion = MotionPlanner()
 control = Control()
+platform = PlatformSerial('COM6')
 
-import cv2
+monitor = Monitor()
+#################################################
+
+
 while True:
     platform.recv()
     control.read(*platform.read())
 
     platform.status()
-    motion.static_obs_handling()
-    if motion.target_angle is not None and motion.distance is not None:
-        control.mission(10, (motion.distance, motion.target_angle), None)
+
+    motion.motion_plan(5)
+    control.mission(*motion.motion)
 
     platform.write(*control.write())
     platform.send()
 
     frames = motion.getFrame()
     frame = Monitor.concatenates(frames[0], frames[1], mode='v')
-    Monitor.show(frame, frames[2], Monitor.imstatus(*platform.status()))
+
+    monitor.show('1', frame, frames[2], frames[3], frames[5])
+    monitor.show('2', Monitor.imstatus(*platform.status()))
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         motion.stop()

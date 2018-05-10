@@ -1,6 +1,7 @@
 # 라이다 통신 및 해석(장애물 추출)
+# 김홍빈
 # input: LiDAR
-# output: numpy array? (to path_planner)
+# output: theta 에 따른 장애물 거리 (to motion_planner)
 
 import math
 import socket
@@ -15,7 +16,6 @@ modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
 
 class Lidar:
     RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
-    NOISE_THRESHOLD = 3000  # 노이즈 분류 기준
 
     def __init__(self):
         self.HOST = '169.254.248.220'

@@ -1,14 +1,20 @@
+# 차량 조향/속도 제어 프로그램
+# 박준혁
+# input: communication.py, motion_planner.py, lane_cam.py 등에서 주는 차가 앞으로 가는 데 필요한 모든 정보
+# output: 통신에 보낼 조향/속도 정보
+
+
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 # self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}
+# car_front = 0.28
 
 import time
 import math
 
 
 class Control:
-
-    car_front = 0.28  # 수정 바람 - 차량 정지 시간
+    car_front = 0.28
 
     def __init__(self):
         self.gear = 0
@@ -19,12 +25,36 @@ class Control:
         self.velocity = 0
         self.steer_past = 0
 
+        self.mission_num = 0  # (일반 주행 모드)
+
+        self.default_mode = 0
+        self.obs_mode = 1
+
+        self.change_mission = 0
+
+        #######################################
+        self.speed_platform = 0
+        self.ENC1 = 0
+        self.cross_track_error = 0
+        self.linear = 0
+        self.cul = 0
+        self.parking_time1 = 0
+        self.parking_time2 = 0
+        self.place = 0
+        self.park_position = 0
+        self.park_theta = 0
+        self.obs_exist = 0
+        self.count = 0
+        self.stop_line = 0
+        self.obs_r = 0
+        self.obs_theta = 0
+        self.turn_distance = 0
+
         self.t1 = 0
         self.t2 = 0
 
         self.ct1 = 0
         self.ct2 = 0
-
         self.ct3 = 0
         self.ct4 = 0
 
@@ -40,34 +70,11 @@ class Control:
         self.pt7 = 0
         self.pt8 = 0
 
-        self.usit = 1
-        self.psit = 1
-
-        self.mission_num = 0  # (일반 주행 모드)
-
-        self.default_mode = 1
-        self.obs_mode = 1
+        self.u_sit = 0
+        self.p_sit = 0
 
         self.default_y_dis = 0.1  # (임의의 값 / 1m)
-
         #######################################
-        self.speed_platform = 0
-        self.ENC1 = 0
-        self.cross_track_error = 0
-        self.linear = 0
-        self.cul = 0
-        self.parking_time1 = 0
-        self.parking_time2 = 0
-        self.corner = 0
-        self.place = 0
-        self.obs_exist = 0
-        self.count = 0
-        self.obs_uturn = 0
-        self.stop_line = 0
-        self.obs_r = 0
-        self.obs_theta = 0
-        #######################################
-        self.change_mission = 0
 
     def read(self, speed, enc):
         #######################################
@@ -86,6 +93,8 @@ class Control:
     def do_mission(self, first, second):
 
         if self.mission_num == 0:
+            if first is None:
+                return
             self.cross_track_error = first[0] / 100
             self.linear = first[1]
             self.cul = first[2] / 100
@@ -97,6 +106,10 @@ class Control:
                 self.__default2__()
 
         elif self.mission_num == 1:
+            self.place = first
+            if second is not None:
+                self.park_position = second[1]
+                self.park_theta = (second[2] - 90)
 
             self.__parking__()
 
@@ -106,11 +119,12 @@ class Control:
             self.__moving__()
 
         elif self.mission_num == 6:
+            self.turn_distance = first / 100
 
-            self.__uturn__()
+            self.__turn__()
 
         elif self.mission_num == 7:
-            self.stop_line = first/100
+            self.stop_line = first / 100
 
             self.__cross__()
 
@@ -123,7 +137,7 @@ class Control:
     def write(self):
         return self.gear, self.speed, self.steer, self.brake
 
-    def change(self):
+    def ch_mission(self):
         # 일회용 미션 함수의 종료를 알리는 변수
         # default, obs는 0을 반환
         # parking, uturn, moving_obs, cross는 1을 반환
@@ -131,7 +145,7 @@ class Control:
 
     def __default__(self):
         self.steer = 0
-        self.speed = 54
+        self.speed = 108
         self.gear = 0
         self.brake = 0
 
@@ -147,12 +161,15 @@ class Control:
         if self.speed_platform == 0:
             self.theta_2 = 0
         else:
-            self.velocity = (self.speed_platform*100)/3600
+            self.velocity = (self.speed_platform * 100) / 3600
             self.theta_2 = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.05
-
         steer_now = (self.theta_1 + self.theta_2)
+
+        self.adjust = 0.3
+        if steer_now > 18:
+            self.adjust = 0.4
+
         steer_final = ((self.adjust * self.steer_past) + ((1 - self.adjust) * steer_now))
 
         self.steer = steer_final * 71
@@ -168,7 +185,7 @@ class Control:
 
     def __default2__(self):
         self.steer = 0
-        self.speed = 54
+        self.speed = 108
         self.gear = 0
         self.brake = 0
 
@@ -193,10 +210,10 @@ class Control:
         if self.speed_platform == 0:
             self.theta_error = 0
         else:
-            self.velocity = (self.speed_platform*100)/3600
+            self.velocity = (self.speed_platform * 100) / 3600
             self.theta_error = math.degrees(math.atan((k * self.cross_track_error) / self.velocity))
 
-        self.adjust = 0.05
+        self.adjust = 0.3
         self.correction_default = 1
 
         steer_now = (self.theta_line + self.theta_error)
@@ -215,9 +232,23 @@ class Control:
 
     def __obs__(self):
         self.steer = 0
-        self.speed = 18
         self.gear = 0
         self.brake = 0
+
+        if self.mission_num == 2:
+            self.speed = 36
+            self.correction = 1.3
+            self.adjust = 0.10
+
+        elif self.mission_num == 4:  # 실험값 보정하기
+            self.speed = 18
+            self.correction = 1.3
+            self.adjust = 0.10
+
+        elif self.mission_num == 5:  # 실험값 보정하기
+            self.speed = 54
+            self.correction = 1.3
+            self.adjust = 0.3
 
         self.change_mission = 0
 
@@ -253,9 +284,6 @@ class Control:
 
         if (self.obs_theta - 90) > 0:
             self.theta_obs = self.theta_obs * (-1)
-
-        self.adjust = 0.10
-        self.correction = 1.1
 
         steer_final = (self.adjust * self.steer_past) + (1 - self.adjust) * self.theta_obs * 1.387 * self.correction
 
@@ -311,53 +339,77 @@ class Control:
 
     def __parking__(self):
         self.steer = 0
-        self.speed = 0
+        self.speed = 36
         self.gear = 0
         self.brake = 0
 
         self.change_mission = 0
 
-        if self.psit == 1:
-            self.speed = 36
-            if self.pt1 == 0:
-                self.pt1 = self.ENC1[0]
-            self.pt2 = self.ENC1[0]
+        if self.p_sit == 0:
+            if self.place is False:
+                self.steer = 0
+                self.speed = 36
+                self.gear = 0
+                self.brake = 0
 
-            if (self.pt2 - self.pt1) < 100:
+            elif self.place is True:
+                self.speed = 0
+                self.brake = 60
+                if self.speed_platform == 0:
+                    self.go = self.park_position / 1.7
+                    self.park_theta_edit = self.park_theta
+                    self.p_sit = 1
+
+        elif self.p_sit == 1:
+            self.speed = 54
+            if self.pt1 == 0:
+                self.pt1 = self.ENC1
+            self.pt2 = self.ENC1
+
+            #############################################
+            self.edit_enc = abs(self.park_theta_edit) / 3.33
+
+            if self.park_theta_edit > 0:
+                self.edit_enc = self.edit_enc * (-1)
+            #############################################
+
+            if (self.pt2 - self.pt1) < self.go + 10:
                 self.steer = 0
 
-            elif 100 <= (self.pt2 - self.pt1) < 280:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
+            elif self.go + 10 <= (self.pt2 - self.pt1) < self.go + 210 + self.edit_enc:  # 회전 엔코더 량 : 200
                 self.steer = 1970
 
-            if (self.pt2 - self.pt1) >= 290:
+            if (self.pt2 - self.pt1) >= self.go + 210 + self.edit_enc:
                 self.steer = 0
                 self.speed = 0
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.psit = 2
+                    self.p_sit = 2
 
-        elif self.psit == 2:
+        elif self.p_sit == 2:
             if self.pt3 == 0:
-                self.pt3 = self.ENC1[0]
-            self.pt4 = self.ENC1[0]
+                self.pt3 = self.ENC1
+            self.pt4 = self.ENC1
 
-            if (self.pt4 - self.pt3) < 100:
-                self.speed = 36
+            if (self.pt4 - self.pt3) < 50:
+                self.speed = 54
                 self.steer = 0
                 self.brake = 0
 
-            if (self.pt4 - self.pt3) >= 100:
+            if (self.pt4 - self.pt3) >= 50:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0
 
                 if self.speed_platform == 0:
-                    self.psit = 3
+                    self.p_sit = 3
 
-        elif self.psit == 3:
-            self.speed_for_write = 0
-            self.steer_for_write = 0
+        elif self.p_sit == 3:
+            self.gear = 2
+            self.speed = 0
+            self.steer = 0
+            self.brake = 0
 
             if self.parking_time1 == 0:
                 self.parking_time1 = time.time()
@@ -365,60 +417,60 @@ class Control:
             self.parking_time2 = time.time()
 
             if (self.parking_time2 - self.parking_time1) > 10:
-                self.psit = 4
+                self.p_sit = 4
 
-        elif self.psit == 4:
-            self.gear = 1
-            self.speed = 36
+        elif self.p_sit == 4:
+            self.gear = 2
+            self.speed = 54
             self.brake = 0
 
             if self.pt5 == 0:
-                self.pt5 = self.ENC1[0]
-            self.pt6 = self.ENC1[0]
+                self.pt5 = self.ENC1
+            self.pt6 = self.ENC1
 
-            if abs(self.pt6 - self.pt5) < 100:
-                self.speed = 36
+            if abs(self.pt6 - self.pt5) < 50:
+                self.speed = 54
                 self.steer = 0
                 self.brake = 0
 
-            if abs(self.pt6 - self.pt5) >= 100:
+            if abs(self.pt6 - self.pt5) >= 50:
+                self.speed = 0
                 self.steer = 0
                 self.brake = 60
-                self.speed = 0
 
                 if self.speed_platform == 0:
-                    self.psit = 5
+                    self.p_sit = 5
 
-        elif self.psit == 5:
-            self.gear = 1
-            self.speed = 36
+        elif self.p_sit == 5:
+            self.gear = 2
+            self.speed = 54
             self.brake = 0
 
             if self.pt7 == 0:
-                self.pt7 = self.ENC1[0]
-            self.pt8 = self.ENC1[0]
+                self.pt7 = self.ENC1
+            self.pt8 = self.ENC1
 
-            if abs(self.pt8 - self.pt7) < 185:
-                self.speed = 36
+            if abs(self.pt8 - self.pt7) < 200:
+                self.speed = 54
                 self.steer = 1970
                 self.brake = 0
 
-            if abs(self.pt8 - self.pt7) >= 185:
+            if abs(self.pt8 - self.pt7) >= 200:
+                self.speed = 0
                 self.steer = 0
                 self.brake = 60
-                self.speed = 0
 
                 if self.speed_platform == 0:
-                    self.psit = 6
+                    self.p_sit = 6
 
-        elif self.psit == 6:
+        elif self.p_sit == 6:
             self.gear = 0
-            self.speed = 36
+            self.speed = 54
             self.steer = 0
             self.brake = 0
             self.change_mission = 1
 
-    def __uturn__(self):
+    def __turn__(self):
         self.steer = 0
         self.speed = 36
         self.gear = 0
@@ -426,53 +478,51 @@ class Control:
 
         self.change_mission = 0
 
-        self.obs_y = self.obs_uturn[1] / 100
+        if self.u_sit == 0:
+            if self.turn_distance < 4.5:
+                self.steer = 0
+                self.speed = 0
+                self.brake = 60
 
-        if abs(self.obs_y) < self.car_front:
-            self.speed = 0
+                if self.speed_platform == 0:
+                    self.u_sit = 2
 
-            if self.usit == 0:
-                self.usit = 1
-
-        if self.usit == 1:
+        elif self.u_sit == 1:
             self.speed = 36
             if self.ct1 == 0:
                 self.ct1 = self.ENC1[0]
             self.ct2 = self.ENC1[0]
 
-            if (self.ct2 - self.ct1) < 100:
-                self.steer = 0
-
-            elif 100 <= (self.ct2 - self.ct1) < 730:
+            if (self.ct2 - self.ct1) < 665:
                 self.steer = -1970
 
-            if (self.ct2 - self.ct1) >= 730:
+            elif (self.ct2 - self.ct1) >= 665:
                 self.steer = 0
                 self.speed = 0
                 self.brake = 60
 
                 if self.speed_platform == 0:
-                    self.usit = 2
+                    self.u_sit = 2
 
-        elif self.usit == 2:
+        elif self.u_sit == 2:
             if self.ct3 == 0:
                 self.ct3 = self.ENC1[0]
             self.ct4 = self.ENC1[0]
 
-            if (self.ct4 - self.ct3) < 134:
+            if (self.ct4 - self.ct3) < 175:
                 self.speed = 36
                 self.steer = 1970
                 self.brake = 0
 
-            if (self.ct4 - self.ct3) >= 134:
+            if (self.ct4 - self.ct3) >= 175:
                 self.steer = 0
                 self.brake = 60
                 self.speed = 0
 
                 if self.speed_platform == 0:
-                    self.usit = 3
+                    self.u_sit = 3
 
-        elif self.usit == 3:
+        elif self.u_sit == 3:
             self.steer = 0
             self.speed = 36
             self.brake = 0
@@ -481,6 +531,6 @@ class Control:
 
 control = Control()
 control.mission(0, (0, 0, 1000000000), None)
-control.change()
+control.ch_mission()
 print(control.steer)
 print(control.change_mission)

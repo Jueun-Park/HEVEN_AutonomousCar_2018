@@ -1,8 +1,14 @@
+# 차선 인식
+# 김홍빈
+# input: 캠 이미지 (from video_stream)
+# output: 차선 근사 이차함수의 계수 세 개, 정지선 정보, 주차 공간 정보 (to motion_planner)
+
+
 import cv2
 import numpy as np
 import random
 import time
-import videostream
+import video_stream
 
 
 class LaneCam:
@@ -23,10 +29,12 @@ class LaneCam:
 
     crop_L = [[210, 510], [262, 562]]
     crop_R = [[151, 451], [0, 300]]
+    crop_R_parking = [[252, 452], [0, 503]]
     output_L = (563, 511)
     output_R = (503, 452)
     xreadParam_L = crop_L, camera_matrix_L, distortion_coefficients_L, Bird_view_matrix_L, output_L
     xreadParam_R = crop_R, camera_matrix_R, distortion_coefficients_R, Bird_view_matrix_R, output_R
+    xreadparam_R_parking = crop_R_parking, camera_matrix_R, distortion_coefficients_R, Bird_view_matrix_R, output_R
 
     # HSV 을 이용한 차선 추출에 필요한 값들
     lower_yellow = np.array([0, 70, 120], dtype=np.uint8)
@@ -40,13 +48,14 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left = videostream.WebcamVideoStream(1, 800, 448)
-        self.video_right = videostream.WebcamVideoStream(0, 800, 448)
-        self.video_left.start('left.avi')
-        self.video_right.start('right.avi')
+        self.video_left = video_stream.WebCamVideoStream(1, 800, 448)
+        self.video_right = video_stream.WebCamVideoStream(0, 800, 448)
+        self.video_left.start()
+        self.video_right.start()
 
-        self.lane_cam_raw_frame = videostream.VideoStream()
-        self.lane_cam_frame = videostream.VideoStream()
+        self.lane_cam_raw_frame = video_stream.VideoStream()
+        self.lane_cam_frame = video_stream.VideoStream()
+        self.parkingline_frame = video_stream.VideoStream()
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -60,6 +69,8 @@ class LaneCam:
         self.left_current_points = np.array([0] * 10)
         self.right_current_points = np.array([0] * 10)
 
+        self.filtered_both = None
+
         # 차선과 닮은 이차함수의 계수 세 개를 담을 변수
         self.left_coefficients = None
         self.right_coefficients = None
@@ -70,10 +81,13 @@ class LaneCam:
         # 주차 공간 정보를 담을 변수
         self.parkingline_info = None
 
+        # 주차 공간 인식 횟수를 담을 변수
+        self.parking_count = 0
+
         time.sleep(1)
 
     def getFrame(self):
-        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read())
+        return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(), self.parkingline_frame.read())
 
     # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
@@ -100,13 +114,18 @@ class LaneCam:
         dst = cv2.warpPerspective(undistorted, transform_matrix, output_size)
         return dst
 
+    def frm_pretreatment_parking(self, ret, frame, crop, *preParam):
+        dst = self.pretreatment(frame, *preParam)
+        cropped = dst[crop[0][0]:crop[0][1], crop[1][0]:crop[1][1]]
+        return cropped
+
     def frm_pretreatment(self, ret, frame, crop, *preParam):
         dst = self.pretreatment(frame, *preParam)
         cropped = dst[crop[0][0]:crop[0][1], crop[1][0]:crop[1][1]]
         transposed = cv2.flip(cv2.transpose(cropped), 0)
         return transposed
 
-    def default_loop(self):
+    def default_loop(self, usage):
         # 프레임 읽어들여서 왼쪽만 HSV 색공간으로 변환하기
         left_frame = self.frm_pretreatment(*self.video_left.read(), *LaneCam.xreadParam_L)
         right_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
@@ -143,15 +162,19 @@ class LaneCam:
                     center_of_mass = self.findCenterofMass(small_box)
 
                     # 박스가 비어 있는 경우 -1을 저장
-                    if center_of_mass == -1: self.left_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.left_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
                         # 질량중심 결과가 전체 영상을 벗어나지 않았을 때만 저장하고
-                        if 0 <= location < 300: self.left_current_points[i] = location
+                        if 0 <= location < 300:
+                            self.left_current_points[i] = location
                         # 벗어나면 -1을 저장함
-                        else: self.left_current_points[i] = -1
+                        else:
+                            self.left_current_points[i] = -1
 
-            else: self.left_current_points = None
+            else:
+                self.left_current_points = None
 
         else:
             for i in range(0, 10):
@@ -166,12 +189,15 @@ class LaneCam:
                     small_box = filtered_L[y1:y2, x1:x2]
                     center_of_mass = self.findCenterofMass(small_box)
 
-                    if center_of_mass == -1: self.left_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.left_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
 
-                        if 0 <= location < 300: self.left_current_points[i] = location
-                        else: self.left_current_points[i] = -1
+                        if 0 <= location < 300:
+                            self.left_current_points[i] = location
+                        else:
+                            self.left_current_points[i] = -1
 
                 else:
                     if i == 0:
@@ -183,7 +209,8 @@ class LaneCam:
                         small_box = filtered_L[y1:y2, x1:x2]
                         center_of_mass = self.findCenterofMass(small_box)
 
-                        if center_of_mass == -1: self.left_current_points[0] = -1
+                        if center_of_mass == -1:
+                            self.left_current_points[0] = -1
                         else:
                             location = reference + center_of_mass
 
@@ -212,7 +239,8 @@ class LaneCam:
                             else:
                                 self.left_current_points[i] = -1
 
-        if np.count_nonzero(self.left_current_points == -1) >= 5: self.left_current_points = None
+        if np.count_nonzero(self.left_current_points == -1) >= 5 and usage == 0: self.left_current_points = None
+        if np.count_nonzero(self.left_current_points == -1) >= 9 and usage == 1: self.left_current_points = None
         self.left_previous_points = self.left_current_points
         # ---------------------------------- 여기까지 왼쪽 차선 박스 쌓기 영역 ----------------------------------
 
@@ -238,15 +266,19 @@ class LaneCam:
                     center_of_mass = self.findCenterofMass(small_box)
 
                     # 박스가 비어 있는 경우 -1을 저장
-                    if center_of_mass == -1: self.right_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.right_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
                         # 질량중심 결과가 전체 영상을 벗어나지 않았을 때만 저장하고
-                        if 0 <= location < 300: self.right_current_points[i] = location
+                        if 0 <= location < 300:
+                            self.right_current_points[i] = location
                         # 벗어나면 -1을 저장함
-                        else: self.right_current_points[i] = -1
+                        else:
+                            self.right_current_points[i] = -1
 
-            else: self.right_current_points = None
+            else:
+                self.right_current_points = None
 
         else:
             for i in range(0, 10):
@@ -261,12 +293,15 @@ class LaneCam:
                     small_box = filtered_R[y1:y2, x1:x2]
                     center_of_mass = self.findCenterofMass(small_box)
 
-                    if center_of_mass == -1: self.right_current_points[i] = -1
+                    if center_of_mass == -1:
+                        self.right_current_points[i] = -1
                     else:
                         location = reference + center_of_mass
 
-                        if 0 <= location < 300: self.right_current_points[i] = location
-                        else: self.right_current_points[i] = -1
+                        if 0 <= location < 300:
+                            self.right_current_points[i] = location
+                        else:
+                            self.right_current_points[i] = -1
 
                 else:
                     if i == 0:
@@ -278,7 +313,8 @@ class LaneCam:
                         small_box = filtered_L[y1:y2, x1:x2]
                         center_of_mass = self.findCenterofMass(small_box)
 
-                        if center_of_mass == -1: self.right_current_points[0] = -1
+                        if center_of_mass == -1:
+                            self.right_current_points[0] = -1
                         else:
                             location = reference + center_of_mass
 
@@ -307,76 +343,89 @@ class LaneCam:
                             else:
                                 self.right_current_points[i] = -1
 
-        if np.count_nonzero(self.right_current_points == -1) >= 5: self.right_current_points = None
+        if np.count_nonzero(self.right_current_points == -1) >= 5 and usage == 0: self.right_current_points = None
+        if np.count_nonzero(self.right_current_points == -1) >= 9 and usage == 1: self.right_current_points = None
         self.right_previous_points = self.right_current_points
 
         # ---------------------------------- 여기까지 오른쪽 차선 박스 쌓기 영역 ----------------------------------
+        if usage == 0:
+            if self.left_current_points is not None:
+                xs_valid = []
+                ys_L_valid = []
 
-        if self.left_current_points is not None:
-            xs_valid = []
-            ys_L_valid = []
+                for i in range(0, 10):
+                    temp = self.left_current_points[i]
+                    if temp != -1:
+                        xs_valid.append(-30 * i)
+                        ys_L_valid.append(-1 * temp)
+                        cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
+                                 150)
 
-            for i in range(0, 10):
-                temp = self.left_current_points[i]
-                if temp != -1:
-                    xs_valid.append(-30 * i)
-                    ys_L_valid.append(-1 * temp)
-                    cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH), 150)
+                self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
 
-            self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
+                xs_plot = np.array([1 * i for i in range(-299, 1)])
+                ys_plot_L = np.array(
+                    [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for v in
+                     xs_plot])
 
-            xs_plot = np.array([1 * i for i in range(-299, 1)])
-            ys_plot_L = np.array(
-                [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for v in xs_plot])
+                transformed_x = xs_plot + 299
+                transformed_y_L = 0 - ys_plot_L
 
-            transformed_x = xs_plot + 299
-            transformed_y_L = 0 - ys_plot_L
+                for i in range(0, 300):
+                    cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
 
-            for i in range(0, 300):
-                cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
+            else:
+                self.left_coefficients = None
 
-        else: self.left_coefficients = None
+            if self.right_current_points is not None:
+                xs_valid = []
+                ys_R_valid = []
 
-        if self.right_current_points is not None:
-            xs_valid = []
-            ys_R_valid = []
+                for i in range(0, 10):
+                    temp = self.right_current_points[i]
+                    if temp != -1:
+                        xs_valid.append(-30 * i)
+                        ys_R_valid.append(300 - temp)
+                        cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH),
+                                 150)
 
-            for i in range(0, 10):
-                temp = self.right_current_points[i]
-                if temp != -1:
-                    xs_valid.append(-30 * i)
-                    ys_R_valid.append(300 - temp)
-                    cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH), (300 - 30 * i, temp + self.BOX_WIDTH), 150)
+                self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
 
-            self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
+                xs_plot = np.array([1 * i for i in range(-299, 1)])
+                ys_plot_R = np.array(
+                    [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2 for v
+                     in xs_plot])
 
-            xs_plot = np.array([1 * i for i in range(-299, 1)])
-            ys_plot_R = np.array(
-                [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2 for v in xs_plot])
+                transformed_x = xs_plot + 299
+                transformed_y_R = 299 - ys_plot_R
 
-            transformed_x = xs_plot + 299
-            transformed_y_R = 299 - ys_plot_R
+                for i in range(0, 300):
+                    cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
 
-            for i in range(0, 300):
-                cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
-
-        else: self.right_coefficients = None
+        else:
+            self.right_coefficients = None
 
         filtered_both = np.vstack((filtered_R, filtered_L))
         final = cv2.flip(cv2.transpose(filtered_both), 1)
+
         self.lane_cam_frame.write(final)
 
     def stopline_loop(self):
         pass
 
     def parkingline_loop(self):
-        parking_frame = self.frm_pretreatment(*self.video_right.read(), *LaneCam.xreadParam_R)
-        filtered_R = cv2.inRange(parking_frame, self.lower_white, self.upper_white)[252:452, 0:503]
+        parking_frame = self.frm_pretreatment_parking(*self.video_right.read(), *LaneCam.xreadparam_R_parking)
+        filtered_R = cv2.inRange(parking_frame, self.lower_white, self.upper_white)
 
-        lines = cv2.HoughLinesP(filtered_R, 1, np.pi / 360, 80, 10, 10)
+        lines = cv2.HoughLinesP(filtered_R, 1, np.pi / 360, 40, 10, 10)
         t1 = time.time()
 
         while True:
+            if lines is None or len(lines) <= 1:
+                v1 = None
+                v2 = None
+                break
+
             rand = random.sample(range(0, len(lines)), 2)
 
             for x1, y1, x2, y2 in lines[rand[0]]: v1 = (x1 - x2, y2 - y1)
@@ -390,7 +439,8 @@ class LaneCam:
             if cos_theta > 1: cos_theta = 1
             theta = np.rad2deg(np.arccos(cos_theta))
 
-            if theta > 55 and min(magnitude_1, magnitude_2) > 30:
+            if (50 < theta < 70 or 110 < theta < 130) and min(magnitude_1, magnitude_2) > 40:
+                self.parking_count += 1
                 break
 
             if (time.time() - t1) >= 0.01:
@@ -402,11 +452,15 @@ class LaneCam:
             theta1 = np.arctan2(v1[1], v1[0])
             theta2 = np.arctan2(v2[1], v2[0])
 
-            if theta1 <= -np.deg2rad(90): theta1 += np.deg2rad(180)
-            elif theta1 > np.deg2rad(120): theta1 -= np.deg2rad(180)
+            if theta1 <= -np.deg2rad(90):
+                theta1 += np.deg2rad(180)
+            elif theta1 > np.deg2rad(120):
+                theta1 -= np.deg2rad(180)
 
-            if theta2 <= -np.deg2rad(90): theta2 += np.deg2rad(180)
-            elif theta2 > np.deg2rad(120): theta2 -= np.deg2rad(180)
+            if theta2 <= -np.deg2rad(90):
+                theta2 += np.deg2rad(180)
+            elif theta2 > np.deg2rad(120):
+                theta2 -= np.deg2rad(180)
 
             middle = (theta1 + theta2) / 2
 
@@ -418,29 +472,31 @@ class LaneCam:
 
             b = np.array([parkline_points[0][0] - lane_points[0][0], lane_points[0][1] - parkline_points[0][1]])
 
-            x, y = 0, 0
+            x, y = None, None
 
             try:
                 solution = np.linalg.solve(A, b)
 
                 x = int(lane_points[0][0] + solution[0] * (lane_points[0][2] - lane_points[0][0]))
-                y = 200 - int(200 - lane_points[0][1] + solution[0] * (lane_points[0][1] - lane_points[0][3])) + 252
+                y = 200 - int(200 - lane_points[0][1] + solution[0] * (lane_points[0][1] - lane_points[0][3]))
 
                 probe_start_x, probe_start_y = int(x + 300 * np.cos(middle)), int(y - 300 * np.sin(middle))
 
-                cv2.circle(parking_frame, (x, y + 252), 7, (0, 255, 0), -1)
-                cv2.line(parking_frame, (x, y + 252), (probe_start_x, probe_start_y + 252), (255, 0, 0), 2)
+                cv2.circle(parking_frame, (x, y), 7, (0, 255, 0), -1)
+                cv2.line(parking_frame, (x, y), (probe_start_x, probe_start_y), (255, 0, 0), 2)
 
             except:
                 pass
 
-            self.parkingline_info = (x, y, middle)
+            if self.parking_count == 5:
+                self.parkingline_info = (x, 200 - y, middle, max(theta1, theta2))
+                self.parking_count = 0
 
         else:
             self.parkingline_info = None
 
         # parking_frame을 모니터에 넘겨줘야 함.
-
+        self.parkingline_frame.write(parking_frame)
 
     def stop(self):
         self.video_left.release()
@@ -449,10 +505,11 @@ class LaneCam:
 
 if __name__ == "__main__":
     from monitor import Monitor
+
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        lane_cam.default_loop()
-        monitor.show(*lane_cam.getFrame())
+        lane_cam.parkingline_loop()
+        monitor.show('1', *lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()
