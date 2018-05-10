@@ -81,10 +81,14 @@ class MotionPlanner:
         # 남은 것: 유턴, 동적, 정지선
         elif self.mission_num == 1:
             self.parkingline_handling()
+        elif self.mission_num == 3:
+            self.moving_obs_handling()
         elif self.mission_num == 4:
             self.static_obs_handling()
-        elif self.mission_num == 5:
-            self.moving_obs_handling()
+        elif self.mission_num == 6:
+            self.Uturn_handling()
+        elif self.mission_num == 7:
+            self.stopline_handling()
 
     def lane_handling(self):
         self.lanecam.default_loop(0)
