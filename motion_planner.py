@@ -316,7 +316,6 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            print("collision count: ", collision_count, "   minimum dist: ", minimum_dist)
 
         self.moving_obs_frame.write(moving_obs_frame)
 
