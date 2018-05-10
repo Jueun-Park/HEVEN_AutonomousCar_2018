@@ -32,6 +32,7 @@ class MotionPlanner:
         self.previous_data = None
 
         self.motion = None
+        self.in_mission = False
 
         self.motion_planner_frame = video_stream.VideoStream()
         self.parking_lidar = video_stream.VideoStream()
@@ -309,6 +310,9 @@ class MotionPlanner:
             data_transposed = data.transpose()
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
+
+            if collision_count > 55 and minimum_dist < 50:
+                self.motion = (3, False, None)
 
             print("collision count: ", collision_count, "   minimum dist: ", minimum_dist)
 
