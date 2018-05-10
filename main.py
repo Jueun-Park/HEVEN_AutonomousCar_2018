@@ -20,16 +20,14 @@ monitor = Monitor()
 
 
 while True:
-    platform.recv()
     control.read(*platform.read())
 
     platform.status()
 
     motion.motion_plan(5)
-    control.mission(*motion.motion)
+    control.mission(*motion.motionparam)
 
     platform.write(*control.write())
-    platform.send()
 
     frames = motion.getFrame()
     frame = Monitor.concatenates(frames[0], frames[1], mode='v')
