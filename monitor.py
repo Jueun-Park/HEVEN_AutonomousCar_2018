@@ -12,7 +12,10 @@ class Monitor:
         self.color_hsv = None
         self.color_buf = []
         self.wname_buf = []
+        self.windows_str = []
+        self.windows_is = {}
 
+    # color picker #
     def color_picker(self, event, x, y, flags, frame):
         self.color_rgv = frame[y][x]
         rgv_frame = np.uint8([[self.color_rgv]])
@@ -50,7 +53,9 @@ class Monitor:
             f = cv2.putText(f, '{:-3} {:-3} {:-3}'.format(color[0], color[1], color[2]), (0, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
         return f
+    # color picker #
 
+    # platform status #
     @classmethod
     def imstatus(cls, gear, speed, steer, brake):
         from serialpacket import SerialPacket
@@ -77,6 +82,21 @@ class Monitor:
         f = cv2.putText(f, steer_str, (0, 170), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
         f = cv2.putText(f, brake_str, (0, 230), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
         return f
+    # platform status #
+
+    # monitor status #
+    def immonitor(self):
+        f = np.full((100, 200, 3), 50, dtype=np.uint8)
+        numwin_str = str(sum(self.windows_is.values()))
+        f = cv2.putText(f, numwin_str, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+        idx = 10
+        for window_str in self.windows_str:
+            color = (255, 255, 255)
+            if self.windows_is[window_str] is False: color = (0, 0, 255)
+            cv2.putText(f, window_str, (50, idx), cv2.FONT_HERSHEY_PLAIN, 1, color)
+            idx += 10
+        return f
+    # monitor status #
 
     @classmethod
     def concatenate(cls, f1, f2, mode='h'):
@@ -126,8 +146,10 @@ class Monitor:
     def show(self, wname, *frames, color_picker=False):
         wname_org = wname
         for i in range(len(frames)):
-            if frames[i] is None: continue
             wname = wname + ('-{}'.format(i) if i != 0 else '')
+            if wname not in self.windows_str: self.windows_str.append(wname)
+            if frames[i] is None: self.windows_is[wname] = False; continue
+            self.windows_is[wname] = True
             cv2.imshow(wname, frames[i])
             if color_picker is True:
                 self.initSetMouseCallback(wname, self.color_picker, frames[i])
@@ -155,6 +177,8 @@ if __name__ == '__main__':
         color_frame = monitor.concatenate(monitor.imcolor(monitor.color_rgv), monitor.imcolor(monitor.color_hsv),
                                           mode='v')
         monitor.show('color-picker', color_frame, monitor.imcolorbuf())
+        monitor.show('monitor', monitor.immonitor())
+        monitor.show('none', None)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     video.release()
     exit()

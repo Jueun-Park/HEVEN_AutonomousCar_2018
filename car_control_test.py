@@ -7,13 +7,14 @@
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 # self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}
+# car_front = 0.28
 
 import time
 import math
 
 
 class Control:
-    car_front = 0.28  # 수정 바람 - 차량 정지 시간
+    car_front = 0.28
 
     def __init__(self):
         self.gear = 0
@@ -24,12 +25,36 @@ class Control:
         self.velocity = 0
         self.steer_past = 0
 
+        self.mission_num = 0  # (일반 주행 모드)
+
+        self.default_mode = 0
+        self.obs_mode = 1
+
+        self.change_mission = 0
+
+        #######################################
+        self.speed_platform = 0
+        self.ENC1 = 0
+        self.cross_track_error = 0
+        self.linear = 0
+        self.cul = 0
+        self.parking_time1 = 0
+        self.parking_time2 = 0
+        self.place = 0
+        self.park_position = 0
+        self.park_theta = 0
+        self.obs_exist = 0
+        self.count = 0
+        self.stop_line = 0
+        self.obs_r = 0
+        self.obs_theta = 0
+        self.turn_distance = 0
+
         self.t1 = 0
         self.t2 = 0
 
         self.ct1 = 0
         self.ct2 = 0
-
         self.ct3 = 0
         self.ct4 = 0
 
@@ -48,32 +73,8 @@ class Control:
         self.u_sit = 0
         self.p_sit = 0
 
-        self.mission_num = 0  # (일반 주행 모드)
-
-        self.default_mode = 0
-        self.obs_mode = 1
-
         self.default_y_dis = 0.1  # (임의의 값 / 1m)
-
         #######################################
-        self.speed_platform = 0
-        self.ENC1 = 0
-        self.cross_track_error = 0
-        self.linear = 0
-        self.cul = 0
-        self.parking_time1 = 0
-        self.parking_time2 = 0
-        self.place = 0
-        self.park_position = 0
-        self.park_linear = 0
-        self.obs_exist = 0
-        self.count = 0
-        self.stop_line = 0
-        self.obs_r = 0
-        self.obs_theta = 0
-        self.turn_distance = 0
-        #######################################
-        self.change_mission = 0
 
     def read(self, speed, enc):
         #######################################
@@ -106,8 +107,9 @@ class Control:
 
         elif self.mission_num == 1:
             self.place = first
-            self.park_position = second[0]
-            self.park_linear = second[1]
+            if second is not None:
+                self.park_position = second[1]
+                self.park_theta = (second[2] - 90)
 
             self.__parking__()
 
@@ -354,8 +356,8 @@ class Control:
                 self.speed = 0
                 self.brake = 60
                 if self.speed_platform == 0:
-                    self.go = self.park_position[0] / 1.7
-                    self.park_theta = self.park_linear
+                    self.go = self.park_position / 1.7
+                    self.park_theta_edit = self.park_theta
                     self.p_sit = 1
 
         elif self.p_sit == 1:
@@ -365,10 +367,9 @@ class Control:
             self.pt2 = self.ENC1
 
             #############################################
-            self.park_theta_edit = math.degrees(math.atan(self.park_theta))
-            self.edit_enc = self.park_theta_edit / 3.33
+            self.edit_enc = abs(self.park_theta_edit) / 3.33
 
-            if self.park_theta > 0:
+            if self.park_theta_edit > 0:
                 self.edit_enc = self.edit_enc * (-1)
             #############################################
 
