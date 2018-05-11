@@ -86,7 +86,7 @@ class MotionPlanner:
         elif self.mission_num == 3:
             self.moving_obs_handling()
         elif self.mission_num == 4:
-            self.static_obs_handling()
+            self.static_obs_handling(300, 110, 65, 65)
         elif self.mission_num == 6:
             self.Uturn_handling()
         elif self.mission_num == 7:
