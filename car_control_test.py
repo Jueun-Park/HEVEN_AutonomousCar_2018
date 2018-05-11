@@ -207,14 +207,17 @@ class Control:
             speed = 54
             correction = 1.4
             adjust = 0.05
+
         elif self.mission_num == 0:  # 실험값 보정하기
             speed = 18
             correction = 1.3
             adjust = 0.10
+
         elif self.mission_num == 4:  # 실험값 보정하기
             speed = 54
             correction = 1.5
             adjust = 0.1
+
         else:
             print("MISSION NUMBER ERROR")
             speed = 0
@@ -235,13 +238,15 @@ class Control:
             theta_obs = -27
         else:
             if self.obs_mode == 0:
+                car_circle = 1.387
                 cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
 
                 # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
                 theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
-                
+
             elif self.obs_mode == 1:
+                car_circle = 1.387
                 cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
                 theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs)
 
@@ -251,8 +256,10 @@ class Control:
                 theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
             elif self.obs_mode == 2:
+                car_circle = 1
                 obs_track_error = obs_r * math.sin(cal_theta)
                 k = 1
+
                 if obs_track_error < 0.27:
                     k = 0.5
                 velocity = (self.speed_platform * 100) / 3600
@@ -265,7 +272,7 @@ class Control:
         if (obs_theta - 90) > 0:
             theta_obs = theta_obs * (-1)
 
-        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * 1.387 * correction
+        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
 
         self.steer_past = steer_final
 
