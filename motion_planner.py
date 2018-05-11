@@ -79,7 +79,6 @@ class MotionPlanner:
 
         if self.mission_num == 0:
             self.lane_handling()
-        # 남은 것: 유턴, 동적, 정지선
         elif self.mission_num == 1:
             self.parkingline_handling()
         elif self.mission_num == 3:
