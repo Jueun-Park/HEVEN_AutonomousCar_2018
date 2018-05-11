@@ -105,56 +105,56 @@ class MotionPlanner:
         else:
             self.motionparam = (0, None, None)
 
-    def static_obs_handling(self):
+    def static_obs_handling(self, radius, angle, obs_size, lane_size):
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
 
-        RAD = np.int32(500)
-        AUX_RANGE = np.int32((180 - self.RANGE) / 2)
+        RAD = np.int32(radius)
+        AUX_RANGE = np.int32((180 - angle) / 2)
 
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
 
         points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
-        for angle in range(0, 361):
-            r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
+        for theta in range(0, 361):
+            r = lidar_raw_data[theta] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
             if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                 # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
-                x = -r * np.cos(np.radians(0.5 * angle))
-                y = r * np.sin(np.radians(0.5 * angle))
+                x = -r * np.cos(np.radians(0.5 * theta))
+                y = r * np.sin(np.radians(0.5 * theta))
 
                 # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
-                points[angle][0] = round(x) + RAD
-                points[angle][1] = RAD - round(y)
+                points[theta][0] = round(x) + RAD
+                points[theta][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 75, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(current_frame, tuple(point), obs_size, 255, -1)  # 캔버스에 점 찍기
 
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 100, 100, -1)
+                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
                 if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 100, 100, -1)
+                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
-        data = np.zeros((self.RANGE + 1, 2), np.int)
+        data = np.zeros((radius + 1, 2), np.int)
 
         color = None
         target = None
 
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)),
-                      block=(self.RANGE + 1, 1, 1))
+                      block=(radius + 1, 1, 1))
             data_transposed = np.transpose(data)
 
-            for i in range(0, self.RANGE + 1):
+            for i in range(0, radius + 1):
                 x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE)))) - 1
                 y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE)))) - 1
                 cv2.line(current_frame, (RAD, RAD), (x, y), 255)
@@ -163,7 +163,7 @@ class MotionPlanner:
 
             count = np.sum(data_transposed[0])
 
-            if count <= self.RANGE - 1:
+            if count <= radius - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
                 minimum_distance = int(min(abs(relative_position)))
 
