@@ -100,7 +100,7 @@ class MotionPlanner:
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motionparam = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
-            print(self.motionparam)
+            print(self.motionparam) 
 
         else:
             self.motionparam = (0, None, None)
