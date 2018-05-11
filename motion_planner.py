@@ -67,7 +67,7 @@ class MotionPlanner:
         self.path = mod.get_function("detect")
         # pycuda alloc end
 
-        #time.sleep(2)
+        time.sleep(2)
 
     def getFrame(self):
         return self.lanecam.getFrame() + (self.motion_planner_frame.read(),
@@ -81,12 +81,13 @@ class MotionPlanner:
 
         if self.mission_num == 0:
             self.lane_handling()
+        # 남은 것: 유턴, 동적, 정지선
         elif self.mission_num == 1:
             self.parkingline_handling()
         elif self.mission_num == 3:
             self.moving_obs_handling()
         elif self.mission_num == 4:
-            self.static_obs_handling(300, 110, 65, 65)
+            self.static_obs_handling(500, 110, 65, 0)
         elif self.mission_num == 6:
             self.Uturn_handling()
         elif self.mission_num == 7:
@@ -144,26 +145,27 @@ class MotionPlanner:
                 if right_lane_points[i] != -1:
                     cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
-        data = np.zeros((radius + 1, 2), np.int)
+        data = np.zeros((angle + 1, 2), np.int)
 
         color = None
         target = None
 
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)),
-                      block=(radius + 1, 1, 1))
+                      block=(angle + 1, 1, 1))
+
             data_transposed = np.transpose(data)
 
-            for i in range(0, radius + 1):
-                x = RAD + int(round(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE)))) - 1
-                y = RAD - int(round(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE)))) - 1
+            for i in range(0, angle + 1):
+                x = RAD + int(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE))) - 1
+                y = RAD - int(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE))) - 1
                 cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
             color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
             count = np.sum(data_transposed[0])
 
-            if count <= radius - 1:
+            if count <= angle - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
                 minimum_distance = int(min(abs(relative_position)))
 
@@ -190,12 +192,12 @@ class MotionPlanner:
 
             if target >= 0:
                 if self.previous_data is not None and abs(
-                      self.previous_data[self.previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 5 and \
+                      self.previous_data[self.previous_target - AUX_RANGE][1] - data[target - AUX_RANGE][1]) <= 1 and \
                         data[target - AUX_RANGE][1] != RAD - 1:
                     target = self.previous_target
 
-                x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target)))) - 1
-                y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target)))) - 1
+                x_target = RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target))))
+                y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 self.motionparam = (4, (data_transposed[1][target - AUX_RANGE], target), None)
