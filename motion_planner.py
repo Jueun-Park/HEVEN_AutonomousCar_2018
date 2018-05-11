@@ -24,7 +24,7 @@ class MotionPlanner:
 
     def __init__(self):
         self.lidar = Lidar()  # lidar_instance
-        time.sleep(2)
+
         self.lanecam = LaneCam()  # lanecam_instance
         self.signcam = KeyCam()  # signcam_instance
 
@@ -67,9 +67,11 @@ class MotionPlanner:
         self.path = mod.get_function("detect")
         # pycuda alloc end
 
+        time.sleep(2)
+
     def getFrame(self):
         return self.lanecam.getFrame() + (self.motion_planner_frame.read(),
-                                          self.parking_lidar.read(), self.moving_obs_frame.read())
+                                          self.parking_lidar.read(), self.moving_obs_frame.read(), self.uturn_frame.read())
 
     def getmotionparam(self):
         return self.motionparam
@@ -109,7 +111,7 @@ class MotionPlanner:
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
 
-        RAD = np.int32(self.OBSTACLE_RADIUS)
+        RAD = np.int32(300)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
         lidar_raw_data = self.lidar.data_list
@@ -136,12 +138,12 @@ class MotionPlanner:
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 75, 100, -1)
+                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 60, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
                 if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 75, 100, -1)
+                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 60, 100, -1)
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 
@@ -279,8 +281,8 @@ class MotionPlanner:
     def Uturn_handling(self):
         self.lanecam.default_loop(0)
 
-        UTURN_RANGE = 90
-        RAD = np.int32(300)
+        UTURN_RANGE = 20
+        RAD = np.int32(500)
         AUX_RANGE = np.int32((180 - np.int32(UTURN_RANGE)) / 2)
 
         lidar_raw_data = self.lidar.data_list
@@ -323,6 +325,7 @@ class MotionPlanner:
             minimum_dist = np.min(data_transposed[1])
 
         self.motionparam = (6, minimum_dist, None)
+        print(self.motionparam)
         self.uturn_frame.write(uturn_frame)
 
     def moving_obs_handling(self):

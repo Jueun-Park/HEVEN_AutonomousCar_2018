@@ -13,7 +13,7 @@ import cv2
 #####################instance#####################
 motion = MotionPlanner()
 control = Control()
-platform = PlatformSerial('COM6')
+platform = PlatformSerial('COM3')
 
 monitor = Monitor()
 #################################################
@@ -26,7 +26,7 @@ while True:
     platform.status()
 
     motion.plan_motion()
-    #control.mission(*motion.getmotionparam())
+    control.mission(*motion.getmotionparam())
 
     platform.write(*control.write())
 
@@ -41,4 +41,3 @@ while True:
         motion.stop()
         platform.stop()
         break
-    print(time.time() - t)

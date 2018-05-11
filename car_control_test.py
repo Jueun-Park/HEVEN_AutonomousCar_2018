@@ -203,18 +203,18 @@ class Control:
         gear = 0
         brake = 0
 
-        if self.mission_num == 2:
-            speed = 36
-            correction = 1.3
-            adjust = 0.10
-        elif self.mission_num == 4:  # 실험값 보정하기
+        if self.mission_num == 0:
+            speed = 54
+            correction = 1.4
+            adjust = 0.05
+        elif self.mission_num == 0:  # 실험값 보정하기
             speed = 18
             correction = 1.3
             adjust = 0.10
-        elif self.mission_num == 5:  # 실험값 보정하기
+        elif self.mission_num == 4:  # 실험값 보정하기
             speed = 54
-            correction = 1.3
-            adjust = 0.3
+            correction = 1.5
+            adjust = 0.1
         else:
             print("MISSION NUMBER ERROR")
             speed = 0
@@ -467,13 +467,19 @@ class Control:
         self.change_mission = 0
 
         if self.u_sit == 0:
-            if turn_distance < 4.5:
+            if turn_distance < 3.5:
                 steer = 0
                 speed = 0
                 brake = 60
 
                 if self.speed_platform == 0:
-                    self.u_sit = 2
+                    self.u_sit = 1
+
+            else:
+                steer = 0
+                speed = 36
+                brake = 0
+                gear = 0
 
         elif self.u_sit == 1:
             speed = 36
