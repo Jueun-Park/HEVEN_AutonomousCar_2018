@@ -110,8 +110,14 @@ if __name__ == "__main__":
     time.sleep(2)
 
     is_in_mission = False
-    sign = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot', 'Roadworks', 'u_turn']
-    sign = [[0 for col in range(7)]for row in range(2)]
+    #sign = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot', 'Roadworks', 'u_turn']
+    sign = [[0 for col in range(7)]for row in range(2)] # 각 표지판이 검출된 횟수를 저장하는 2D Array
+    # -----------------------------------------------------------------------------------------------------------------
+    # | Bicycles | Crosswalk_PedestrainCrossing | Double_bend | Narrow_Carriageway | Parking_Lot | Roadworks | u_turn |
+    # -----------------------------------------------------------------------------------------------------------------
+    # |    0     |               0              |      0      |         0          |      0      |      0    |    0   |
+    # -----------------------------------------------------------------------------------------------------------------
+    # 이런 느낌?
     sign[0][0] = 'Bicycles'
     sign[0][1] = 'Crosswalk_PedestrainCrossing'
     sign[0][2] = 'Double_bend'
@@ -139,9 +145,16 @@ if __name__ == "__main__":
                 if sign[0][i] == result:
                     sign[1][i] = sign[1][i] + 1
 
-        for i in range(7):
+        for i in range(7): # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
             if sign[1][i] >= 3:
                 sign2action = sign[0][i]
+                sign[1][0] = 0
+                sign[1][1] = 0
+                sign[1][2] = 0
+                sign[1][3] = 0
+                sign[1][4] = 0
+                sign[1][5] = 0
+                sign[1][6] = 0
                 break
 
         #sign2action이 뭐냐에 따라서 어떤 거 실행?
