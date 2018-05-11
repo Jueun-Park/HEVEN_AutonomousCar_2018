@@ -28,7 +28,7 @@ class Control:
         self.mission_num = 0  # DEFAULT 모드
 
         self.default_mode = 0 # 0번 주행 모드
-        self.obs_mode = 1  # 1번 회피 모드
+        self.obs_mode = 2  # 2번 회피 모드
 
         self.change_mission = 0
         #######################################
@@ -203,18 +203,21 @@ class Control:
         gear = 0
         brake = 0
 
-        if self.mission_num == 2:
-            speed = 36
-            correction = 1.3
-            adjust = 0.10
-        elif self.mission_num == 4:  # 실험값 보정하기
+        if self.mission_num == 0:
+            speed = 54
+            correction = 1.4
+            adjust = 0.05
+
+        elif self.mission_num == 0:  # 실험값 보정하기
             speed = 18
             correction = 1.3
             adjust = 0.10
-        elif self.mission_num == 5:  # 실험값 보정하기
+
+        elif self.mission_num == 4:  # 실험값 보정하기
             speed = 54
-            correction = 1.3
-            adjust = 0.3
+            correction = 1.5
+            adjust = 0.1
+
         else:
             print("MISSION NUMBER ERROR")
             speed = 0
@@ -235,12 +238,15 @@ class Control:
             theta_obs = -27
         else:
             if self.obs_mode == 0:
+                car_circle = 1.387
                 cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
 
                 # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
                 theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
+
             elif self.obs_mode == 1:
+                car_circle = 1.387
                 cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
                 theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs)
 
@@ -248,6 +254,17 @@ class Control:
                 mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
 
                 theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
+
+            elif self.obs_mode == 2:
+                car_circle = 1
+                obs_track_error = obs_r * math.sin(cal_theta)
+                k = 1
+
+                if obs_track_error < 0.27:
+                    k = 0.5
+                velocity = (self.speed_platform * 100) / 3600
+                theta_obs = math.degrees(math.atan((k * obs_track_error) / velocity))
+
             else:
                 print("OBS MODE ERROR")
                 theta_obs = 0
@@ -255,7 +272,7 @@ class Control:
         if (obs_theta - 90) > 0:
             theta_obs = theta_obs * (-1)
 
-        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * 1.387 * correction
+        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
 
         self.steer_past = steer_final
 
@@ -467,13 +484,19 @@ class Control:
         self.change_mission = 0
 
         if self.u_sit == 0:
-            if turn_distance < 4.5:
+            if turn_distance < 3.5:
                 steer = 0
                 speed = 0
                 brake = 60
 
                 if self.speed_platform == 0:
-                    self.u_sit = 2
+                    self.u_sit = 1
+
+            else:
+                steer = 0
+                speed = 36
+                brake = 0
+                gear = 0
 
         elif self.u_sit == 1:
             speed = 36
