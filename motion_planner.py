@@ -67,7 +67,7 @@ class MotionPlanner:
         self.path = mod.get_function("detect")
         # pycuda alloc end
 
-        time.sleep(2)
+        #time.sleep(2)
 
     def getFrame(self):
         return self.lanecam.getFrame() + (self.motion_planner_frame.read(),
@@ -111,7 +111,7 @@ class MotionPlanner:
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
 
-        RAD = np.int32(300)
+        RAD = np.int32(500)
         AUX_RANGE = np.int32((180 - self.RANGE) / 2)
 
         lidar_raw_data = self.lidar.data_list
@@ -138,12 +138,12 @@ class MotionPlanner:
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 60, 100, -1)
+                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), 100, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
                 if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 60, 100, -1)
+                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), 100, 100, -1)
 
         data = np.zeros((self.RANGE + 1, 2), np.int)
 

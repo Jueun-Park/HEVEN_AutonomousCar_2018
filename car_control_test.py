@@ -28,7 +28,7 @@ class Control:
         self.mission_num = 0  # DEFAULT 모드
 
         self.default_mode = 0 # 0번 주행 모드
-        self.obs_mode = 2  # 2번 회피 모드
+        self.obs_mode = 1  # 2번 회피 모드
 
         self.change_mission = 0
         #######################################
@@ -94,7 +94,10 @@ class Control:
             self.__turn__(first / 100)
 
         elif self.mission_num == 7:
-            self.__cross__(first / 100)
+            if first is None:
+                self.__cross__(200)
+            else:
+                self.__cross__(first / 100)
 
         else:
             self.__obs__(first[0] / 100, first[1])
@@ -203,6 +206,8 @@ class Control:
         gear = 0
         brake = 0
 
+        car_circle = 1
+
         if self.mission_num == 0:
             speed = 54
             correction = 1.4
@@ -215,8 +220,8 @@ class Control:
 
         elif self.mission_num == 4:  # 실험값 보정하기
             speed = 54
-            correction = 1.5
-            adjust = 0.1
+            correction = 1.3
+            adjust = 0.2
 
         else:
             print("MISSION NUMBER ERROR")
@@ -247,7 +252,7 @@ class Control:
 
             elif self.obs_mode == 1:
                 car_circle = 1.387
-                cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+                cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta) / 2
                 theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs)
 
                 son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
@@ -258,10 +263,11 @@ class Control:
             elif self.obs_mode == 2:
                 car_circle = 1
                 obs_track_error = obs_r * math.sin(cal_theta)
-                k = 1
+
+                k = 0.2
 
                 if obs_track_error < 0.27:
-                    k = 0.5
+                    k = 0.2
                 velocity = (self.speed_platform * 100) / 3600
                 theta_obs = math.degrees(math.atan((k * obs_track_error) / velocity))
 

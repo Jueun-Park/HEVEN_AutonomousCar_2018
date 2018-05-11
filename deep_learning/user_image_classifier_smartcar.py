@@ -9,7 +9,7 @@ import tensorflow as tf
 그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
 '''
 
-sys.path.insert(0, 'C:/Users/jiwunghyun/Desktop/slim')
+sys.path.insert(0, 'C:/Users/Administrator/Desktop/slim')
 #이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
 #따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
 
@@ -17,7 +17,7 @@ from nets import inception
 from preprocessing import inception_preprocessing
 
 
-checkpoints_dir = 'C:/Users/jiwunghyun/Desktop/dataset/train_inception_v1_smartcar_FineTune_logs/all'
+checkpoints_dir = 'C:/Users/Administrator/Desktop/dataset/train_inception_v1_smartcar_FineTune_logs/all'
 #데이터의 checkpoint 디렉토리 넣어줌
 slim = tf.contrib.slim
 
@@ -26,7 +26,7 @@ image_size = inception.inception_v1.default_image_size
 
 with tf.Graph().as_default():
 
-    images_dir = 'C:/Users/jiwunghyun/Desktop/slim/user_images'
+    images_dir = 'C:/Users/Administrator/Desktop/slim/user_images'
     #자신이 원하는 이미지 인식, slim 폴더안에 user_images폴더를 만들고 그 안에 인식하고 싶은 사진을 넣어주면 사진 수 만큼 인식할거임
     user_images = [] 
     user_processed_images = [] 
@@ -63,7 +63,7 @@ with tf.Graph().as_default():
     names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
     #7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
     
-
+    count = 0
     for files in range(len(image_files)):
         probabilitie = probabilities[files, 0:]
         sorted_inds = [i[0] for i in sorted(enumerate(-probabilitie), key=lambda x:x[1])]
@@ -76,4 +76,7 @@ with tf.Graph().as_default():
         for p in range(7):
             index = sorted_inds[p]
             print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
+            if(probabilitie[index] >= 0.95):
+                count += 1
         print()
+    print (count)
