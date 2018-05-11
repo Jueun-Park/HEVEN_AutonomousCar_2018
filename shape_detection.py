@@ -45,14 +45,17 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture(2)
-    count = 0
+    cam = cv2.VideoCapture(0)
+    cam.set(3, 800)
+    cam.set(4, 448)
+
+    # count = 0
     if not cam.isOpened():
         print("cam open failed")
     while True:
         s, img = cam.read()
         main()
-        count += 1
+        # count += 1
         cv2.imshow('cam', img)
 
         if cv2.waitKey(30) & 0xff == 27:
