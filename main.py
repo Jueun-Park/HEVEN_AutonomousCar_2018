@@ -2,7 +2,7 @@
 # interpreted by python 3.6
 # 하위 프로그램
 
-#######################Module#####################
+#######################Module#####################q
 from communication import PlatformSerial
 from motion_planner import MotionPlanner
 from car_control_test import Control
@@ -13,7 +13,7 @@ import cv2
 #####################instance#####################
 motion = MotionPlanner()
 control = Control()
-platform = PlatformSerial('COM6')
+platform = PlatformSerial('COM4')
 
 monitor = Monitor()
 #################################################
@@ -26,7 +26,7 @@ while True:
     platform.status()
 
     motion.plan_motion()
-    #control.mission(*motion.getmotionparam())
+    control.mission(*motion.getmotionparam())
 
     platform.write(*control.write())
 
@@ -41,4 +41,3 @@ while True:
         motion.stop()
         platform.stop()
         break
-    print(time.time() - t)

@@ -431,6 +431,8 @@ class LaneCam:
 
         t1 = time.time()
 
+        stop_line = None
+
         while True:
             if lines is None: break
 
