@@ -105,6 +105,9 @@ class Control:
     def write(self):
         return self.gear, self.speed, self.steer, self.brake
 
+    def get_status(self):
+        return self.u_sit, self.p_sit
+
     def ch_mission(self):
         # 일회용 미션 함수의 종료를 알리는 변수
         # default, obs는 0을 반환

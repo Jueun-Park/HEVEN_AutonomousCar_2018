@@ -31,13 +31,15 @@ while True:
     platform.write(*control.write())
 
     frames = motion.getFrame()
-    frame = monitor.concatenate(frames[0], frames[1], mode='v')
+    status_temp = monitor.concatenate(monitor.immonitor(), monitor.immission(motion.mission_num, control.get_status()), mode='h')
+    status = monitor.concatenate(status_temp, monitor.imstatus(*platform.status()), mode='v')
 
-    monitor.show('1', *frames)
-    monitor.show('status', monitor.imstatus(*platform.status()))
-    monitor.show('monitor', monitor.immonitor())
+    monitor.show('frame', *frames, windows_is=motion.windows_is)
+    monitor.show('status', status)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         motion.stop()
         platform.stop()
+        monitor.stop()
         break
+    print(time.time() - t)
