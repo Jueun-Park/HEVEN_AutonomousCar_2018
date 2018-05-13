@@ -40,6 +40,10 @@ def is_in_this_mission(ndarray):
         return False
 
 def process_one_frame_sign(frame, is_in_mission):
+    if len(frame) < 1:
+        return "Nothing", 0.00
+
+
     if is_in_mission:
         pass
 
@@ -106,6 +110,8 @@ class SignCam:
         self.cam = cv2.VideoCapture('sign_logging.avi')
         self.sign2action = "Nothing"
 
+        self.sign_init()
+
 
     def sign_init(self):
         self.sign[0][0] = 'Bicycles'
@@ -155,7 +161,7 @@ class SignCam:
             img_list = shape_detect(frame)
             for img in img_list:
                 result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
-                # print(result)
+                print(result_sign)
                 self.sign = self.countup_recognition(result_sign, prob)
 
             self.print_sign()
@@ -163,6 +169,7 @@ class SignCam:
 
             if self.sign2action:
                 print(self.sign2action, "will be starting")
+                sign2action = "Nothing"
             # sign2action이 뭐냐에 따라서 어떤 거 실행?
 
 
