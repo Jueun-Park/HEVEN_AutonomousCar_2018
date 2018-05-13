@@ -5,7 +5,7 @@
 #######################Module#####################q
 from communication import PlatformSerial
 from motion_planner import MotionPlanner
-from car_control_test import Control
+from car_control import Control
 
 from monitor import Monitor
 import time

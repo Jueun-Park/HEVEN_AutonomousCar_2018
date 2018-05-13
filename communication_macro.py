@@ -1,5 +1,5 @@
 from serialpacket import SerialPacket
-from car_control_test import Control
+from car_control import Control
 import serial
 
 
