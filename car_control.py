@@ -6,7 +6,6 @@
 
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
-# self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}
 # car_front = 0.28
 
 import time
