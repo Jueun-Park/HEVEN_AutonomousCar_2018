@@ -118,8 +118,9 @@ class Control:
 
     def ch_mission(self):
         # 일회용 미션 함수의 종료를 알리는 변수
-        # default, obs는 0을 반환
-        # parking, uturn, moving_obs, cross는 1을 반환
+        # default는 0을 반환
+        # obs는 1을 반환
+        # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
 
     def __default__(self, cross_track_error, linear):
@@ -242,7 +243,7 @@ class Control:
             correction = 0.0
             adjust = 0.0
 
-        self.change_mission = 0
+        self.change_mission = 1
 
         cal_theta = math.radians(abs(obs_theta - 90))
         cos_theta = math.cos(cal_theta)
@@ -334,7 +335,7 @@ class Control:
             speed = 36
             brake = 0
             if self.count > 0:
-                self.change_mission = 1
+                self.change_mission = 2
 
         self.gear = gear
         self.speed = speed
@@ -360,7 +361,7 @@ class Control:
             else:
                 speed = 54
                 brake = 0
-                self.change_mission = 1
+                self.change_mission = 2
 
         self.gear = gear
         self.speed = speed
@@ -498,7 +499,7 @@ class Control:
             speed = 54
             steer = 0
             brake = 0
-            self.change_mission = 1
+            self.change_mission = 2
 
         self.gear = gear
         self.speed = speed
@@ -567,7 +568,7 @@ class Control:
             speed = 36
             steer = 0
             brake = 0
-            self.change_mission = 1
+            self.change_mission = 2
 
         self.gear = gear
         self.speed = speed
