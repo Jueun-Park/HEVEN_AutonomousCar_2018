@@ -6,6 +6,9 @@
 #         그 외 미션 주행에 필요한 각 정보들
 
 
+# modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
+#           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
+
 import pycuda.driver as drv
 import numpy as np
 from pycuda.compiler import SourceModule
@@ -29,6 +32,9 @@ class MotionPlanner:
         self.signcam = KeyCam()  # signcam_instance
 
         self.mission_num = 0
+
+        self.lap_during_collision = 0
+        self.lap_during_clear = 0
 
         self.previous_target = None
         self.previous_data = None
@@ -111,7 +117,7 @@ class MotionPlanner:
             self.static_obs_handling(300, 110, 65, 0)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(400, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0)
 
         elif self.mission_num == 5:
             self.static_obs_handling(300, 110, 70, 0)
@@ -130,7 +136,6 @@ class MotionPlanner:
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motionparam = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
-            print(self.motionparam) 
 
         else:
             self.motionparam = (0, None, None)
@@ -187,14 +192,25 @@ class MotionPlanner:
 
             data_transposed = np.transpose(data)
 
+            # 장애물에 부딫힌 곳까지 하얀 선 그리기
             for i in range(0, angle + 1):
                 x = RAD + int(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE))) - 1
                 y = RAD - int(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE))) - 1
                 cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
+            # 진행할 방향을 빨간색으로 표시하기 위해 흑백에서 BGR 로 변환
             color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
+            # count 는 장애물이 부딪힌 방향의 갯수를 의미
             count = np.sum(data_transposed[0])
+
+            if count == 0:
+                self.lap_during_clear = time.time()
+
+            else:
+                self.lap_during_collision = time.time()
+
+            print(self.lap_during_clear)
 
             if count <= angle - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
