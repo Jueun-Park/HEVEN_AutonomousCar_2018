@@ -1,4 +1,3 @@
-import numpy as np
 import cv2
 import time
 
@@ -22,30 +21,32 @@ if cap.read():
         else:
             img5 = cv2.GaussianBlur(img, (5, 5), 0)
             gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 129, 194)
+            edges = cv2.Canny(gray, 52, 104, apertureSize=3)
             image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             count = 0
             for cnt in contours:
                 (x, y, w, h) = cv2.boundingRect(cnt)
                 le = max(w,h)+10
+                area = cv2.contourArea(cnt)  # Contour Line면적
+                hull = cv2.convexHull(cnt)  # Convex hull line
+                hull_area = cv2.contourArea(hull)  # Convex hull 면적
 
-                if w>40 and h>40:
-                    x_1 = int (x+(w-le)/2 -5)
-                    x_2 = int (x+(w+le)/2 +5)
-                    y_1 = int (y+(h-le)/2 -5)
-                    y_2 = int (y+(h+le)/2 +5)
-                    img_trim = img[y_1 : y_2 , x_1 :x_2]
-                    height, width = img_trim.shape[:2]
-                    limit = height - width
+                if hull_area > 0:
+                    solidity = int (100*(area) / hull_area)
+                    if solidity>93 and w>40 and h>40:
+                        x_1 = int (x+(w-le)/2 -5)
+                        x_2 = int (x+(w+le)/2 +5)
+                        y_1 = int (y+(h-le)/2 -5)
+                        y_2 = int (y+(h+le)/2 +5)
 
-                    if limit > -5 and limit < 5:
-                        if x_1 >0 and y_1 > 0:
+                        if x_1 >0 and 350 >y_2 and y_1 > 110:
                             cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
-                            name = "./images/" + str(count) + "_" + str(count_2) + "_"+ str(height) +".png"
+                            img_trim = img[y_1: y_2, x_1:x_2]
                             img_trim = cv2.resize(img_trim, (32,32))
+                            name = "./images/" + str(solidity) +str(count) + "_" + str(count_2) + "_.png"
                             cv2.imwrite(name,img_trim)
-                count += 1
+                    count += 1
 
         cv2.imshow('img', img)
         if cv2.waitKey(25) & 0xFF == ord('q'):

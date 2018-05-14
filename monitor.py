@@ -86,8 +86,15 @@ class Monitor:
 
     # mission status #
     def immission(self, mission_num, control_status):
-        f = np.zeros((240, 400, 3), dtype=np.uint8)
-
+        f = np.full((100, 200, 3), 20, dtype=np.uint8)
+        mission_num_str = str(mission_num)
+        control_status_str = ''
+        if mission_num == 6:
+            control_status_str = str(control_status[0])
+        elif mission_num == 1:
+            control_status_str = str(control_status[1])
+        f = cv2.putText(f, mission_num_str, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255))
+        f = cv2.putText(f, control_status_str, (100, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 100))
         return f
     # mission status #
 
@@ -150,16 +157,28 @@ class Monitor:
         self.wname_buf.append(winname)
         cv2.setMouseCallback(winname, onMouse, userdata)
 
-    def show(self, wname, *frames, color_picker=False):
+    def show(self, wname, *frames, windows_is=None, color_picker=False):
         wname_org = wname
         for i in range(len(frames)):
             wname = wname_org + ('-{}'.format(i) if i != 0 else '')
-            if wname not in self.windows_str: self.windows_str.append(wname)
-            if frames[i] is None: self.windows_is[wname] = False; continue
+            if wname not in self.windows_str:
+                self.windows_str.append(wname)
+                self.windows_is[wname] = False
+            if windows_is is not None:
+                if windows_is[i] is False:
+                    self.windows_is[wname] = False
+                    cv2.destroyWindow(wname)
+                    continue
+            if frames[i] is None:
+                self.windows_is[wname] = False
+                continue
             self.windows_is[wname] = True
             cv2.imshow(wname, frames[i])
             if color_picker is True:
                 self.initSetMouseCallback(wname, self.color_picker, frames[i])
+
+    def stop(self):
+        cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
@@ -187,4 +206,5 @@ if __name__ == '__main__':
         monitor.show('none', None)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     video.release()
+    monitor.stop()
     exit()

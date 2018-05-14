@@ -6,7 +6,6 @@
 
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
-# self.change_mission = { 0 : (미션 변경 X), 1 : default, 2 : obs}
 # car_front = 0.28
 
 import time
@@ -27,12 +26,13 @@ class Control:
         #######################################
         self.mission_num = 0  # DEFAULT 모드
 
-        self.default_mode = 0 # 0번 주행 모드
-        self.obs_mode = 1  # 2번 회피 모드
+        self.default_mode = 0  # 0번 주행 모드
+        self.obs_mode = 0
 
         self.change_mission = 0
         #######################################
         self.steer_past = 0
+
         self.parking_time1 = 0
         self.parking_time2 = 0
         self.count = 0
@@ -78,24 +78,31 @@ class Control:
         if self.mission_num == 0:
             if first is None:
                 return
+
             if self.default_mode == 0:
                 self.__default__(first[0] / 100, first[1])
+
             elif self.default_mode == 1:
                 self.__default2__(first[0] / 100, first[1], first[2] / 100)
 
         elif self.mission_num == 1:
-            if second is None: self.__parking__(first, None, None)
-            else: self.__parking__(first, second[1], second[2] - 90)
+            if second is None:
+                self.__parking__(first, None, None)
+            else:
+                self.__parking__(first, second[1], 90 - second[2])
 
         elif self.mission_num == 3:
-            self.__moving__(first)
+            if first is None:
+                self.__moving__(False)
+            else:
+                self.__moving__(first)
 
         elif self.mission_num == 6:
             self.__turn__(first / 100)
 
         elif self.mission_num == 7:
             if first is None:
-                self.__cross__(200)
+                self.__cross__(100)
             else:
                 self.__cross__(first / 100)
 
@@ -105,11 +112,23 @@ class Control:
     def write(self):
         return self.gear, self.speed, self.steer, self.brake
 
+    def get_status(self):
+        return self.u_sit, self.p_sit
+
     def ch_mission(self):
         # 일회용 미션 함수의 종료를 알리는 변수
-        # default, obs는 0을 반환
-        # parking, uturn, moving_obs, cross는 1을 반환
+        # default는 0을 반환
+        # obs는 1을 반환
+        # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
+
+    def accelerate(self, target_speed):
+        final_speed = target_speed
+        if self.speed_platform < 20 < final_speed:
+            final_speed *= 2
+            if final_speed > 200:
+                final_speed = 200
+        return final_speed
 
     def __default__(self, cross_track_error, linear):
         gear = 0
@@ -133,8 +152,6 @@ class Control:
         steer_now = (theta_1 + theta_2)
 
         adjust = 0.3
-        if steer_now > 18:
-            adjust = 0.4
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
@@ -148,7 +165,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -198,7 +215,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -206,22 +223,26 @@ class Control:
         gear = 0
         brake = 0
 
+        obs_mode = 0
         car_circle = 1
 
-        if self.mission_num == 0:
+        if self.mission_num == 2:
             speed = 54
             correction = 1.4
             adjust = 0.05
+            obs_mode = 1
 
-        elif self.mission_num == 0:  # 실험값 보정하기
+        elif self.mission_num == 4:  # 실험값 보정하기
             speed = 18
             correction = 1.3
             adjust = 0.10
+            obs_mode = 1
 
-        elif self.mission_num == 4:  # 실험값 보정하기
-            speed = 54
+        elif self.mission_num == 5:  # 실험값 보정하기
+            speed = 42
             correction = 1.3
-            adjust = 0.2
+            adjust = 0.05
+            obs_mode = 2
 
         else:
             print("MISSION NUMBER ERROR")
@@ -229,53 +250,64 @@ class Control:
             correction = 0.0
             adjust = 0.0
 
-        self.change_mission = 0
+        self.change_mission = 1
 
         cal_theta = math.radians(abs(obs_theta - 90))
         cos_theta = math.cos(cal_theta)
         sin_theta = math.sin(cal_theta)
 
-        if (obs_theta - 90) == 0:
+        if (90 - obs_theta) == 0:
             theta_obs = 0
-        elif obs_theta == -35:
-            theta_obs = 27
-        elif obs_theta == -145:
-            theta_obs = -27
+
         else:
-            if self.obs_mode == 0:
-                car_circle = 1.387
-                cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
+            if obs_mode == 0:
+                if obs_theta == -35:
+                    theta_obs = 27
+                elif obs_theta == -145:
+                    theta_obs = -27
+                else:
+                    car_circle = 1.387
+                    cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
+                    # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
 
-                # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
+                    theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
 
-                theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
+            elif obs_mode == 1:
+                if obs_theta == -35:
+                    theta_obs = 27
+                elif obs_theta == -145:
+                    theta_obs = -27
+                else:
+                    car_circle = 1.387
+                    cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+                    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 2
 
-            elif self.obs_mode == 1:
-                car_circle = 1.387
-                cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta) / 2
-                theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs)
+                    son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
+                    mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
 
-                son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
-                mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
+                    theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
-                theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
+            elif obs_mode == 2:
+                if obs_theta == -35:
+                    theta_obs = 20
+                    speed = 18
+                elif obs_theta == -145:
+                    theta_obs = -20
+                    speed = 18
+                else:
+                    car_circle = 1.387
+                    cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+                    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 4
 
-            elif self.obs_mode == 2:
-                car_circle = 1
-                obs_track_error = obs_r * math.sin(cal_theta)
+                    son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
+                    mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
 
-                k = 0.2
-
-                if obs_track_error < 0.27:
-                    k = 0.2
-                velocity = (self.speed_platform * 100) / 3600
-                theta_obs = math.degrees(math.atan((k * obs_track_error) / velocity))
-
+                    theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
             else:
                 print("OBS MODE ERROR")
                 theta_obs = 0
 
-        if (obs_theta - 90) > 0:
+        if (90 - obs_theta) < 0:
             theta_obs = theta_obs * (-1)
 
         steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
@@ -291,7 +323,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -310,10 +342,10 @@ class Control:
             speed = 36
             brake = 0
             if self.count > 0:
-                self.change_mission = 1
+                self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -336,10 +368,10 @@ class Control:
             else:
                 speed = 54
                 brake = 0
-                self.change_mission = 1
+                self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -375,17 +407,17 @@ class Control:
             #############################################
             self.edit_enc = abs(self.park_theta_edit) / 3.33
 
-            if self.park_theta_edit > 0:
+            if self.park_theta_edit < 0:
                 self.edit_enc = self.edit_enc * (-1)
             #############################################
 
-            if (self.pt2 - self.pt1) < self.go + 10:
+            if (self.pt2 - self.pt1) < self.go + 5:
                 steer = 0
 
-            elif self.go + 10 <= (self.pt2 - self.pt1) < self.go + 210 + self.edit_enc:  # 회전 엔코더 량 : 200
+            elif self.go + 5 <= (self.pt2 - self.pt1) < self.go + 215 + self.edit_enc:  # 회전 엔코더 량 : 200
                 steer = 1970
 
-            if (self.pt2 - self.pt1) >= self.go + 210 + self.edit_enc:
+            if (self.pt2 - self.pt1) >= self.go + 215 + self.edit_enc:
                 speed = 0
                 steer = 0
                 brake = 60
@@ -456,12 +488,12 @@ class Control:
                 self.pt7 = self.enc
             self.pt8 = self.enc
 
-            if abs(self.pt8 - self.pt7) < 200:
+            if abs(self.pt8 - self.pt7) < 205:
                 speed = 54
                 steer = 1970
                 brake = 0
 
-            if abs(self.pt8 - self.pt7) >= 200:
+            if abs(self.pt8 - self.pt7) >= 205:
                 speed = 0
                 steer = 0
                 brake = 60
@@ -474,10 +506,10 @@ class Control:
             speed = 54
             steer = 0
             brake = 0
-            self.change_mission = 1
+            self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -490,7 +522,7 @@ class Control:
         self.change_mission = 0
 
         if self.u_sit == 0:
-            if turn_distance < 3.5:
+            if turn_distance < 3.6:
                 steer = 0
                 speed = 0
                 brake = 60
@@ -543,10 +575,10 @@ class Control:
             speed = 36
             steer = 0
             brake = 0
-            self.change_mission = 1
+            self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 

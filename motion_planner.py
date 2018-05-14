@@ -39,6 +39,7 @@ class MotionPlanner:
         self.parking_lidar = video_stream.VideoStream()
         self.moving_obs_frame = video_stream.VideoStream()
         self.uturn_frame = video_stream.VideoStream()
+        self.windows_is = []
 
         # pycuda alloc
         drv.init()
@@ -70,14 +71,32 @@ class MotionPlanner:
         time.sleep(2)
 
     def getFrame(self):
-        return self.lanecam.getFrame() + (self.motion_planner_frame.read(),
+        lanecam_getFrame = self.lanecam.getFrame()
+        self.windows_is =                               [True, True, False, False, False, False, False, False]
+        if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
+        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, True, True, False, False]
+        elif self.mission_num == 2: self.windows_is =   [True, True, False, False, False, False, False, False]
+        elif self.mission_num == 3: self.windows_is =   [True, True, False, False, False, False, True, False]
+        elif self.mission_num == 4: self.windows_is =   [True, True, False, False, False, False, False, False]
+        elif self.mission_num == 5: self.windows_is =   [True, True, False, False, False, False, False, False]
+        elif self.mission_num == 6: self.windows_is =   [True, True, False, False, False, False, False, True]
+        elif self.mission_num == 7: self.windows_is =   [False, False, False, True, False, False, False, False]
+
+        return lanecam_getFrame + (self.motion_planner_frame.read(),
                                           self.parking_lidar.read(), self.moving_obs_frame.read(), self.uturn_frame.read())
 
     def getmotionparam(self):
         return self.motionparam
 
-    def plan_motion(self):
-        self.mission_num = self.signcam.get_mission()
+    def plan_motion(self, control_status):
+        if self.mission_num == 0:
+            self.mission_num = self.signcam.get_mission()
+        elif self.mission_num == 1:
+            if control_status[1] == 6:
+                self.mission_num = 0
+        elif self.mission_num == 6:
+            if control_status[0] == 3:
+                self.mission_num = 0
 
         if self.mission_num == 0:
             self.lane_handling()

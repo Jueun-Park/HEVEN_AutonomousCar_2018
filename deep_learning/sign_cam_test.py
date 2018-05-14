@@ -22,13 +22,13 @@ from shape_detection import shape_detect
 이 방법을 사용한 이유는 실제로 데이터를 구현하고 tensorflow로 표지판을 인식하는데까지 너무 많은 노력과 지식이 필요한데
 그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
 '''
-
 sys.path.insert(0, 'C:/Users/jiwunghyun/Desktop/slim')
 #이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
 #따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
 
 from nets import inception
 from preprocessing import inception_preprocessing
+
 
 def is_in_this_mission(ndarray):
     try:
@@ -39,9 +39,11 @@ def is_in_this_mission(ndarray):
     except Exception as e:
         return False
 
-
-
 def process_one_frame_sign(frame, is_in_mission):
+    if len(frame) < 1:
+        return "Nothing", 0.00
+
+
     if is_in_mission:
         pass
 
@@ -101,82 +103,77 @@ def process_one_frame_sign(frame, is_in_mission):
 
     return names[sorted_inds[0]], probabilitie[sorted_inds[0]] # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
 
+class SignCam:
+    def __init__(self):
+        self.is_in_mission = False
+        self.sign = [[0 for col in range(7)]for row in range(2)]
+        self.cam = cv2.VideoCapture('sign_logging.avi')
+        self.sign2action = "Nothing"
 
-def sign_init(sign):
-    sign[0][0] = 'Bicycles'
-    sign[0][1] = 'Crosswalk_PedestrainCrossing'
-    sign[0][2] = 'Double_bend'
-    sign[0][3] = 'Narrow_Carriageway'
-    sign[0][4] = 'Parking_Lot'
-    sign[0][5] = 'Roadworks'
-    sign[0][6] = 'u_turn'
-    sign[1][0] = 0
-    sign[1][1] = 0
-    sign[1][2] = 0
-    sign[1][3] = 0
-    sign[1][4] = 0
-    sign[1][5] = 0
-    sign[1][6] = 0
-    return sign
+        self.sign_init()
 
-def countup_recognition(sign, result_sign, prob):
-    for i in range(7):
-        if sign[0][i] == result_sign and prob > 0.90:
-            sign[1][i] = sign[1][i] + 1
-            break
-    return sign
 
-def print_sign(sign):
-    for i in range(7):
-        print(sign[0][i], sign[1][i])
+    def sign_init(self):
+        self.sign[0][0] = 'Bicycles'
+        self.sign[0][1] = 'Crosswalk_PedestrainCrossing'
+        self.sign[0][2] = 'Double_bend'
+        self.sign[0][3] = 'Narrow_Carriageway'
+        self.sign[0][4] = 'Parking_Lot'
+        self.sign[0][5] = 'Roadworks'
+        self.sign[0][6] = 'u_turn'
+        self.sign[1][0] = 0
+        self.sign[1][1] = 0
+        self.sign[1][2] = 0
+        self.sign[1][3] = 0
+        self.sign[1][4] = 0
+        self.sign[1][5] = 0
+        self.sign[1][6] = 0
+        return self.sign
 
-if __name__ == "__main__":
-    # 웹캠 읽어오기
-    cam = cv2.VideoCapture('sign_logging.avi')
-    time.sleep(2)
+    def countup_recognition(self, result_sign, prob):
+        for i in range(7):
+            if self.sign[0][i] == result_sign and prob > 0.90:
+                self.sign[1][i] = self.sign[1][i] + 1
+                break
+        return self.sign
 
-    is_in_mission = False
-    #sign = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot', 'Roadworks', 'u_turn']
-    sign = [[0 for col in range(7)]for row in range(2)] # 각 표지판이 검출된 횟수를 저장하는 2D Array
-    # -----------------------------------------------------------------------------------------------------------------
-    # | Bicycles | Crosswalk_PedestrainCrossing | Double_bend | Narrow_Carriageway | Parking_Lot | Roadworks | u_turn |
-    # -----------------------------------------------------------------------------------------------------------------
-    # |    0     |               0              |      0      |         0          |      0      |      0    |    0   |
-    # -----------------------------------------------------------------------------------------------------------------
-    # 이런 느낌?
-    sign_init(sign)
+    def print_sign(self): # test code 에서 사용될 출력 함수
+        for i in range(7):
+            print(self.sign[0][i], self.sign[1][i])
 
-    # 영상 처리 -> 이쪽에서 5m부터 1m 씩 조정할 수 있도록 짜야할 것 같음.
-    while (cam.isOpened()):
-        frame_okay, frame = cam.read()  # 한 프레임을 가져오자.
-        # 이미지 중 표지판이 있는 곳 확인
-        img_list = shape_detect(frame)
-        for img in img_list:
-            result_sign, prob = process_one_frame_sign(img, is_in_mission)
-            #print(result)
-            sign = countup_recognition(sign, result_sign, prob)
-
-        print_sign(sign)
-
-        sign2action = "Nothing"
-        for i in range(7): # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
-            if sign[1][i] >= 3:
-                sign2action = sign[0][i]
-                sign[1][0] = 0
-                sign[1][1] = 0
-                sign[1][2] = 0
-                sign[1][3] = 0
-                sign[1][4] = 0
-                sign[1][5] = 0
-                sign[1][6] = 0
+    def set_sign2action(self):
+        for i in range(7):  # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
+            if self.sign[1][i] >= 3:
+                self.sign2action = self.sign[0][i]
+                self.sign[1][0] = 0
+                self.sign[1][1] = 0
+                self.sign[1][2] = 0
+                self.sign[1][3] = 0
+                self.sign[1][4] = 0
+                self.sign[1][5] = 0
+                self.sign[1][6] = 0
                 break
 
-        if sign2action:
-            print(sign2action , "will be starting")
+    def detect(self):
+        while (self.cam.isOpened()):
+            frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
+            # 이미지 중 표지판이 있는 곳 확인
+            img_list = shape_detect(frame)
+            for img in img_list:
+                result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
+                print(result_sign)
+                self.sign = self.countup_recognition(result_sign, prob)
 
-        #sign2action이 뭐냐에 따라서 어떤 거 실행?
+            self.print_sign()
+            self.set_sign2action()
 
-        # if cv2.waitKey(1) & 0xff == ord('q'):
-        #     cam.release()
-        #     cv2.destroyAllWindows()
-        #     break
+            if self.sign2action:
+                print(self.sign2action, "will be starting")
+                sign2action = "Nothing"
+            # sign2action이 뭐냐에 따라서 어떤 거 실행?
+
+
+if __name__ == "__main__":
+    current_signcam = SignCam()
+    current_signcam.detect()
+

@@ -57,6 +57,7 @@ class LaneCam:
         self.lane_cam_frame = video_stream.VideoStream()
         self.parkingline_frame = video_stream.VideoStream()
         self.stopline_frame = video_stream.VideoStream()
+        self.windows_is = []
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
         self.left_frame = None
@@ -88,6 +89,7 @@ class LaneCam:
         time.sleep(1)
 
     def getFrame(self):
+        self.windows_is = [True, True, True, True]
         return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(),
                 self.parkingline_frame.read(), self.stopline_frame.read())
 
