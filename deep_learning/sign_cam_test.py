@@ -22,7 +22,7 @@ from shape_detection import shape_detect
 이 방법을 사용한 이유는 실제로 데이터를 구현하고 tensorflow로 표지판을 인식하는데까지 너무 많은 노력과 지식이 필요한데
 그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
 '''
-sys.path.insert(0, 'C:/Users/jiwunghyun/Desktop/slim')
+sys.path.insert(0, 'C:/Users/Administrator/Desktop/slim')
 #이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
 #따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
 
@@ -49,7 +49,7 @@ def process_one_frame_sign(frame, is_in_mission):
 
     t1 = time.time()  # 프레임 시작 시간 측정
 
-    checkpoints_dir = 'C:/Users/jiwunghyun/Desktop/dataset/train_inception_v1_smartcar_FineTune_logs/all'
+    checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
     # 데이터의 checkpoint 디렉토리 넣어줌
     slim = tf.contrib.slim
 
@@ -74,7 +74,7 @@ def process_one_frame_sign(frame, is_in_mission):
     probabilities = tf.nn.softmax(logits)
 
     init_fn = slim.assign_from_checkpoint_fn(
-        os.path.join(checkpoints_dir, 'model.ckpt-500'),
+        os.path.join(checkpoints_dir, 'model.ckpt-11542'),
         # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
         slim.get_model_variables('InceptionV1'))
     # Slim model중 InceptionV1을 이용함

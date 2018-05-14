@@ -1,5 +1,11 @@
+# sign_cam.py 가 개발이 완료되지 않았을 때, 나머지 프로그램 테스트를 위한 코드
+# 김진웅
+# input: 키보드 숫자 인풋
+# output: 현재 수행중인 미션 번호
+
 import threading
 import keyboard
+
 
 class KeyCam:
     def __init__(self):
