@@ -137,7 +137,7 @@ def process_one_frame_sign(frame, is_in_mission):
 if __name__ == "__main__":
 
     # 웹캠 읽어오기
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(2)
     time.sleep(2)
 
     is_in_mission = False

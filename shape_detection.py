@@ -57,7 +57,7 @@ if __name__ == "__main__":
         main()
         cv2.imshow('cam', img)
 
-        if cv2.waitKey(30) & 0xff == 27:
+        if cv2.waitKey(1) & 0xff == 27:
             break
     cam.release()
     cv2.destroyAllWindows()

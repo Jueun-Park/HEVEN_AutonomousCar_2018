@@ -124,7 +124,11 @@ class Control:
 
     def accelerate(self, target_speed):
         final_speed = target_speed
-        if self.speed_platform < 20 < final_speed:
+        if self.speed_platform < 30 < final_speed:
+            final_speed *= 2
+            if final_speed > 200:
+                final_speed = 200
+        elif self.speed_platform < 30 < final_speed:
             final_speed *= 2
             if final_speed > 200:
                 final_speed = 200
@@ -132,7 +136,7 @@ class Control:
 
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 108
+        speed = 20
         brake = 0
         self.change_mission = 0
 
@@ -171,7 +175,7 @@ class Control:
 
     def __default2__(self, cross_track_error, linear, cul):
         gear = 0
-        speed = 108
+        speed = 10
         brake = 0
         self.change_mission = 0
 

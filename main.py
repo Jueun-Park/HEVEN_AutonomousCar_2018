@@ -30,6 +30,8 @@ while True:
     monitor.show('frame', *frames, windows_is=motion.windows_is)
     monitor.show('status', status)
 
+    print(platform.write_packet.speed)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         motion.stop()
         platform.stop()
