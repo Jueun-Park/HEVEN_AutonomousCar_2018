@@ -97,6 +97,9 @@ class MotionPlanner:
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
+        elif self.mission_num == 2 or 4 or 5:
+            if control_status[2] == 2:
+                self.mission_num = 0
 
         if self.mission_num == 0:
             self.lane_handling()
