@@ -74,12 +74,12 @@ class MotionPlanner:
         lanecam_getFrame = self.lanecam.getFrame()
         self.windows_is =                               [True, True, False, False, False, False, False, False]
         if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, True, True, False, False]
-        elif self.mission_num == 2: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 3: self.windows_is =   [True, True, False, False, False, False, True, False]
+        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, False, False, False]
+        elif self.mission_num == 2: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 3: self.windows_is =   [False, False, False, False, False, False, True, False]
         elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
-        elif self.mission_num == 5: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 6: self.windows_is =   [True, True, False, False, False, False, False, True]
+        elif self.mission_num == 5: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 6: self.windows_is =   [False, False, False, False, False, False, False, True]
         elif self.mission_num == 7: self.windows_is =   [False, False, False, True, False, False, False, False]
 
         return lanecam_getFrame + (self.motion_planner_frame.read(),
@@ -97,21 +97,28 @@ class MotionPlanner:
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
-        elif self.mission_num == 2 or self.mission_num == 4 or self.mission_num == 5:
-            if control_status[2] == 2:
-                self.mission_num = 0
 
         if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
         elif self.mission_num == 1:
             self.parkingline_handling()
+
         elif self.mission_num == 3:
             self.moving_obs_handling()
+
+        elif self.mission_num == 2:
+            self.static_obs_handling(500, 110, 65, 0)
+
         elif self.mission_num == 4:
             self.static_obs_handling(500, 110, 65, 0)
+
+        elif self.mission_num == 5:
+            self.static_obs_handling(500, 110, 65, 0)
+
         elif self.mission_num == 6:
             self.Uturn_handling()
+
         elif self.mission_num == 7:
             self.stopline_handling()
 
