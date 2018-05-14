@@ -122,6 +122,14 @@ class Control:
         # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
 
+    def accelerate(self, target_speed):
+        final_speed = target_speed
+        if self.speed_platform < 20:
+            final_speed *= 2
+        if final_speed > 200:
+            final_speed = 200
+        return final_speed
+
     def __default__(self, cross_track_error, linear):
         gear = 0
         speed = 108
@@ -157,7 +165,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -207,7 +215,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -315,7 +323,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -337,7 +345,7 @@ class Control:
                 self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -363,7 +371,7 @@ class Control:
                 self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -501,7 +509,7 @@ class Control:
             self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
@@ -570,7 +578,7 @@ class Control:
             self.change_mission = 2
 
         self.gear = gear
-        self.speed = speed
+        self.speed = self.accelerate(speed)
         self.steer = steer
         self.brake = brake
 
