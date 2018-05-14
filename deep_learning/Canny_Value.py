@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture("C:/Users/LG/PycharmProjects/untitled6/previous_double_bend.mp4")
+cap = cv2.VideoCapture(2)
 cap.set(3, 800)
 cap.set(4, 448)
 
