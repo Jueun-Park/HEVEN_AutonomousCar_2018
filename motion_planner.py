@@ -88,8 +88,16 @@ class MotionPlanner:
     def getmotionparam(self):
         return self.motionparam
 
-    def plan_motion(self):
-        self.mission_num = self.signcam.get_mission()
+    def plan_motion(self, control_status):
+        if self.mission_num == 0:
+            self.mission_num = self.signcam.get_mission()
+        elif self.mission_num == 1:
+            if control_status[1] == 6:
+                self.mission_num = 0
+        elif self.mission_num == 6:
+            if control_status[0] == 3:
+                self.mission_num = 0
+
         if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
