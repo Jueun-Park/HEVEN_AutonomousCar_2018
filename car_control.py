@@ -128,15 +128,11 @@ class Control:
             final_speed *= 2
             if final_speed > 200:
                 final_speed = 200
-        elif self.speed_platform < 30 < final_speed:
-            final_speed *= 2
-            if final_speed > 200:
-                final_speed = 200
         return final_speed
 
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 20
+        speed = 108
         brake = 0
         self.change_mission = 0
 
@@ -175,7 +171,7 @@ class Control:
 
     def __default2__(self, cross_track_error, linear, cul):
         gear = 0
-        speed = 10
+        speed = 108
         brake = 0
         self.change_mission = 0
 
