@@ -114,13 +114,13 @@ class MotionPlanner:
             self.moving_obs_handling()
 
         elif self.mission_num == 2:
-            self.static_obs_handling(300, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0, 3)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(300, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0, 3)
 
         elif self.mission_num == 5:
-            self.static_obs_handling(300, 110, 70, 0)
+            self.static_obs_handling(100, 110, 70, 0, 3)
 
         elif self.mission_num == 6:
             self.Uturn_handling()
@@ -140,7 +140,7 @@ class MotionPlanner:
         else:
             self.motionparam = (0, None, None)
 
-    def static_obs_handling(self, radius, angle, obs_size, lane_size):
+    def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
@@ -210,7 +210,14 @@ class MotionPlanner:
             else:
                 self.lap_during_collision = time.time()
 
-            print(self.lap_during_clear)
+            print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
+
+            if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0:
+                print("Escape!")
+                self.lap_during_clear = 0
+                self.lap_during_collision = 0
+                self.signcam.mission_num = 0
+                self.mission_num = 0
 
             if count <= angle - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
