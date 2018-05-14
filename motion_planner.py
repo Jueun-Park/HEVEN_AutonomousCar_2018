@@ -77,7 +77,7 @@ class MotionPlanner:
         elif self.mission_num == 1: self.windows_is =   [False, False, True, False, True, True, False, False]
         elif self.mission_num == 2: self.windows_is =   [True, True, False, False, False, False, False, False]
         elif self.mission_num == 3: self.windows_is =   [True, True, False, False, False, False, True, False]
-        elif self.mission_num == 4: self.windows_is =   [True, True, False, False, False, False, False, False]
+        elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
         elif self.mission_num == 5: self.windows_is =   [True, True, False, False, False, False, False, False]
         elif self.mission_num == 6: self.windows_is =   [True, True, False, False, False, False, False, True]
         elif self.mission_num == 7: self.windows_is =   [False, False, False, True, False, False, False, False]
@@ -89,15 +89,15 @@ class MotionPlanner:
         return self.motionparam
 
     def plan_motion(self, control_status):
-        if self.mission_num == 0:
-            self.mission_num = self.signcam.get_mission()
-        elif self.mission_num == 1:
+        #if self.mission_num == 0:
+        self.mission_num = self.signcam.get_mission()
+        if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
-        elif self.mission_num == 2 or 4 or 5:
+        elif self.mission_num == 2 or self.mission_num == 4 or self.mission_num == 5:
             if control_status[2] == 2:
                 self.mission_num = 0
 
@@ -160,12 +160,14 @@ class MotionPlanner:
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+                    if lane_size != 0:
+                        cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
-                if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+               if right_lane_points[i] != -1:
+                   if lane_size != 0:
+                        cv2.circle(current_frame, (RAD + 299 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         data = np.zeros((angle + 1, 2), np.int)
 
