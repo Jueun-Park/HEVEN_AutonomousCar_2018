@@ -108,13 +108,13 @@ class MotionPlanner:
             self.moving_obs_handling()
 
         elif self.mission_num == 2:
-            self.static_obs_handling(500, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(500, 110, 65, 0)
+            self.static_obs_handling(400, 110, 65, 0)
 
         elif self.mission_num == 5:
-            self.static_obs_handling(500, 110, 65, 0)
+            self.static_obs_handling(300, 110, 70, 0)
 
         elif self.mission_num == 6:
             self.Uturn_handling()
@@ -231,7 +231,7 @@ class MotionPlanner:
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motionparam = (4, (data_transposed[1][target - AUX_RANGE], target), None)
+                self.motionparam = (self.mission_num, (data_transposed[1][target - AUX_RANGE], target), None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -241,7 +241,7 @@ class MotionPlanner:
                 y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motionparam = (4, (10, target), None)
+                self.motionparam = (self.mission_num, (10, target), None)
 
             if color is None: return
 
@@ -363,7 +363,7 @@ class MotionPlanner:
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
 
-        MOVING_OBS_RANGE = 90
+        MOVING_OBS_RANGE = 60
         RAD = np.int32(300)
         AUX_RANGE = np.int32((180 - np.int32(MOVING_OBS_RANGE)) / 2)
 
@@ -403,7 +403,7 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            if collision_count > 50 and minimum_dist < 110:
+            if collision_count > 50 and minimum_dist < 180:
                 self.motionparam = (3, False, None)
 
             else: self.motionparam = (3, True, None)

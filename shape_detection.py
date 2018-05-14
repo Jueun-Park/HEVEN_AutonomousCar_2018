@@ -26,14 +26,14 @@ def shape_detect(img):
             if hull_area >0:
                 solidity = int (100*area / hull_area)
                 if  solidity>95 and w > 40 and h > 40:
-                    x_1 = int(x + (w - le) / 2 - 5)
-                    x_2 = int(x + (w + le) / 2 + 5)
-                    y_1 = int(y + (h - le) / 2 - 5)
-                    y_2 = int(y + (h + le) / 2 + 5)
+                    x_1 = int(x + (w - le) / 2)
+                    x_2 = int(x + (w + le) / 2)
+                    y_1 = int(y + (h - le) / 2)
+                    y_2 = int(y + (h + le) / 2)
 
                     if x_1 > 0 and 350 > y_2 and y_1 > 110:
                         img_trim = img[y_1: y_2, x_1:x_2]
-                        # cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (0, 0, 255), 4)
+                        cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (0, 0, 255), 4)
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
                         sign.append(img_trim_resize)
     return sign

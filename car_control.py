@@ -77,6 +77,7 @@ class Control:
     def do_mission(self, first, second):
         if self.mission_num == 0:
             if first is None:
+                self.speed = self.accelerate(54)
                 return
 
             if self.default_mode == 0:
@@ -124,11 +125,7 @@ class Control:
 
     def accelerate(self, target_speed):
         final_speed = target_speed
-        if self.speed_platform < 30 < final_speed:
-            final_speed *= 2
-            if final_speed > 200:
-                final_speed = 200
-        elif self.speed_platform < 30 < final_speed:
+        if self.speed_platform < 20 < final_speed:
             final_speed *= 2
             if final_speed > 200:
                 final_speed = 200
@@ -247,9 +244,9 @@ class Control:
             obs_mode = 1
 
         elif self.mission_num == 5:  # 실험값 보정하기
-            speed = 42
-            correction = 1.3
-            adjust = 0.05
+            speed = 48
+            correction = 1.5
+            adjust = 0.25
             obs_mode = 2
 
         else:
@@ -297,15 +294,15 @@ class Control:
 
             elif obs_mode == 2:
                 if obs_theta == -35:
-                    theta_obs = 20
-                    speed = 18
+                    theta_obs = 12
+                    speed = 12
                 elif obs_theta == -145:
-                    theta_obs = -20
-                    speed = 18
+                    theta_obs = -12
+                    speed = 12
                 else:
                     car_circle = 1.387
                     cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
-                    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 4
+                    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 2
 
                     son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
                     mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
@@ -341,19 +338,19 @@ class Control:
 
         self.change_mission = 0
 
-        if obs_exist is True:
+        if obs_exist is False:
             speed = 0
-            brake = 60
+            brake = 70
             if self.count == 0:
                 self.count += 1
         else:
-            speed = 36
+            speed = 54
             brake = 0
             if self.count > 0:
                 self.change_mission = 2
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 
