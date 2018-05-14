@@ -113,7 +113,7 @@ class Control:
         return self.gear, self.speed, self.steer, self.brake
 
     def get_status(self):
-        return self.u_sit, self.p_sit
+        return self.u_sit, self.p_sit, self.change_mission
 
     def ch_mission(self):
         # 일회용 미션 함수의 종료를 알리는 변수
@@ -206,6 +206,10 @@ class Control:
         correction_default = 1
 
         steer_now = (theta_line + theta_error)
+
+        if abs(steer_now) > 18:
+            speed = 72
+
         steer_final = (adjust * self.steer_past) + (1 - adjust) * steer_now * 1.387
 
         self.steer_past = steer_final
@@ -327,7 +331,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 
