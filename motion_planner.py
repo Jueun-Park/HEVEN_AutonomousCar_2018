@@ -74,12 +74,12 @@ class MotionPlanner:
         lanecam_getFrame = self.lanecam.getFrame()
         self.windows_is =                               [True, True, False, False, False, False, False, False]
         if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, True, True, False, False]
-        elif self.mission_num == 2: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 3: self.windows_is =   [True, True, False, False, False, False, True, False]
-        elif self.mission_num == 4: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 5: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 6: self.windows_is =   [True, True, False, False, False, False, False, True]
+        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, False, False, False]
+        elif self.mission_num == 2: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 3: self.windows_is =   [False, False, False, False, False, False, True, False]
+        elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 5: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 6: self.windows_is =   [False, False, False, False, False, False, False, True]
         elif self.mission_num == 7: self.windows_is =   [False, False, False, True, False, False, False, False]
 
         return lanecam_getFrame + (self.motion_planner_frame.read(),
@@ -89,9 +89,9 @@ class MotionPlanner:
         return self.motionparam
 
     def plan_motion(self, control_status):
-        if self.mission_num == 0:
-            self.mission_num = self.signcam.get_mission()
-        elif self.mission_num == 1:
+        #if self.mission_num == 0:
+        self.mission_num = self.signcam.get_mission()
+        if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
         elif self.mission_num == 6:
@@ -103,12 +103,22 @@ class MotionPlanner:
         # 남은 것: 유턴, 동적, 정지선
         elif self.mission_num == 1:
             self.parkingline_handling()
+
         elif self.mission_num == 3:
             self.moving_obs_handling()
+
+        elif self.mission_num == 2:
+            self.static_obs_handling(300, 110, 65, 0)
+
         elif self.mission_num == 4:
-            self.static_obs_handling(500, 110, 65, 0)
+            self.static_obs_handling(400, 110, 65, 0)
+
+        elif self.mission_num == 5:
+            self.static_obs_handling(300, 110, 70, 0)
+
         elif self.mission_num == 6:
             self.Uturn_handling()
+
         elif self.mission_num == 7:
             self.stopline_handling()
  
@@ -157,12 +167,14 @@ class MotionPlanner:
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+                    if lane_size != 0:
+                        cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
-                if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+               if right_lane_points[i] != -1:
+                   if lane_size != 0:
+                        cv2.circle(current_frame, (RAD + 299 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         data = np.zeros((angle + 1, 2), np.int)
 
@@ -219,7 +231,7 @@ class MotionPlanner:
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motionparam = (4, (data_transposed[1][target - AUX_RANGE], target), None)
+                self.motionparam = (self.mission_num, (data_transposed[1][target - AUX_RANGE], target), None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -229,7 +241,7 @@ class MotionPlanner:
                 y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motionparam = (4, (10, target), None)
+                self.motionparam = (self.mission_num, (10, target), None)
 
             if color is None: return
 
@@ -351,7 +363,7 @@ class MotionPlanner:
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
 
-        MOVING_OBS_RANGE = 90
+        MOVING_OBS_RANGE = 60
         RAD = np.int32(300)
         AUX_RANGE = np.int32((180 - np.int32(MOVING_OBS_RANGE)) / 2)
 
@@ -391,7 +403,7 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            if collision_count > 50 and minimum_dist < 110:
+            if collision_count > 50 and minimum_dist < 180:
                 self.motionparam = (3, False, None)
 
             else: self.motionparam = (3, True, None)

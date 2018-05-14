@@ -17,7 +17,7 @@ from nets import inception
 from preprocessing import inception_preprocessing
 
 
-checkpoints_dir = 'C:/Users/Administrator/Desktop/dataset/train_inception_v1_smartcar_FineTune_logs/all'
+checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
 #데이터의 checkpoint 디렉토리 넣어줌
 slim = tf.contrib.slim
 
@@ -51,7 +51,7 @@ with tf.Graph().as_default():
     probabilities = tf.nn.softmax(logits)
 
     init_fn = slim.assign_from_checkpoint_fn(
-        os.path.join(checkpoints_dir, 'model.ckpt-500'),
+        os.path.join(checkpoints_dir, 'model.ckpt-11542'),
         #Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
         slim.get_model_variables('InceptionV1'))
         #Slim model중 InceptionV1을 이용함
