@@ -21,9 +21,6 @@ import video_stream
 from keycam import KeyCam
 
 class MotionPlanner:
-    OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
-    PARKING_RADIUS = 500
-    RANGE = 110
 
     def __init__(self):
         self.lidar = Lidar()  # lidar_instance
@@ -95,15 +92,24 @@ class MotionPlanner:
         return self.motionparam
 
     def plan_motion(self, control_status):
+        # ------------------------------------- 미션 번호 변경과 탈출 -------------------------------------
         #if self.mission_num == 0:
         self.mission_num = self.signcam.get_mission()
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
+
+        elif self.mission_num == 3:
+            pass
+
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
 
+        elif self.mission_num == 7:
+            pass
+
+        # --------------------------------------- 미션 수행 ----------------------------------------
         if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
@@ -275,7 +281,7 @@ class MotionPlanner:
         self.motionparam = (7, self.lanecam.stopline_info, None)
 
     def parkingline_handling(self):
-        RAD = self.PARKING_RADIUS
+        RAD = 300
         self.lanecam.parkingline_loop()
         parking_line = self.lanecam.parkingline_info
 
