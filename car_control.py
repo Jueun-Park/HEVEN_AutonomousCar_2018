@@ -77,7 +77,6 @@ class Control:
     def do_mission(self, first, second):
         if self.mission_num == 0:
             if first is None:
-                self.speed = self.accelerate(54)
                 return
 
             if self.default_mode == 0:
