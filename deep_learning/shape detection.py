@@ -44,7 +44,7 @@ if cap.read():
                             cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                             img_trim = img[y_1: y_2, x_1:x_2]
                             img_trim = cv2.resize(img_trim, (32,32))
-                            name = "./images/" + str(solidity) +str(count) + "_" + str(count_2) + "_.png"
+                            name = "./images/" + str(solidity) +"_"+str(y_1)+"_"+str(y_2)+"_"+str(count) + "_" + str(count_2) + "_.png"
                             cv2.imwrite(name,img_trim)
                     count += 1
 

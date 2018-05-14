@@ -109,17 +109,20 @@ class SignCam:
         self.sign = [[0 for col in range(7)]for row in range(2)]
         self.cam = cv2.VideoCapture('sign_logging.avi')
         self.sign2action = "Nothing"
+        self.mission_number = 0
 
         self.sign_init()
 
+    # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
+    #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
     def sign_init(self):
-        self.sign[0][0] = 'Bicycles'
-        self.sign[0][1] = 'Crosswalk_PedestrainCrossing'
-        self.sign[0][2] = 'Double_bend'
-        self.sign[0][3] = 'Narrow_Carriageway'
-        self.sign[0][4] = 'Parking_Lot'
-        self.sign[0][5] = 'Roadworks'
+        self.sign[0][0] = 'Bicycles' #
+        self.sign[0][1] = 'Crosswalk_PedestrainCrossing' # CROSS_WALK 7
+        self.sign[0][2] = 'Double_bend' # S_Curve 4
+        self.sign[0][3] = 'Narrow_Carriageway' # NARROW 5
+        self.sign[0][4] = 'Parking_Lot' # PARKING 1
+        self.sign[0][5] = 'Roadworks' #
         self.sign[0][6] = 'u_turn'
         self.sign[1][0] = 0
         self.sign[1][1] = 0
@@ -166,14 +169,33 @@ class SignCam:
 
             self.print_sign()
             self.set_sign2action()
-
-            if self.sign2action:
-                print(self.sign2action, "will be starting")
-                sign2action = "Nothing"
+            print(self.get_mission())
             # sign2action이 뭐냐에 따라서 어떤 거 실행?
+
+    def get_mission(self):
+        if self.sign2action == "Nothing":
+            self.mission_number = 0
+        elif self.sign2action == 'Parking_Lot':
+            self.mission_number = 1
+        elif self.sign2action == 'Roadworks':
+            self.mission_number = 2
+        elif self.sign2action == 'Bicycles':
+            self.mission_number = 3
+        elif self.sign2action == 'Double_bend':
+            self.mission_number = 4
+        elif self.sign2action == 'Narrow_Carriageway':
+            self.mission_number = 5
+        elif self.sign2action == 'u_turn':
+            self.mission_number = 6
+        elif self.sign2action == 'Crosswalk_PedestrainCrossing':
+            self.mission_number = 7
+
+        self.sign2action = "Nothing"
+        return self.mission_number
 
 
 if __name__ == "__main__":
     current_signcam = SignCam()
     current_signcam.detect()
+    current_signcam.get_mission()
 
