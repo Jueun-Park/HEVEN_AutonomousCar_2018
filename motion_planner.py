@@ -6,6 +6,9 @@
 #         그 외 미션 주행에 필요한 각 정보들
 
 
+# modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
+#           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
+
 import pycuda.driver as drv
 import numpy as np
 from pycuda.compiler import SourceModule
@@ -29,6 +32,9 @@ class MotionPlanner:
         self.signcam = KeyCam()  # signcam_instance
 
         self.mission_num = 0
+
+        self.lap_during_collision = 0
+        self.lap_during_clear = 0
 
         self.previous_target = None
         self.previous_data = None
@@ -74,12 +80,12 @@ class MotionPlanner:
         lanecam_getFrame = self.lanecam.getFrame()
         self.windows_is =                               [True, True, False, False, False, False, False, False]
         if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, True, True, False, False]
-        elif self.mission_num == 2: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 3: self.windows_is =   [True, True, False, False, False, False, True, False]
-        elif self.mission_num == 4: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 5: self.windows_is =   [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 6: self.windows_is =   [True, True, False, False, False, False, False, True]
+        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, False, False, False]
+        elif self.mission_num == 2: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 3: self.windows_is =   [False, False, False, False, False, False, True, False]
+        elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 5: self.windows_is =   [False, False, False, False, True, False, False, False]
+        elif self.mission_num == 6: self.windows_is =   [False, False, False, False, False, False, False, True]
         elif self.mission_num == 7: self.windows_is =   [False, False, False, True, False, False, False, False]
 
         return lanecam_getFrame + (self.motion_planner_frame.read(),
@@ -88,22 +94,40 @@ class MotionPlanner:
     def getmotionparam(self):
         return self.motionparam
 
-    def plan_motion(self):
+    def plan_motion(self, control_status):
+        #if self.mission_num == 0:
         self.mission_num = self.signcam.get_mission()
+        if self.mission_num == 1:
+            if control_status[1] == 6:
+                self.mission_num = 0
+        elif self.mission_num == 6:
+            if control_status[0] == 3:
+                self.mission_num = 0
+
         if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
         elif self.mission_num == 1:
             self.parkingline_handling()
+
         elif self.mission_num == 3:
             self.moving_obs_handling()
+
+        elif self.mission_num == 2:
+            self.static_obs_handling(300, 110, 65, 0)
+
         elif self.mission_num == 4:
-            self.static_obs_handling(500, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0)
+
+        elif self.mission_num == 5:
+            self.static_obs_handling(300, 110, 70, 0)
+
         elif self.mission_num == 6:
             self.Uturn_handling()
+
         elif self.mission_num == 7:
             self.stopline_handling()
-
+ 
     def lane_handling(self):
         self.lanecam.default_loop(0)
 
@@ -112,7 +136,6 @@ class MotionPlanner:
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motionparam = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
-            print(self.motionparam)
 
         else:
             self.motionparam = (0, None, None)
@@ -149,12 +172,14 @@ class MotionPlanner:
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+                    if lane_size != 0:
+                        cv2.circle(current_frame, (RAD - left_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
-                if right_lane_points[i] != -1:
-                    cv2.circle(current_frame, (RAD + 300 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+               if right_lane_points[i] != -1:
+                   if lane_size != 0:
+                        cv2.circle(current_frame, (RAD + 299 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         data = np.zeros((angle + 1, 2), np.int)
 
@@ -167,14 +192,25 @@ class MotionPlanner:
 
             data_transposed = np.transpose(data)
 
+            # 장애물에 부딫힌 곳까지 하얀 선 그리기
             for i in range(0, angle + 1):
                 x = RAD + int(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE))) - 1
                 y = RAD - int(data_transposed[1][i] * np.sin(np.radians(i + AUX_RANGE))) - 1
                 cv2.line(current_frame, (RAD, RAD), (x, y), 255)
 
+            # 진행할 방향을 빨간색으로 표시하기 위해 흑백에서 BGR 로 변환
             color = cv2.cvtColor(current_frame, cv2.COLOR_GRAY2BGR)
 
+            # count 는 장애물이 부딪힌 방향의 갯수를 의미
             count = np.sum(data_transposed[0])
+
+            if count == 0:
+                self.lap_during_clear = time.time()
+
+            else:
+                self.lap_during_collision = time.time()
+
+            print(self.lap_during_clear)
 
             if count <= angle - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
@@ -211,7 +247,7 @@ class MotionPlanner:
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motionparam = (4, (data_transposed[1][target - AUX_RANGE], target), None)
+                self.motionparam = (self.mission_num, (data_transposed[1][target - AUX_RANGE], target), None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -221,7 +257,7 @@ class MotionPlanner:
                 y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motionparam = (4, (10, target), None)
+                self.motionparam = (self.mission_num, (10, target), None)
 
             if color is None: return
 
@@ -343,7 +379,7 @@ class MotionPlanner:
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
 
-        MOVING_OBS_RANGE = 90
+        MOVING_OBS_RANGE = 60
         RAD = np.int32(300)
         AUX_RANGE = np.int32((180 - np.int32(MOVING_OBS_RANGE)) / 2)
 
@@ -383,7 +419,7 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            if collision_count > 50 and minimum_dist < 110:
+            if collision_count > 50 and minimum_dist < 180:
                 self.motionparam = (3, False, None)
 
             else: self.motionparam = (3, True, None)

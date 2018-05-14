@@ -6,16 +6,17 @@
 [위키 작성법(마크다운 문서)](https://gist.github.com/ihoneymon/652be052a0727ad59601)
 
 ## 자율주행 프로그램 구조
-|Category|Role|Program Name|
-|:--------|:--------|:--------|
-|**Perception**|LiDAR Mapper|```lidar.py```|
-|"|Cam Video Stream Control|```video_stream.py```|
-|"|Lane Detector|```lane_cam.py```|
-|"|Sign Detector|```shape_detection.py```<br>```sign_cam.py```|
-|**Planning**|Motion & Prticular Condition Planner|```parabola.py```<br>```motion_planner.py```|
-|**Control**|Car Speed/Steering Control|```car_control.py```|
-|**Communication**|Communication with Platform|```serial_packet.py```<br>```communication.py```|
-|**Process**|Main Process Management|```main.py```|
+|Category|Role|Program Name|Developer|
+|:--------|:--------|:--------|:-----------:|
+|**Perception**|LiDAR Mapper|```lidar.py```|김홍빈|
+|"|Cam Video Stream Control|```video_stream.py```|김진웅|
+|"|Lane Detector|```lane_cam.py```|김홍빈 예하진|
+|"|Sign Detector|```shape_detection.py```<br>```sign_cam.py```|김윤진 이아영<br>김성우 현지웅|
+|**Planning**|Motion & Prticular Condition Planner|```parabola.py```<br>```motion_planner.py```|김홍빈|
+|**Control**|Car Speed/Steering Control|```car_control.py```|박준혁|
+|**Communication**|Communication with Platform|```serial_packet.py```<br>```communication.py```|김진웅|
+|**Process**|Main Process Management|```main.py```|김진웅 유성룡|
+* Project Design & Management: 박주은
 
 ## 팀원
 ### 소프트웨어 및 알고리즘 개발 부문

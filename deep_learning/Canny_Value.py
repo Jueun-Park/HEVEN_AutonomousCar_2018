@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture('C:\\Users\Administrator\PycharmProjects\Lane_logging\sign_logging.avi')
+cap = cv2.VideoCapture(2)
 cap.set(3, 800)
 cap.set(4, 448)
 
@@ -37,14 +37,14 @@ if cap.read():
 
             for cnt in contours:
                 (x, y, w, h) = cv2.boundingRect(cnt)
-                le = max(w,h)
+                le = max(w,h)+10
 
                 if w>60 and h>60:
 
-                    x_1 = int (x+(w-le)/2 -5)
-                    x_2 = int (x+(w+le)/2 +5)
-                    y_1 = int (y+(h-le)/2 -5)
-                    y_2 = int (y+(h+le)/2 +5)
+                    x_1 = int (x+(w-le)/2)
+                    x_2 = int (x+(w+le)/2)
+                    y_1 = int (y+(h-le)/2)
+                    y_2 = int (y+(h+le)/2)
 
                     cv2.rectangle(edges_copy, (x_1, y_1), (x_2, y_2), (255, 0, 0), 5)
                     img_trim = img[y_1 : y_2 , x_1 :x_2]
