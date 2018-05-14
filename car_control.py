@@ -202,6 +202,10 @@ class Control:
         correction_default = 1
 
         steer_now = (theta_line + theta_error)
+
+        if abs(steer_now) > 18:
+            speed = 72
+
         steer_final = (adjust * self.steer_past) + (1 - adjust) * steer_now * 1.387
 
         self.steer_past = steer_final
