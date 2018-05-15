@@ -32,6 +32,7 @@ class MotionPlanner:
 
         self.lap_during_collision = 0
         self.lap_during_clear = 0
+        self.mission_start_lap = 0
 
         self.previous_target = None
         self.previous_data = None
@@ -96,6 +97,8 @@ class MotionPlanner:
         if self.mission_num == 0:
             self.signcam.detect_one_frame()
             self.mission_num = self.signcam.get_mission()
+            if self.mission_num != 0:
+                self.mission_start_lap = time.time()
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
@@ -150,6 +153,7 @@ class MotionPlanner:
             self.motionparam = (0, None, None)
 
     def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
+
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
@@ -194,10 +198,11 @@ class MotionPlanner:
 
         print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
 
-        if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0:
+        if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0 and time.time() - self.mission_start_lap > 3:
             print("Escape!")
             self.lap_during_clear = 0
             self.lap_during_collision = 0
+            self.mission_start_lap = 0
             self.mission_num = 0
 
         if left_lane_points is not None:
