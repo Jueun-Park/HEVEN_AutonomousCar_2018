@@ -21,9 +21,6 @@ import video_stream
 from keycam import KeyCam
 
 class MotionPlanner:
-    OBSTACLE_RADIUS = 500  # 원일 경우 반지름, 사각형일 경우 한 변
-    PARKING_RADIUS = 500
-    RANGE = 110
 
     def __init__(self):
         self.lidar = Lidar()  # lidar_instance
@@ -95,15 +92,24 @@ class MotionPlanner:
         return self.motionparam
 
     def plan_motion(self, control_status):
+        # ------------------------------------- 미션 번호 변경과 탈출 -------------------------------------
         #if self.mission_num == 0:
         self.mission_num = self.signcam.get_mission()
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
+
+        elif self.mission_num == 3:
+            pass
+
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
 
+        elif self.mission_num == 7:
+            pass
+
+        # --------------------------------------- 미션 수행 ----------------------------------------
         if self.mission_num == 0:
             self.lane_handling()
         # 남은 것: 유턴, 동적, 정지선
@@ -114,13 +120,13 @@ class MotionPlanner:
             self.moving_obs_handling()
 
         elif self.mission_num == 2:
-            self.static_obs_handling(300, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0, 3)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(300, 110, 65, 0)
+            self.static_obs_handling(300, 110, 65, 0, 3)
 
         elif self.mission_num == 5:
-            self.static_obs_handling(300, 110, 70, 0)
+            self.static_obs_handling(100, 110, 70, 0, 3)
 
         elif self.mission_num == 6:
             self.Uturn_handling()
@@ -140,7 +146,7 @@ class MotionPlanner:
         else:
             self.motionparam = (0, None, None)
 
-    def static_obs_handling(self, radius, angle, obs_size, lane_size):
+    def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
@@ -210,7 +216,14 @@ class MotionPlanner:
             else:
                 self.lap_during_collision = time.time()
 
-            print(self.lap_during_clear)
+            print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
+
+            if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0:
+                print("Escape!")
+                self.lap_during_clear = 0
+                self.lap_during_collision = 0
+                self.signcam.mission_num = 0
+                self.mission_num = 0
 
             if count <= angle - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
@@ -268,7 +281,7 @@ class MotionPlanner:
         self.motionparam = (7, self.lanecam.stopline_info, None)
 
     def parkingline_handling(self):
-        RAD = self.PARKING_RADIUS
+        RAD = 300
         self.lanecam.parkingline_loop()
         parking_line = self.lanecam.parkingline_info
 

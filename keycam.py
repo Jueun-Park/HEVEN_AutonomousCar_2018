@@ -26,7 +26,6 @@ class KeyCam:
         elif c == '6': self.mission_num = 6
         elif c == '7': self.mission_num = 7
 
-
 if __name__ == "__main__":
     k = KeyCam()
     keyboard.hook(k.keylook)
