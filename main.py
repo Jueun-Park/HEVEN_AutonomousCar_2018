@@ -13,7 +13,7 @@ import cv2
 #####################instance#####################
 motion = MotionPlanner()
 control = Control()
-platform = PlatformSerial('COM4')
+platform = PlatformSerial('COM3')
 monitor = Monitor()
 #################################################
 

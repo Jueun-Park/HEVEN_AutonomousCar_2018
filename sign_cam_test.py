@@ -136,7 +136,7 @@ class SignCam:
 
     def countup_recognition(self, result_sign, prob):
         for i in range(7):
-            if self.sign[0][i] == result_sign and prob > 0.90:
+            if self.sign[0][i] == result_sign and prob > 0.95:
                 self.sign[1][i] = self.sign[1][i] + 1
                 break
         return self.sign
@@ -147,7 +147,7 @@ class SignCam:
 
     def set_sign2action(self):
         for i in range(7):  # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
-            if self.sign[1][i] >= 3:
+            if self.sign[1][i] >= 1:
                 self.sign2action = self.sign[0][i]
                 self.sign[1][0] = 0
                 self.sign[1][1] = 0
@@ -190,6 +190,7 @@ class SignCam:
             self.mission_number = 7
 
         self.sign2action = "Nothing"
+        print(self.mission_number)
         return self.mission_number
 
 

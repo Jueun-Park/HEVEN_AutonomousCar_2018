@@ -122,17 +122,9 @@ class Control:
         # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
 
-    def accelerate(self, target_speed):
-        final_speed = target_speed
-        if self.speed_platform < 20 < final_speed:
-            final_speed *= 2
-            if final_speed > 200:
-                final_speed = 200
-        return final_speed
-
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 20
+        speed = 54
         brake = 0
         self.change_mission = 0
 
@@ -153,6 +145,9 @@ class Control:
 
         adjust = 0.3
 
+        if abs(steer_now) > 18:
+            speed = 36
+
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
 
@@ -165,13 +160,13 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 
     def __default2__(self, cross_track_error, linear, cul):
         gear = 0
-        speed = 10
+        speed = 154
         brake = 0
         self.change_mission = 0
 
@@ -219,7 +214,7 @@ class Control:
             self.steer_past = -27.746
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 
@@ -361,21 +356,21 @@ class Control:
 
         self.change_mission = 0
 
-        if abs(stop_line) < 1:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(stop_line) < 2:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
 
             if (self.t2 - self.t1) < 3.0:
                 speed = 0
-                brake = 60
+                brake = 70
             else:
                 speed = 54
                 brake = 0
                 self.change_mission = 2
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 
@@ -513,7 +508,7 @@ class Control:
             self.change_mission = 2
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 
@@ -582,7 +577,7 @@ class Control:
             self.change_mission = 2
 
         self.gear = gear
-        self.speed = self.accelerate(speed)
+        self.speed = speed
         self.steer = steer
         self.brake = brake
 

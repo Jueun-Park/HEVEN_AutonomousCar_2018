@@ -18,7 +18,7 @@ from lidar import Lidar
 from lanecam import LaneCam
 import time
 import video_stream
-from keycam import KeyCam
+from sign_cam_test import SignCam
 
 class MotionPlanner:
 
@@ -26,7 +26,7 @@ class MotionPlanner:
         self.lidar = Lidar()  # lidar_instance
 
         self.lanecam = LaneCam()  # lanecam_instance
-        self.signcam = KeyCam()  # signcam_instance
+        self.signcam = SignCam()  # signcam_instance
 
         self.mission_num = 0
 
@@ -93,21 +93,24 @@ class MotionPlanner:
 
     def plan_motion(self, control_status):
         # ------------------------------------- 미션 번호 변경과 탈출 -------------------------------------
-        #if self.mission_num == 0:
-        self.mission_num = self.signcam.get_mission()
+        if self.mission_num == 0:
+            self.signcam.detect_one_frame()
+            self.mission_num = self.signcam.get_mission()
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
 
         elif self.mission_num == 3:
-            pass
+            if control_status[2] == 2:
+                self.mission_num = 0
 
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
 
         elif self.mission_num == 7:
-            pass
+            if control_status[2] == 2:
+                self.mission_num = 0
 
         # --------------------------------------- 미션 수행 ----------------------------------------
         if self.mission_num == 0:
@@ -120,13 +123,13 @@ class MotionPlanner:
             self.moving_obs_handling()
 
         elif self.mission_num == 2:
-            self.static_obs_handling(300, 110, 65, 0, 3)
+            self.static_obs_handling(300, 110, 65, 100, 3)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(300, 110, 65, 0, 3)
+            self.static_obs_handling(300, 110, 65, 60, 3)
 
         elif self.mission_num == 5:
-            self.static_obs_handling(100, 110, 70, 0, 3)
+            self.static_obs_handling(500, 110, 70, 60, 1.5)
 
         elif self.mission_num == 6:
             self.Uturn_handling()
@@ -175,6 +178,28 @@ class MotionPlanner:
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), obs_size, 255, -1)  # 캔버스에 점 찍기
 
+        data_ = np.zeros((angle + 1, 2), np.int)
+
+        if current_frame is not None:
+            self.path(drv.InOut(data_), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)),
+                      block=(angle + 1, 1, 1))
+
+        count_ = np.sum(np.transpose(data_)[0])
+
+        if count_ == 0:
+            self.lap_during_clear = time.time()
+
+        else:
+            self.lap_during_collision = time.time()
+
+        print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
+
+        if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0:
+            print("Escape!")
+            self.lap_during_clear = 0
+            self.lap_during_collision = 0
+            self.mission_num = 0
+
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
@@ -198,6 +223,7 @@ class MotionPlanner:
 
             data_transposed = np.transpose(data)
 
+
             # 장애물에 부딫힌 곳까지 하얀 선 그리기
             for i in range(0, angle + 1):
                 x = RAD + int(data_transposed[1][i] * np.cos(np.radians(i + AUX_RANGE))) - 1
@@ -209,21 +235,6 @@ class MotionPlanner:
 
             # count 는 장애물이 부딪힌 방향의 갯수를 의미
             count = np.sum(data_transposed[0])
-
-            if count == 0:
-                self.lap_during_clear = time.time()
-
-            else:
-                self.lap_during_collision = time.time()
-
-            print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
-
-            if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0:
-                print("Escape!")
-                self.lap_during_clear = 0
-                self.lap_during_collision = 0
-                self.signcam.mission_num = 0
-                self.mission_num = 0
 
             if count <= angle - 1:
                 relative_position = np.argwhere(data_transposed[0] == 0) - 90 + AUX_RANGE
@@ -432,7 +443,7 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])
             minimum_dist = np.min(data_transposed[1])
 
-            if collision_count > 50 and minimum_dist < 180:
+            if collision_count > 50 and minimum_dist < 200:
                 self.motionparam = (3, False, None)
 
             else: self.motionparam = (3, True, None)
