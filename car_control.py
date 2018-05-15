@@ -30,6 +30,10 @@ class Control:
         self.obs_mode = 0
 
         self.change_mission = 0
+
+        self.sign_list = [0,0,0,0,0,0,0,0]
+        self.sign_t1 = 0
+        self.sign_t2 = 0
         #######################################
         self.steer_past = 0
 
@@ -70,6 +74,7 @@ class Control:
     def mission(self, mission_num, first, second):
         self.set_mission(mission_num)
         self.do_mission(first, second)
+        self.sign_delay(mission_num)
 
     def set_mission(self, mission_num):
         self.mission_num = mission_num
@@ -110,7 +115,7 @@ class Control:
             self.__obs__(first[0] / 100, first[1])
 
     def write(self):
-        return self.gear, self.speed, self.steer, self.brake
+        return self.gear, self.sign_speed, self.steer, self.brake
 
     def get_status(self):
         return self.u_sit, self.p_sit, self.change_mission
@@ -122,9 +127,27 @@ class Control:
         # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
 
+    def sign_delay(self, mission_num):
+        self.sign_speed = 36
+
+        if mission_num != 0 and self.sign_list[mission_num] != 1:
+            if self.sign_t1 == 0:
+                self.sign_t1 = time.time()
+            self.sign_t2 = time.time()
+
+            if (self.sign_t2 - self.sign_t1) < 1:
+                self.sign_speed = 18
+            elif (self.sign_t2 - self.sign_t1) >= 1:
+                self.sign_list[mission_num] = 1
+
+        else:
+            self.sign_speed = self.speed
+
+        return self.sign_speed
+
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 54
+        speed = 108
         brake = 0
         self.change_mission = 0
 

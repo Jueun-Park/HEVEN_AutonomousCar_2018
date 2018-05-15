@@ -146,7 +146,7 @@ class SignCam:
             print(self.sign[0][i], self.sign[1][i])
 
     def set_sign2action(self):
-        for i in range(7):  # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
+        for i in range(7):  # 만약 한 표지판의 인식 횟수가 1회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
             if self.sign[1][i] >= 1:
                 self.sign2action = self.sign[0][i]
                 self.sign[1][0] = 0
