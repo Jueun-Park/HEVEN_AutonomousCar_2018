@@ -168,6 +168,7 @@ class SignCam:
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
             # 이미지 중 표지판이 있는 곳 확인
             img_list = shape_detect(frame)
+
             for img in img_list:
                 result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
                 print(result_sign)

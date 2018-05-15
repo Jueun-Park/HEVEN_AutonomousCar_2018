@@ -1,7 +1,7 @@
 import cv2
 import time
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 cap.set(3, 800)
 cap.set(4, 448)
 
@@ -23,6 +23,7 @@ if cap.read():
             gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
             edges = cv2.Canny(gray, 52, 104, apertureSize=3)
             image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
 
             count = 0
             for cnt in contours:
