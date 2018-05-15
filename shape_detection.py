@@ -25,17 +25,17 @@ def shape_detect(img):
             hull = cv2.convexHull(cnt)
             hull_area = cv2.contourArea(hull)
 
-            if hull_area >0:
+            if hull_area > 0:
                 solidity = int (100*area / hull_area)
-                if  solidity>93 and w > 40 and h > 40:
+                if  solidity>94 and w > 42 and h > 42:
                     x_1 = int(x + (w - le) / 2)
                     x_2 = int(x + (w + le) / 2)
                     y_1 = int(y + (h - le) / 2)
                     y_2 = int(y + (h + le) / 2)
 
-                    if x_1 > 0 and 350 > y_2 and y_1 > 60:
+                    if x_1 > 300 and 290 > y_2 and 185 > y_1 > 80:
                         img_trim = img[y_1: y_2, x_1:x_2]
-                        cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (0, 0, 255), 4)
+                        cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
                         sign.append(img_trim_resize)
     return sign
