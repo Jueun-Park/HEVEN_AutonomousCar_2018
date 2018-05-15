@@ -23,8 +23,8 @@ from shape_detection import shape_detect
 그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
 '''
 sys.path.insert(0, './slim')
-#이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
-#따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
+# 이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
+# 따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
 
 from nets import inception
 from preprocessing import inception_preprocessing
@@ -39,10 +39,10 @@ def is_in_this_mission(ndarray):
     except Exception as e:
         return False
 
+
 def process_one_frame_sign(frame, is_in_mission):
     if len(frame) < 1:
         return "Nothing", 0.00
-
 
     if is_in_mission:
         pass
@@ -59,7 +59,7 @@ def process_one_frame_sign(frame, is_in_mission):
     user_images = []
     user_processed_images = []
 
-    cv2.imwrite('test.jpg',frame)
+    cv2.imwrite('test.jpg', frame)
     image_input = tf.read_file('test.jpg')
     image = tf.image.decode_jpeg(image_input, channels=3)
     user_images.append(image)
@@ -79,14 +79,16 @@ def process_one_frame_sign(frame, is_in_mission):
         slim.get_model_variables('InceptionV1'))
     # Slim model중 InceptionV1을 이용함
 
-    with tf.Session() as sess:
+    with tf.device('/gpu:0'):
+        sess = tf.Session()
+    # with tf.Session() as sess:
         init_fn(sess)
         np_images, probabilities = sess.run([user_images, probabilities])
 
-    #names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
+    # names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
     # 7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
-    names = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot', 'Roadworks', 'u_turn']
-
+    names = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
+             'Roadworks', 'u_turn']
 
     probabilitie = probabilities[0, 0:]
     sorted_inds = [i[0] for i in sorted(enumerate(-probabilitie), key=lambda x: x[1])]
@@ -101,13 +103,14 @@ def process_one_frame_sign(frame, is_in_mission):
     # plt.axis('off')
     # plt.show()
 
+    # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
+    return names[sorted_inds[0]], probabilitie[sorted_inds[0]]
 
-    return names[sorted_inds[0]], probabilitie[sorted_inds[0]] # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
 
 class SignCam:
     def __init__(self):
         self.is_in_mission = False
-        self.sign = [[0 for col in range(7)]for row in range(2)]
+        self.sign = [[0 for col in range(7)] for row in range(2)]
         self.cam = cv2.VideoCapture(2)
         self.sign2action = "Nothing"
         self.mission_number = 0
@@ -118,13 +121,13 @@ class SignCam:
     #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
     def sign_init(self):
-        self.sign[0][0] = 'Bicycles' #
-        self.sign[0][1] = 'Crosswalk_PedestrainCrossing' # CROSS_WALK 7
-        self.sign[0][2] = 'Double_bend' # S_Curve 4
-        self.sign[0][3] = 'Narrow_Carriageway' # NARROW 5
-        self.sign[0][4] = 'Parking_Lot' # PARKING 1
-        self.sign[0][5] = 'Roadworks' #
-        self.sign[0][6] = 'u_turn'
+        self.sign[0][0] = 'Bicycles'  # MOVING_OBS 3
+        self.sign[0][1] = 'Crosswalk_PedestrainCrossing'  # CROSS_WALK 7
+        self.sign[0][2] = 'Double_bend'  # S_Curve 4
+        self.sign[0][3] = 'Narrow_Carriageway'  # NARROW 5
+        self.sign[0][4] = 'Parking_Lot'  # PARKING 1
+        self.sign[0][5] = 'Roadworks'  # STATIC_OBS 2
+        self.sign[0][6] = 'u_turn'  # U_TURN 6
         self.sign[1][0] = 0
         self.sign[1][1] = 0
         self.sign[1][2] = 0
@@ -141,12 +144,13 @@ class SignCam:
                 break
         return self.sign
 
-    def print_sign(self): # test code 에서 사용될 출력 함수
+    def print_sign(self):  # test code 에서 사용될 출력 함수
         for i in range(7):
             print(self.sign[0][i], self.sign[1][i])
 
     def set_sign2action(self):
-        for i in range(7):  # 만약 한 표지판의 인식 횟수가 1회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
+        # 만약 한 표지판의 인식 횟수가 1회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
+        for i in range(7):
             if self.sign[1][i] >= 1:
                 self.sign2action = self.sign[0][i]
                 self.sign[1][0] = 0
@@ -159,20 +163,20 @@ class SignCam:
                 break
 
     def detect_one_frame(self):
-        #while (self.cam.isOpened()):
-            frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
-            # 이미지 중 표지판이 있는 곳 확인
+        # while (self.cam.isOpened()):
+        frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
+        # 이미지 중 표지판이 있는 곳 확인
 
-            img_list = shape_detect(frame)
+        img_list = shape_detect(frame)
 
-            print(img_list)
-            for img in img_list:
-                result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
-                print(result_sign)
-                self.sign = self.countup_recognition(result_sign, prob)
+        print(img_list)
+        for img in img_list:
+            result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
+            print(result_sign)
+            self.sign = self.countup_recognition(result_sign, prob)
 
-            self.print_sign()
-            self.set_sign2action()
+        self.print_sign()
+        self.set_sign2action()
 
     def get_mission(self):
         if self.sign2action == "Nothing":
@@ -199,9 +203,8 @@ class SignCam:
 
 if __name__ == "__main__":
     current_signcam = SignCam()
-    while(current_signcam.cam.isOpened()):
-        start=time.time()
+    while (current_signcam.cam.isOpened()):
+        start = time.time()
         current_signcam.detect_one_frame()
         mission_number = current_signcam.get_mission()
         print(mission_number)
-
