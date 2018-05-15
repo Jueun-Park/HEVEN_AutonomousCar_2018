@@ -108,9 +108,10 @@ class SignCam:
     def __init__(self):
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)]for row in range(2)]
-        self.cam = cv2.VideoCapture(2)
+        self.cam = cv2.VideoCapture('C:/Users/Administrator/PycharmProjects/Lane_logging/sign_logging_12.avi')
         self.sign2action = "Nothing"
         self.mission_number = 0
+
 
         self.sign_init()
 
@@ -162,7 +163,10 @@ class SignCam:
         #while (self.cam.isOpened()):
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
             # 이미지 중 표지판이 있는 곳 확인
+
             img_list = shape_detect(frame)
+
+            print(img_list)
             for img in img_list:
                 result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
                 print(result_sign)
@@ -197,7 +201,10 @@ class SignCam:
 if __name__ == "__main__":
     current_signcam = SignCam()
     while(current_signcam.cam.isOpened()):
+        start=time.time()
         current_signcam.detect_one_frame()
         mission_number = current_signcam.get_mission()
         print(mission_number)
+        end=time.time()
+        print(end-start)
 

@@ -97,8 +97,10 @@ class MotionPlanner:
         if self.mission_num == 0:
             self.signcam.detect_one_frame()
             self.mission_num = self.signcam.get_mission()
+
             if self.mission_num != 0:
                 self.mission_start_lap = time.time()
+
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
@@ -126,7 +128,7 @@ class MotionPlanner:
             self.moving_obs_handling()
 
         elif self.mission_num == 2:
-            self.static_obs_handling(300, 110, 65, 100, 3)
+            self.static_obs_handling(500, 110, 65, 100, 1.5)
 
         elif self.mission_num == 4:
             self.static_obs_handling(300, 110, 65, 60, 3)
@@ -153,7 +155,6 @@ class MotionPlanner:
             self.motionparam = (0, None, None)
 
     def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
-
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points

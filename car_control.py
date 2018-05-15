@@ -23,6 +23,8 @@ class Control:
         self.speed = 0
         self.steer = 0
         self.brake = 0
+        self.sign_speed = 0
+        self.sign_brake = 0
         #######################################
         self.mission_num = 0  # DEFAULT 모드
 
@@ -115,7 +117,7 @@ class Control:
             self.__obs__(first[0] / 100, first[1])
 
     def write(self):
-        return self.gear, self.sign_speed, self.steer, self.brake
+        return self.gear, self.sign_speed, self.steer, self.sign_brake
 
     def get_status(self):
         return self.u_sit, self.p_sit, self.change_mission
@@ -128,26 +130,24 @@ class Control:
         return self.change_mission
 
     def sign_delay(self, mission_num):
-        self.sign_speed = 36
-
         if mission_num != 0 and self.sign_list[mission_num] != 1:
             if self.sign_t1 == 0:
                 self.sign_t1 = time.time()
             self.sign_t2 = time.time()
 
             if (self.sign_t2 - self.sign_t1) < 1:
-                self.sign_speed = 18
-            elif (self.sign_t2 - self.sign_t1) >= 1:
+                self.sign_speed = 0
+                self.sign_brake = 70
+            elif (self.sign_t2 - self.sign_t1) > 1:
                 self.sign_list[mission_num] = 1
 
         else:
             self.sign_speed = self.speed
-
-        return self.sign_speed
+            self.sign_brake = self.brake
 
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 108
+        speed = 81
         brake = 0
         self.change_mission = 0
 
@@ -189,7 +189,7 @@ class Control:
 
     def __default2__(self, cross_track_error, linear, cul):
         gear = 0
-        speed = 154
+        speed = 54
         brake = 0
         self.change_mission = 0
 
@@ -544,7 +544,7 @@ class Control:
         self.change_mission = 0
 
         if self.u_sit == 0:
-            if turn_distance < 3.6:
+            if turn_distance < 3.5:
                 steer = 0
                 speed = 0
                 brake = 60
@@ -553,7 +553,7 @@ class Control:
                     self.u_sit = 1
 
             else:
-                steer = 0
+                steer = 1
                 speed = 36
                 brake = 0
                 gear = 0

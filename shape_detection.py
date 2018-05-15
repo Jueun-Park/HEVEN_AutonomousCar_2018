@@ -27,7 +27,7 @@ def shape_detect(img):
 
             if hull_area > 0:
                 solidity = int (100*area / hull_area)
-                if  solidity>94 and w > 42 and h > 42:
+                if  solidity>94 and w > 42 and h > 0:
                     x_1 = int(x + (w - le) / 2)
                     x_2 = int(x + (w + le) / 2)
                     y_1 = int(y + (h - le) / 2)
@@ -48,7 +48,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture(2)
+    cam = cv2.VideoCapture('C:/Users/Administrator/PycharmProjects/Lane_logging/sign_logging_12.avi')
     cam.set(3, 800)
     cam.set(4, 448)
 
