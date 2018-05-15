@@ -95,10 +95,11 @@ def process_one_frame_sign(frame, is_in_mission):
         index = sorted_inds[p]
         print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
 
-    plt.figure()
-    plt.imshow(np_images[0].astype(np.uint8))
-    plt.axis('off')
-    plt.show()
+    # 검출된 표지판 사진 확인하고 싶으면 주석을 푸시면 됩니다. 근데 그 사진을 꺼야지 다음 코드가 진행이 되더라고요.
+    # plt.figure()
+    # plt.imshow(np_images[0].astype(np.uint8))
+    # plt.axis('off')
+    # plt.show()
 
 
     return names[sorted_inds[0]], probabilitie[sorted_inds[0]] # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
@@ -169,8 +170,6 @@ class SignCam:
 
             self.print_sign()
             self.set_sign2action()
-            print(self.get_mission())
-            # sign2action이 뭐냐에 따라서 어떤 거 실행?
 
     def get_mission(self):
         if self.sign2action == "Nothing":
