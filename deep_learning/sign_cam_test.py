@@ -157,8 +157,8 @@ class SignCam:
                 self.sign[1][6] = 0
                 break
 
-    def detect(self):
-        while (self.cam.isOpened()):
+    def detect_one_frame(self):
+        #while (self.cam.isOpened()):
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
             # 이미지 중 표지판이 있는 곳 확인
             img_list = shape_detect(frame)
@@ -196,6 +196,8 @@ class SignCam:
 
 if __name__ == "__main__":
     current_signcam = SignCam()
-    current_signcam.detect()
-    current_signcam.get_mission()
+    while(current_signcam.cam.isOpened()):
+        current_signcam.detect_one_frame()
+        mission_number = current_signcam.get_mission()
+        print(mission_number)
 
