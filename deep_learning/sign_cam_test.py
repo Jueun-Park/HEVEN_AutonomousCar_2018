@@ -79,9 +79,14 @@ def process_one_frame_sign(frame, is_in_mission):
         slim.get_model_variables('InceptionV1'))
     # Slim model중 InceptionV1을 이용함
 
-    with tf.Session() as sess:
+    with tf.device('/gpu:0'):
+        sess = tf.Session()
         init_fn(sess)
         np_images, probabilities = sess.run([user_images, probabilities])
+
+    # with tf.Session() as sess:
+    #     init_fn(sess)
+    #     np_images, probabilities = sess.run([user_images, probabilities])
 
     #names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
     # 7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
