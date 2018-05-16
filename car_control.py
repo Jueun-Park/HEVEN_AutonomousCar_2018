@@ -85,12 +85,7 @@ class Control:
         if self.mission_num == 0:
             if first is None:
                 return
-
-            if self.default_mode == 0:
-                self.__default__(first[0] / 100, first[1])
-
-            elif self.default_mode == 1:
-                self.__default2__(first[0] / 100, first[1], first[2] / 100)
+            self.__default__(first[0] / 100, first[1])
 
         elif self.mission_num == 1:
             if second is None:
@@ -140,14 +135,15 @@ class Control:
                 self.sign_brake = 70
             elif (self.sign_t2 - self.sign_t1) > 1:
                 self.sign_list[mission_num] = 1
-
+                self.sign_t1 = 0
+                self.sign_t2 = 0
         else:
             self.sign_speed = self.speed
             self.sign_brake = self.brake
 
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 81
+        speed = 72
         brake = 0
         self.change_mission = 0
 
@@ -168,67 +164,13 @@ class Control:
 
         adjust = 0.3
 
-        if abs(steer_now) > 18:
-            speed = 36
+        if abs(steer_now) > 15:
+            speed = 54
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
 
         steer = steer_final * 71
-        if steer > 1970:
-            steer = 1970
-            self.steer_past = 27.746
-        elif steer < -1970:
-            steer = -1970
-            self.steer_past = -27.746
-
-        self.gear = gear
-        self.speed = speed
-        self.steer = steer
-        self.brake = brake
-
-    def __default2__(self, cross_track_error, linear, cul):
-        gear = 0
-        speed = 54
-        brake = 0
-        self.change_mission = 0
-
-        tan_value_1 = abs(linear)
-        theta_1 = math.atan(tan_value_1)
-
-        default_y_dis = 0.1  # (임의의 값 / 1m)
-        son = cul * math.sin(theta_1) - default_y_dis
-        mother = cul * math.cos(theta_1) + cross_track_error + 0.4925
-
-        tan_value_2 = abs(son / mother)
-        theta_line = math.degrees(math.atan(tan_value_2))
-
-        if linear > 0:
-            theta_line = theta_line * (-1)
-
-        k = 1
-        if abs(theta_line) < 15 and abs(cross_track_error) < 0.27:
-            k = 0.5
-
-        if self.speed_platform == 0:
-            theta_error = 0
-        else:
-            velocity = (self.speed_platform * 100) / 3600
-            theta_error = math.degrees(math.atan((k * cross_track_error) / velocity))
-
-        adjust = 0.3
-        correction_default = 1
-
-        steer_now = (theta_line + theta_error)
-
-        if abs(steer_now) > 18:
-            speed = 72
-
-        steer_final = (adjust * self.steer_past) + (1 - adjust) * steer_now * 1.387
-
-        self.steer_past = steer_final
-
-        steer = steer_final * 71 * correction_default
         if steer > 1970:
             steer = 1970
             self.steer_past = 27.746
@@ -250,7 +192,7 @@ class Control:
 
         if self.mission_num == 2:
             speed = 54
-            correction = 1.4
+            correction = 1.6
             adjust = 0.05
             obs_mode = 1
 
@@ -311,10 +253,10 @@ class Control:
 
             elif obs_mode == 2:
                 if obs_theta == -35:
-                    theta_obs = 12
+                    theta_obs = 10
                     speed = 12
                 elif obs_theta == -145:
-                    theta_obs = -12
+                    theta_obs = -10
                     speed = 12
                 else:
                     car_circle = 1.387
@@ -357,7 +299,7 @@ class Control:
 
         if obs_exist is False:
             speed = 0
-            brake = 70
+            brake = 80
             if self.count == 0:
                 self.count += 1
         else:
@@ -384,9 +326,9 @@ class Control:
                 self.t1 = time.time()
             self.t2 = time.time()
 
-            if (self.t2 - self.t1) < 3.0:
+            if (self.t2 - self.t1) < 4.0:
                 speed = 0
-                brake = 70
+                brake = 75
             else:
                 speed = 54
                 brake = 0
@@ -476,7 +418,7 @@ class Control:
 
             self.parking_time2 = time.time()
 
-            if (self.parking_time2 - self.parking_time1) > 10:
+            if (self.parking_time2 - self.parking_time1) > 11:
                 self.p_sit = 4
 
         elif self.p_sit == 4:
@@ -553,7 +495,7 @@ class Control:
                     self.u_sit = 1
 
             else:
-                steer = 1
+                steer = 0.5
                 speed = 36
                 brake = 0
                 gear = 0
