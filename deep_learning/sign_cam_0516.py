@@ -40,67 +40,7 @@ def is_in_this_mission(ndarray):
         return False
 
 
-def process_one_frame_sign(frame, is_in_mission):
-    if len(frame) < 1:
-        return "Nothing", 0.00
 
-    if is_in_mission:
-        pass
-
-    t1 = time.time()  # 프레임 시작 시간 측정
-
-    image_size = inception.inception_v1.default_image_size
-    # 사용되는 딥러닝 툴은 inception v1으로 가동됨
-
-    user_images = []
-    user_processed_images = []
-
-    # 프레임 저장 후 검사
-    cv2.imwrite('test.jpg', frame)
-    image_input = tf.read_file('test.jpg')
-
-    image = tf.image.decode_jpeg(image_input, channels=3)
-    user_images.append(image)
-    processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
-    user_processed_images.append(processed_image)
-
-    processed_images = tf.expand_dims(processed_image, 0)
-
-    with slim.arg_scope(inception.inception_v1_arg_scope()):
-        logits, _ = inception.inception_v1(user_processed_images, num_classes=7, is_training=False, reuse=tf.AUTO_REUSE)
-        # Number of class: 우리 표지판 총 7개의 class를 판별
-    probabilities = tf.nn.softmax(logits)
-
-
-    # tensorflow-gpu 사용, CUDA 9.0
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-
-    np_images, probabilities = self.sess.run([user_images, probabilities])
-
-    # names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
-    # 7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
-    names = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
-             'Roadworks', 'u_turn']
-
-    probabilitie = probabilities[0, 0:]
-    sorted_inds = [i[0] for i in sorted(enumerate(-probabilitie), key=lambda x: x[1])]
-
-    for p in range(7):
-        index = sorted_inds[p]
-
-        # print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
-
-    # 검출된 표지판 사진 확인하고 싶으면 주석을 푸시면 됩니다. 근데 그 사진을 꺼야지 다음 코드가 진행이 되더라고요.
-    # plt.figure()
-    # plt.imshow(np_images[0].astype(np.uint8))
-    # plt.axis('off')
-    # plt.show()
-
-    t2 = time.time()
-    print("one frame time: ", t2 - t1)
-
-    # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
-    return names[sorted_inds[0]], probabilitie[sorted_inds[0]]
 
 
 class SignCam:
@@ -251,7 +191,7 @@ class SignCam:
 
         print("img_list: ", img_list)
         for img in img_list:
-            result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
+            result_sign, prob = self.process_one_frame_sign(img, self.is_in_mission)
             print("result sign: ", result_sign)
             self.sign = self.countup_recognition(result_sign, prob)
 
