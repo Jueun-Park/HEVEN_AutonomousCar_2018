@@ -15,10 +15,10 @@ from pycuda.compiler import SourceModule
 import cv2
 from parabola import Parabola
 from lidar import Lidar
-from lanecam import LaneCam
+from lane_cam import LaneCam
 import time
 import video_stream
-from sign_cam_test import SignCam
+from sign_cam import SignCam
 
 class MotionPlanner:
     def __init__(self):

@@ -96,13 +96,17 @@ def process_one_frame_sign(frame, is_in_mission):
 
     for p in range(7):
         index = sorted_inds[p]
-        print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
+
+        # print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
 
     # 검출된 표지판 사진 확인하고 싶으면 주석을 푸시면 됩니다. 근데 그 사진을 꺼야지 다음 코드가 진행이 되더라고요.
     # plt.figure()
     # plt.imshow(np_images[0].astype(np.uint8))
     # plt.axis('off')
     # plt.show()
+
+    t2 = time.time()
+    print("one frame time: ", t2-t1)
 
     # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
     return names[sorted_inds[0]], probabilitie[sorted_inds[0]]
@@ -156,7 +160,7 @@ class SignCam:
 
     def print_sign(self):  # test code 에서 사용될 출력 함수
         for i in range(7):
-            print(self.sign[0][i], self.sign[1][i])
+            print("print_sign: ", self.sign[0][i], self.sign[1][i])
 
     def set_sign2action(self):
         # 만약 한 표지판의 인식 횟수가 1회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
@@ -179,10 +183,10 @@ class SignCam:
 
         img_list = shape_detect(frame)
 
-        print(img_list)
+        print("img_list: ", img_list)
         for img in img_list:
             result_sign, prob = process_one_frame_sign(img, self.is_in_mission)
-            print(result_sign)
+            print("result sign: ", result_sign)
             self.sign = self.countup_recognition(result_sign, prob)
 
         self.print_sign()
