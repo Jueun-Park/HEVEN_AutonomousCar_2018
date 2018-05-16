@@ -7,6 +7,7 @@
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 # car_front = 0.28
+# 임의로 수정하지 말 것
 
 import time
 import math
