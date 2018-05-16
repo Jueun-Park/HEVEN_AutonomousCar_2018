@@ -135,7 +135,16 @@ class SignCam:
         self.sign[1][4] = 0
         self.sign[1][5] = 0
         self.sign[1][6] = 0
-        return self.sign
+
+    def sign_reinit(self):
+        self.sign[1][0] = 0
+        self.sign[1][1] = 0
+        self.sign[1][2] = 0
+        self.sign[1][3] = 0
+        self.sign[1][4] = 0
+        self.sign[1][5] = 0
+        self.sign[1][6] = 0
+
 
     def countup_recognition(self, result_sign, prob):
         for i in range(7):
@@ -195,6 +204,9 @@ class SignCam:
             self.mission_number = 6
         elif self.sign2action == 'Crosswalk_PedestrainCrossing':
             self.mission_number = 7
+
+        if self.mission_number > 0:
+            self.sign_reinit()
 
         self.sign2action = "Nothing"
         print(self.mission_number)
