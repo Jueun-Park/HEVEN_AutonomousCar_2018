@@ -13,7 +13,6 @@ import math
 
 
 class Control:
-    car_front = 0.28
 
     def __init__(self):
         self.speed_platform = 0
@@ -333,7 +332,7 @@ class Control:
 
             if (self.t2 - self.t1) < 4.0:
                 speed = 0
-                brake = 75
+                brake = 80
             else:
                 speed = 54
                 brake = 0
