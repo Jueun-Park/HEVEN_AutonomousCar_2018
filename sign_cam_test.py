@@ -76,11 +76,10 @@ def process_one_frame_sign(frame, is_in_mission):
     probabilities = tf.nn.softmax(logits)
 
     init_fn = slim.assign_from_checkpoint_fn(
-        os.path.join(checkpoints_dir, 'model.ckpt-11542'),
-        # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
-        slim.get_model_variables('InceptionV1'))
-    # Slim model중 InceptionV1을 이용함
-
+        os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
+        slim.get_model_variables('InceptionV1'))  # Slim model중 InceptionV1을 이용함
+    
+    # tensorflow-gpu 사용, CUDA 9.0
     with tf.device('/gpu:0'):
         sess = tf.Session()
     # with tf.Session() as sess:
