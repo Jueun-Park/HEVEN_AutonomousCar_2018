@@ -5,7 +5,7 @@
 
 import cv2
 
-count=0
+count = 0
 
 def shape_detect(img):
     sign = []
