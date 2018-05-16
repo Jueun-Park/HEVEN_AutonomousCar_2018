@@ -131,15 +131,14 @@ class Control:
             self.sign_t2 = time.time()
 
             if (self.sign_t2 - self.sign_t1) < 1:
-                self.sign_speed = 0
-                self.sign_brake = 70
+                self.sign_speed = 9
+
             elif (self.sign_t2 - self.sign_t1) > 1:
                 self.sign_list[mission_num] = 1
                 self.sign_t1 = 0
                 self.sign_t2 = 0
         else:
             self.sign_speed = self.speed
-            self.sign_brake = self.brake
 
     def __default__(self, cross_track_error, linear):
         gear = 0
@@ -194,7 +193,7 @@ class Control:
             speed = 54
             correction = 1.6
             adjust = 0.05
-            obs_mode = 1
+            obs_mode = 0
 
         elif self.mission_num == 4:  # 실험값 보정하기
             speed = 18
@@ -231,10 +230,16 @@ class Control:
                     theta_obs = -27
                 else:
                     car_circle = 1.387
-                    cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
-                    # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
+                    cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+                    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 2
 
-                    theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
+                    son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
+                    mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
+
+                    theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
+
+                    if abs(theta_obs) > 15:
+                        speed = 24
 
             elif obs_mode == 1:
                 if obs_theta == -35:

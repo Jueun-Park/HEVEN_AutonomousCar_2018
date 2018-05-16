@@ -51,3 +51,17 @@ def __default2__(self, cross_track_error, linear, cul):
     self.speed = speed
     self.steer = steer
     self.brake = brake
+
+#################################################################################################
+
+if obs_mode == 0:
+    if obs_theta == -35:
+        theta_obs = 27
+    elif obs_theta == -145:
+        theta_obs = -27
+    else:
+        car_circle = 1.387
+        cul_obs = (obs_r + 2.08 * cos_theta) / (2 * sin_theta)
+        # k = math.sqrt( x_position ^ 2 + 1.04 ^ 2)
+
+        theta_obs = math.degrees(math.atan(1.04 / (cul_obs + 0.4925)))  # 장애물 회피각 산출 코드
