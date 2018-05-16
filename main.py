@@ -21,10 +21,10 @@ monitor = Monitor()
 while True:
     control.read(*platform.read())
     motion.plan_motion(control.get_status())
-    control.mission(*motion.getmotionparam())
+    control.mission(*motion.get_motion_parameter())
     platform.write(*control.write())
 
-    frames = motion.getFrame()
+    frames = motion.get_frame()
     status_temp = monitor.concatenate(monitor.immonitor(), monitor.immission(motion.mission_num, control.get_status()), mode='h')
     status = monitor.concatenate(status_temp, monitor.imstatus(*platform.status()), mode='v')
     monitor.show('frame', *frames, windows_is=motion.windows_is)

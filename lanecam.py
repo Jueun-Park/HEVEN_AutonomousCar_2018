@@ -90,6 +90,9 @@ class LaneCam:
 
     def getFrame(self):
         self.windows_is = [True, True, True, True]
+        # return:
+        # 차선인식 raw 화면, 차선인식 결과 화면,
+        # 주차공간 인식 화면, 정지선 인식 화면,
         return (self.lane_cam_raw_frame.read(), self.lane_cam_frame.read(),
                 self.parkingline_frame.read(), self.stopline_frame.read())
 
