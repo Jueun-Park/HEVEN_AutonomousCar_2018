@@ -80,8 +80,9 @@ def process_one_frame_sign(frame, is_in_mission):
         slim.get_model_variables('InceptionV1'))  # Slim model중 InceptionV1을 이용함
     
     # tensorflow-gpu 사용, CUDA 9.0
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
     with tf.device('/gpu:0'):
-        sess = tf.Session()
+        sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
     # with tf.Session() as sess:
         init_fn(sess)
         np_images, probabilities = sess.run([user_images, probabilities])
