@@ -57,6 +57,13 @@ class SignCam:
         # 데이터의 checkpoint 디렉토리 넣어줌
         self.slim = tf.contrib.slim
 
+        user_processed_images2 = []
+        processed_image2 = inception_preprocessing.preprocess_image(tf.image.decode_jpeg('test.jpg', channels=3), inception.inception_v1.default_image_size, inception.inception_v1.default_image_size, is_training=False)
+        user_processed_images2.append(processed_image2)
+
+        processed_images = tf.expand_dims(processed_image2, 0)
+
+
         init_fn = self.slim.assign_from_checkpoint_fn(
             os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
             self.slim.get_model_variables('InceptionV1'))  # Slim model중 InceptionV1을 이용함
