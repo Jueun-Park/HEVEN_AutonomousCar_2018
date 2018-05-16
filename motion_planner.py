@@ -474,7 +474,7 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])  # 막힌 부채살 개수
             minimum_dist = np.min(data_transposed[1])  # 막힌 부채살 중 가장 짧은 길이
 
-            if collision_count > 50 and minimum_dist < 200:
+            if collision_count > 30 and minimum_dist < 150:
                 # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
                 self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), False)
 
