@@ -199,7 +199,8 @@ class MotionPlanner:
 
         print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
 
-        if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0 and time.time() - self.mission_start_lap > 3:
+        if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0 and \
+                time.time() - self.mission_start_lap > 3:
             print("Escape!")
             self.lap_during_clear = 0
             self.lap_during_collision = 0
