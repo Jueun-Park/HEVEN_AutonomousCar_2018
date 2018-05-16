@@ -37,7 +37,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_integer('num_clones', 1,
                             'Number of model clones to deploy.')
 
-tf.app.flags.DEFINE_boolean('clone_on_cpu', True,
+tf.app.flags.DEFINE_boolean('clone_on_cpu', False,
                             'Use CPUs to deploy clones.')
 
 tf.app.flags.DEFINE_integer('worker_replicas', 1, 'Number of worker replicas.')
@@ -340,12 +340,10 @@ def _get_init_fn():
   # TODO(sguada) variables.filter_variables()
   variables_to_restore = []
   for var in slim.get_model_variables():
-    excluded = False
     for exclusion in exclusions:
       if var.op.name.startswith(exclusion):
-        excluded = True
         break
-    if not excluded:
+    else:
       variables_to_restore.append(var)
 
   if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
@@ -551,7 +549,6 @@ def main(_):
 
     # Merge all summaries together.
     summary_op = tf.summary.merge(list(summaries), name='summary_op')
-
 
     ###########################
     # Kicks off the training. #
