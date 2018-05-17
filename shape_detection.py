@@ -35,7 +35,7 @@ def shape_detect(img):
             hull_area = cv2.contourArea(hull)
             if hull_area > 0:
                 solidity = int(100 * area / hull_area)
-                if solidity > 94 and w > 42 and h > 0:
+                if solidity > 94 and w > 42 and h > 42:
                     x_1 = int(x + (w - le) / 2)
                     x_2 = int(x + (w + le) / 2)
                     y_1 = int(y + (h - le) / 2)
@@ -54,7 +54,7 @@ def shape_detect(img):
                         nonzero_num = np.count_nonzero(both != 0)
 
                         if nonzero_num > 200:
-                            if (le > 80 and len(cnt) > 100) or (le > 60 and len(cnt) < 100):
+                            if (le > 80 and len(cnt) > 120) or (le > 60 and 60 < len(cnt) < 120) or len(cnt) < 60:
                                 cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                                 sign.append(img_trim_resize)
     return sign
@@ -67,7 +67,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('sign_logging_13.avi')
+    cam = cv2.VideoCapture('parking_2.mp4')
     cam.set(3, 800)
     cam.set(4, 448)
 
