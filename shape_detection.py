@@ -51,6 +51,7 @@ def shape_detect(img):
                         nonzero_num = np.count_nonzero(both != 0)
 
                         if nonzero_num > 200:
+                            print (len(cnt))
                             cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                             sign.append(img_trim_resize)
     return sign
