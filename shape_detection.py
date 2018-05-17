@@ -4,8 +4,15 @@
 # output: 표지판 후보 이미지
 
 import cv2
+import numpy as np
 
 count = 0
+
+lower_yellow = np.array([0, 0, 0], np.uint8)
+upper_yellow = np.array([255, 255, 255], np.uint8)
+
+lower_blue = np.array([60, 20, 0], np.uint8)
+upper_blue = np.array([170, 70, 10], np.uint8)
 
 def shape_detect(img):
     sign = []
@@ -26,8 +33,8 @@ def shape_detect(img):
             hull_area = cv2.contourArea(hull)
 
             if hull_area > 0:
-                solidity = int (100*area / hull_area)
-                if  solidity>94 and w > 42 and h > 0:
+                solidity = int(100 * area / hull_area)
+                if solidity > 94 and w > 42 and h > 0:
                     x_1 = int(x + (w - le) / 2)
                     x_2 = int(x + (w + le) / 2)
                     y_1 = int(y + (h - le) / 2)
@@ -35,9 +42,18 @@ def shape_detect(img):
 
                     if x_1 > 300 and 290 > y_2 and 185 > y_1 > 80:
                         img_trim = img[y_1: y_2, x_1:x_2]
-                        cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
+
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
-                        sign.append(img_trim_resize)
+
+                        #yellow_filtered = cv2.inRange(img_trim_resize, lower_yellow, upper_yellow)
+                        blue_filtered = cv2.inRange(img_trim_resize, lower_blue, upper_blue)
+                        cv2.imshow('filtered', blue_filtered)
+                        #both = cv2.bitwise_or(yellow_filtered, blue_filtered)
+                        nonzero_num = np.count_nonzero(blue_filtered != 0)
+
+                        if nonzero_num > 150:
+                            cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
+                            sign.append(img_trim_resize)
     return sign
 
 
@@ -48,7 +64,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('C:/Users/Administrator/PycharmProjects/Lane_logging/sign_logging_12.avi')
+    cam = cv2.VideoCapture('sign_logging_13.avi')
     cam.set(3, 800)
     cam.set(4, 448)
 

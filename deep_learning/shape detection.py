@@ -48,7 +48,8 @@ if cap.read():
                             name = "./images/" + str(solidity) +"_"+str(y_1)+"_"+str(y_2)+"_"+str(count) + "_" + str(count_2) + "_.png"
                             cv2.imwrite(name,img_trim)
                     count += 1
-
+        if cv2.waitKey(0) & 0xFF == ord(' '):
+            continue
         cv2.imshow('img', img)
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
