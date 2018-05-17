@@ -45,6 +45,8 @@ class SignCam:
         self.sess = tf.Session()
 
         self.thread = threading.Thread(target=self.detect_one_frame)
+        self.stop_fg = False
+        self.exit_fg = False
 
         self.sign_init()
 
@@ -54,12 +56,17 @@ class SignCam:
     def sign_control(self):
         return self.sign_trigger
 
-    def wrapper(self):
-        self.thread.start()
-        self.thread.join()
-
     def start(self):
         self.thread.start()
+
+    def restart(self):
+        self.stop_fg = False
+
+    def stop(self):
+        self.stop_fg = True
+
+    def exit(self):
+        self.exit_fg = True
 
     def sign_init(self):
         self.sign[0][0] = 'Bicycles'  # MOVING_OBS 3
@@ -113,6 +120,8 @@ class SignCam:
 
     def detect_one_frame(self):
         while True:
+            if self.exit_fg is True: break
+            if self.stop_fg is True: time.sleep(1); continue
             # while (self.cam.isOpened()):
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
             # 이미지 중 표지판이 있는 곳 확인
@@ -132,8 +141,9 @@ class SignCam:
                 print("result sign: ", result_sign)
                 self.sign = self.countup_recognition(result_sign, prob)
 
-                # self.print_sign()
-                self.set_sign2action()
+            # self.print_sign()
+            self.set_sign2action()
+
 
 
     def get_mission(self):

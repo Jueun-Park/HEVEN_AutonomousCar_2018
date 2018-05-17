@@ -117,6 +117,7 @@ class MotionPlanner:
         print(self.mission_num)
 
         if self.mission_num == 0:
+            self.signcam.restart()
             #self.signcam.detect_one_frame()
             self.mission_num = self.signcam.get_mission()
             self.keycam.mission_num = self.mission_num
@@ -141,6 +142,9 @@ class MotionPlanner:
             if control_status[2] == 2:
                 self.mission_num = 0
 
+        if self.mission_num != 0:
+            self.signcam.stop()
+
         # --------------------------------------- 미션 수행 ----------------------------------------
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
         #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
@@ -148,6 +152,7 @@ class MotionPlanner:
             self.lane_handling()
 
         elif self.mission_num == 1:
+            self.signcam.stop()
             self.parkingline_handling()
 
         elif self.mission_num == 3:
@@ -182,6 +187,7 @@ class MotionPlanner:
             self.motion_parameter = (0, None, None)
 
     def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
+
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
@@ -206,10 +212,10 @@ class MotionPlanner:
                 # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
                 points[theta][0] = round(x) + RAD
                 points[theta][1] = RAD - round(y)
-
+        t = time.time()
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), obs_size, 255, -1)  # 캔버스에 점 찍기
-
+        print(time.time() - t)
         data_ = np.zeros((angle + 1, 2), np.int)
 
         if current_frame is not None:
@@ -225,7 +231,6 @@ class MotionPlanner:
             self.lap_during_collision = time.time()
 
         print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
-
         # 다음 세 가지 조건을 모두 만족하면 탈출한다:
         # 전방이 깨끗한 시간이 timeout 이상일 때
         # 장애물을 한 번이라도 만난 뒤에
@@ -237,7 +242,6 @@ class MotionPlanner:
             self.lap_during_collision = 0
             self.mission_start_lap = 0
             self.mission_num = 0
-
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
@@ -254,6 +258,7 @@ class MotionPlanner:
 
         color = None
         target = None
+
 
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)),
@@ -324,6 +329,7 @@ class MotionPlanner:
             if color is None: return
 
         self.motion_planner_frame.write(color)
+
 
     def stopline_handling(self):
         self.lanecam.stopline_loop()
@@ -508,7 +514,7 @@ class MotionPlanner:
         self.stop_fg = True
         self.lidar.stop()
         self.lanecam.stop()
-        #self.signcam.stop()
+        self.signcam.exit()
 
         # pycuda dealloc
         global context
