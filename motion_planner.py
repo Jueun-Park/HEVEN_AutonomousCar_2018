@@ -111,7 +111,7 @@ class MotionPlanner:
         print(self.mission_num)
 
         if self.mission_num == 0:
-            self.signcam.detect_one_frame()
+            #self.signcam.detect_one_frame()
             self.mission_num = self.signcam.get_mission()
             self.keycam.mission_num = self.mission_num
             #self.mission_num = self.keycam.get_mission()
@@ -139,7 +139,6 @@ class MotionPlanner:
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
         #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
         if self.mission_num == 0:
-            self.signcam.start()
             self.lane_handling()
 
         elif self.mission_num == 1:
