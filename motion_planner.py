@@ -74,7 +74,6 @@ class MotionPlanner:
                 """)
 
         self.path = mod.get_function("detect")
-
         # pycuda alloc end
 
         time.sleep(2)
