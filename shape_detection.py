@@ -8,11 +8,12 @@ import numpy as np
 
 count = 0
 
-lower_yellow = np.array([0, 0, 0], np.uint8)
-upper_yellow = np.array([255, 255, 255], np.uint8)
+lower_yellow = np.array([0, 30, 40], np.uint8)
+upper_yellow = np.array([55, 197, 255], np.uint8)
 
-lower_blue = np.array([0, 0, 0], np.uint8)
-upper_blue = np.array([255, 255, 255], np.uint8)
+lower_blue = np.array([51, 15, 0], np.uint8)
+upper_blue = np.array([150, 65, 22], np.uint8)
+
 
 def shape_detect(img):
     sign = []
@@ -43,13 +44,13 @@ def shape_detect(img):
 
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
 
-                        #yellow_filtered = cv2.inRange(img_trim_resize, lower_yellow, upper_yellow)
+                        yellow_filtered = cv2.inRange(img_trim_resize, lower_yellow, upper_yellow)
                         blue_filtered = cv2.inRange(img_trim_resize, lower_blue, upper_blue)
-                        cv2.imshow('filtered', blue_filtered)
-                        #both = cv2.bitwise_or(yellow_filtered, blue_filtered)
-                        nonzero_num = np.count_nonzero(blue_filtered != 0)
+                        both = cv2.bitwise_or(yellow_filtered, blue_filtered)
+                        cv2.imshow('filtered', both)
+                        nonzero_num = np.count_nonzero(both != 0)
 
-                        if nonzero_num > 150:
+                        if nonzero_num > 200:
                             cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                             sign.append(img_trim_resize)
     return sign
