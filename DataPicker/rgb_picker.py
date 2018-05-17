@@ -15,7 +15,7 @@ def bind(win_name, frame):
     cv2.setMouseCallback(win_name, draw_circle, frame)
 
 # 영상을 불러온다
-cap = cv2.VideoCapture('cut.mp4')
+cap = cv2.VideoCapture('./sign_sum_4.mp4')
 ret, img = cap.read()
 cv2.namedWindow('image')
 bind('image', img)
