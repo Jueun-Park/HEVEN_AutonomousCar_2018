@@ -97,12 +97,15 @@ class Control:
 
         elif self.mission_num == 3:
             if first is None:
-                self.__moving__(False)
+                self.__moving__(None, None, False)
             else:
-                self.__moving__(first)
+                self.__moving__(first[0] / 100, first[1], second)
 
         elif self.mission_num == 6:
-            self.__turn__(first / 100)
+            if second is None:
+                self.__turn__(first / 100, None, None)
+            else:
+                self.__turn__(first / 100, second[0] / 100, second[1])
 
         elif self.mission_num == 7:
             if first is None:
@@ -293,9 +296,39 @@ class Control:
         self.steer = steer
         self.brake = brake
 
-    def __moving__(self, obs_exist):
-        steer = 0
+    def __moving__(self, moving_error, moving_linear, obs_exist):
         gear = 0
+
+        if moving_error is None:
+            steer = 0
+        else:
+            ############################################################################################################
+            tan_value = moving_linear * (-1)
+            theta_1 = math.degrees(math.atan(tan_value))
+
+            k = 0.5
+
+            if self.speed_platform == 0:
+                theta_2 = 0
+            else:
+                velocity = (self.speed_platform * 100) / 3600
+                theta_2 = math.degrees(math.atan((k * moving_error) / velocity))
+
+            steer_now = (theta_1 + theta_2)
+
+            adjust = 0.3
+
+            steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
+            self.steer_past = steer_final
+
+            steer = steer_final * 71
+            if steer > 1970:
+                steer = 1970
+                self.steer_past = 27.746
+            elif steer < -1970:
+                steer = -1970
+                self.steer_past = -27.746
+            ############################################################################################################
 
         self.change_mission = 0
 
@@ -305,7 +338,10 @@ class Control:
             if self.count == 0:
                 self.count += 1
         else:
-            speed = 54
+            if moving_error is None:
+                speed = 12
+            else:
+                speed = 42
             brake = 0
             if self.count > 0:
                 self.change_mission = 2
@@ -323,7 +359,7 @@ class Control:
 
         self.change_mission = 0
 
-        if abs(stop_line) < 2:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(stop_line) < 1.5:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
@@ -479,7 +515,7 @@ class Control:
         self.steer = steer
         self.brake = brake
 
-    def __turn__(self, turn_distance):
+    def __turn__(self, turn_distance, line_error, line_linear):
         gear = 0
         speed = 36
         steer = 0
@@ -497,7 +533,33 @@ class Control:
                     self.u_sit = 1
 
             else:
-                steer = 0.5
+                ########################################################################################################
+                tan_value = line_linear * (-1)
+                theta_1 = math.degrees(math.atan(tan_value))
+
+                k = 0.5
+
+                if self.speed_platform == 0:
+                    theta_2 = 0
+                else:
+                    velocity = (self.speed_platform * 100) / 3600
+                    theta_2 = math.degrees(math.atan((k * line_error) / velocity))
+
+                steer_now = (theta_1 + theta_2)
+
+                adjust = 0.3
+
+                steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
+                self.steer_past = steer_final
+
+                steer = steer_final * 71
+                if steer > 1970:
+                    steer = 1970
+                    self.steer_past = 27.746
+                elif steer < -1970:
+                    steer = -1970
+                    self.steer_past = -27.746
+                ########################################################################################################
                 speed = 36
                 brake = 0
                 gear = 0
