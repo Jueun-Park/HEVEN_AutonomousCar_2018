@@ -25,7 +25,7 @@ import threading
 이 방법을 사용한 이유는 실제로 데이터를 구현하고 tensorflow로 표지판을 인식하는데까지 너무 많은 노력과 지식이 필요한데
 그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
 '''
-sys.path.insert(0, 'C:/Users/Administrator/Desktop/HEVEN_AutonomousCar_2018/slim')
+sys.path.insert(0, './slim')
 # 이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
 # 따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
 
@@ -37,7 +37,7 @@ class SignCam:
     def __init__(self):
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)] for row in range(2)]
-        self.cam = cv2.VideoCapture(2)#r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4')
+        self.cam = cv2.VideoCapture(0)#r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4')
         self.cam.set(3, 800)
         self.cam.set(4, 448)
         self.sign2action = "Nothing"
