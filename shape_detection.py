@@ -54,7 +54,7 @@ def shape_detect(img):
                         nonzero_num = np.count_nonzero(both != 0)
 
                         if nonzero_num > 200:
-                            if (le > 80 and len(cnt) > 120) or (le > 60 and 60<len(cnt) < 120) or (le>40 and len(cnt)<60):
+                            if (le > 80 and len(cnt) > 120) or (le > 60 and 60 < len(cnt) < 120) or len(cnt) < 60:
                                 cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                                 sign.append(img_trim_resize)
     return sign
@@ -67,7 +67,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture(2)
+    cam = cv2.VideoCapture('sign_logging_13.avi')
     cam.set(3, 800)
     cam.set(4, 448)
 
