@@ -19,6 +19,7 @@ from lane_cam import LaneCam
 import time
 import video_stream
 from sign_cam import SignCam
+from key_cam import KeyCam
 
 class MotionPlanner:
     def __init__(self):
@@ -26,6 +27,9 @@ class MotionPlanner:
 
         self.lanecam = LaneCam()  # lane_cam_instance
         self.signcam = SignCam()  # sign_cam_instance
+        self.keycam = KeyCam()
+
+        self.signcam.start()
 
         self.mission_num = 0
 
@@ -45,6 +49,7 @@ class MotionPlanner:
         self.windows_is = []
 
         # pycuda alloc
+
         drv.init()
         global context
         from pycuda.tools import make_default_context
@@ -69,6 +74,7 @@ class MotionPlanner:
                 """)
 
         self.path = mod.get_function("detect")
+
         # pycuda alloc end
 
         time.sleep(2)
@@ -100,9 +106,16 @@ class MotionPlanner:
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
         #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
+        #if self.keycam.get_mission() != 0:
+        self.mission_num = self.keycam.get_mission()
+
+        print(self.mission_num)
+
         if self.mission_num == 0:
             self.signcam.detect_one_frame()
             self.mission_num = self.signcam.get_mission()
+            self.keycam.mission_num = self.mission_num
+            #self.mission_num = self.keycam.get_mission()
 
             if self.mission_num != 0:
                 self.mission_start_lap = time.time()
@@ -127,6 +140,7 @@ class MotionPlanner:
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
         #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
         if self.mission_num == 0:
+            self.signcam.start()
             self.lane_handling()
 
         elif self.mission_num == 1:
@@ -474,12 +488,15 @@ class MotionPlanner:
             collision_count = np.sum(data_transposed[0])  # 막힌 부채살 개수
             minimum_dist = np.min(data_transposed[1])  # 막힌 부채살 중 가장 짧은 길이
 
-            if collision_count > 50 and minimum_dist < 200:
-                # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
-                self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), False)
+            if path is not None:
+                if collision_count > 50 and minimum_dist < 200:
+                    # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
+                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), False)
 
+                else:
+                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), True)
             else:
-                self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), True)
+                self.motion_parameter = (3, None, False)
 
         self.moving_obs_frame.write(moving_obs_frame)
 
