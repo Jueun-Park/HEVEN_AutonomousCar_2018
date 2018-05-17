@@ -8,11 +8,11 @@ import numpy as np
 
 count = 0
 
-lower_yellow = np.array([0, 30, 40], np.uint8)
-upper_yellow = np.array([55, 197, 255], np.uint8)
+lower_yellow = np.array([0, 0, 0], np.uint8)
+upper_yellow = np.array([255, 255, 255], np.uint8)
 
-lower_blue = np.array([51, 15, 0], np.uint8)
-upper_blue = np.array([150, 65, 22], np.uint8)
+lower_blue = np.array([0, 0, 0], np.uint8)
+upper_blue = np.array([255, 255, 255], np.uint8)
 
 
 def shape_detect(img):
