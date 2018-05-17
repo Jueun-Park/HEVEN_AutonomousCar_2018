@@ -25,7 +25,7 @@ def shape_detect(img):
         img5 = cv2.GaussianBlur(img, (5, 5), 0)
         gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 52, 104, apertureSize=3)
-        image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         for cnt in contours:
             (x, y, w, h) = cv2.boundingRect(cnt)
             le = max(w, h) + 10
@@ -35,14 +35,14 @@ def shape_detect(img):
             hull_area = cv2.contourArea(hull)
             if hull_area > 0:
                 solidity = int(100 * area / hull_area)
-                if solidity > 94 and w > 42 and h > 0:
+                if solidity > 94 and w > 42 and h > 42:
                     x_1 = int(x + (w - le) / 2)
                     x_2 = int(x + (w + le) / 2)
                     y_1 = int(y + (h - le) / 2)
                     y_2 = int(y + (h + le) / 2)
 
                     if x_1 > 300 and 290 > y_2 and 185 > y_1 > 80:
-                    #x_1 > 0 and y_1 > 0:
+                    # if x_1 > 0 and y_1 > 0:
                         img_trim = img[y_1: y_2, x_1:x_2]
 
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
@@ -54,7 +54,7 @@ def shape_detect(img):
                         nonzero_num = np.count_nonzero(both != 0)
 
                         if nonzero_num > 200:
-                            if (le > 80 and len(cnt) > 100) or (le > 60 and len(cnt) < 100):
+                            if (le > 80 and len(cnt) > 120) or (le > 60 and 60<len(cnt) < 120) or (le>40 and len(cnt)<60):
                                 cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                                 sign.append(img_trim_resize)
     return sign
@@ -67,7 +67,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('sign_logging_13.avi')
+    cam = cv2.VideoCapture(2)
     cam.set(3, 800)
     cam.set(4, 448)
 
