@@ -35,6 +35,7 @@ from preprocessing import inception_preprocessing
 
 class SignCam:
     def __init__(self):
+        self.sign_trigger = 0
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)] for row in range(2)]
         self.cam = cv2.VideoCapture(0)#r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4')
@@ -51,6 +52,9 @@ class SignCam:
 
     # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
     #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
+
+    def sign_control(self):
+        return self.sign_trigger
 
     def wrapper(self):
         self.thread.start()
@@ -118,6 +122,11 @@ class SignCam:
 
         img_list = shape_detect(frame)
 
+        if len(img_list) == 0:
+            self.sign_trigger = 0
+        else:
+            self.sign_trigger = 1
+
         cv2.imshow('1', frame)
         if cv2.waitKey(1) & 0xff == 27:
             return
@@ -128,8 +137,6 @@ class SignCam:
 
         #self.print_sign()
         self.set_sign2action()
-
-
 
     def get_mission(self):
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,

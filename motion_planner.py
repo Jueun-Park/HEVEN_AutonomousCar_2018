@@ -50,6 +50,8 @@ class MotionPlanner:
 
         # pycuda alloc
 
+        self.sign_delay = 0
+
         drv.init()
         global context
         from pycuda.tools import make_default_context
@@ -77,6 +79,10 @@ class MotionPlanner:
         # pycuda alloc end
 
         time.sleep(2)
+
+    def get_sign_trigger(self):
+        self.sign_delay = self.signcam.sign_control()
+        return self.sign_delay
 
     def get_frame(self):
         lanecam_getFrame = self.lanecam.getFrame()
