@@ -22,6 +22,7 @@ def shape_detect(img):
     if img is None:
         print("image is none")
     else:
+        img2 = img
         img5 = cv2.GaussianBlur(img, (5, 5), 0)
         gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 52, 104, apertureSize=3)
@@ -43,7 +44,7 @@ def shape_detect(img):
 
                     if x_1 > 300 and 290 > y_2 and 185 > y_1 > 80:
                     # if x_1 > 0 and y_1 > 0:
-                        img_trim = img[y_1: y_2, x_1:x_2]
+                        img_trim = img2[y_1: y_2, x_1:x_2]
 
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
 
@@ -67,7 +68,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('sign_logging_13.avi')
+    cam = cv2.VideoCapture('C:/Users/LG/PycharmProjects/untitled6/sign_logging_13.avi')
     cam.set(3, 800)
     cam.set(4, 448)
 
