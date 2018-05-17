@@ -37,11 +37,13 @@ class SignCam:
         self.sign_trigger = 0
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)] for row in range(2)]
-        self.cam = cv2.VideoCapture(0)  # r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4') #2
+        self.cam = cv2.VideoCapture(2)  # r'C:/Users/Administrator/PycharmProjects/Lane_logging/cut.mp4') #2
         self.cam.set(3, 800)
         self.cam.set(4, 448)
         self.sign2action = "Nothing"
         self.mission_number = 0
+        self.done = 0
+
 
 
         self.thread = threading.Thread(target=self.detect_one_frame)
@@ -96,7 +98,7 @@ class SignCam:
 
     def countup_recognition(self, result_sign, prob):
         for i in range(7):
-            if self.sign[0][i] == result_sign and prob > 0.95:
+            if self.sign[0][i] == result_sign and prob > 0.95: # 확률 95퍼 이상, 조정 시 값만 바꿔주세요.
                 self.sign[1][i] = self.sign[1][i] + 1
                 break
 
@@ -105,9 +107,9 @@ class SignCam:
             print("print_sign: ", self.sign[0][i], self.sign[1][i])
 
     def set_sign2action(self):
-        # 만약 한 표지판의 인식 횟수가 1회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
+        # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기 (3번도 다양하게 바꿀 수 있음)
         for i in range(7):
-            if self.sign[1][i] >= 1:
+            if self.sign[1][i] >= 3:
                 self.sign2action = self.sign[0][i]
                 self.sign[1][0] = 0
                 self.sign[1][1] = 0
@@ -202,12 +204,14 @@ class SignCam:
         label_lines = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
                  'Roadworks', 'u_turn']
 
-        with tf.gfile.FastGFile(
-                "C:/Users/Administrator/Desktop/HEVEN_AutonomousCar_2018/deep_learning/minimal_graph.proto", 'rb') as f:
-            # with tf.device('/gpu:0'):
-            graph_def = tf.GraphDef()
-            graph_def.ParseFromString(f.read())
-            _ = tf.import_graph_def(graph_def, name='')
+        if self.done == 0 :
+            with tf.gfile.FastGFile(
+                    "C:/Users/Administrator/Desktop/HEVEN_AutonomousCar_2018/deep_learning/minimal_graph.proto", 'rb') as f:
+                # with tf.device('/gpu:0'):
+                graph_def = tf.GraphDef()
+                graph_def.ParseFromString(f.read())
+                _ = tf.import_graph_def(graph_def, name='')
+            self.done = self.done + 1
 
         # config=tf.ConfigProto(log_device_placement=True)
 
