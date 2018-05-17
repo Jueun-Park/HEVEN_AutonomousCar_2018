@@ -23,6 +23,7 @@ while True:
     control.read(*platform.read())
     motion.plan_motion(control.get_status())
     control.mission(*motion.get_motion_parameter())
+    control.deceleration(*motion.get_sign_trigger())
     platform.write(*control.write())
 
     frames = motion.get_frame()
