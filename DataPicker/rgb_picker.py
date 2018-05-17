@@ -23,7 +23,7 @@ def bind(win_name, frame):
 
 
 # 영상을 불러온다
-cap = cv2.VideoCapture('cut.mp4')  # video name
+cap = cv2.VideoCapture('yellow.mp4')  # video name
 ret, img = cap.read()
 cv2.namedWindow('image')
 bind('image', img)
@@ -41,6 +41,7 @@ writer = csv.writer(file, lineterminator='\n')  # rgb 단위로 줄바꿈
 while True:
     if img is None:
         print("image is none")
+        break
     else:
         # 한 프레임씩 스페이스바로 넘긴다
         cv2.imshow('image', img)

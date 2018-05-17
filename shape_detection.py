@@ -16,6 +16,8 @@ upper_blue = np.array([150, 65, 22], np.uint8)
 
 
 def shape_detect(img):
+    #cv2.line(img, (0, 290), (799, 290), (0, 0, 255), 2)
+    #cv2.line(img, (0, 290), (799, 290), (0, 0, 255), 2)
     sign = []
     if img is None:
         print("image is none")
@@ -39,7 +41,8 @@ def shape_detect(img):
                     y_1 = int(y + (h - le) / 2)
                     y_2 = int(y + (h + le) / 2)
 
-                    if x_1 > 300 and 290 > y_2 and 185 > y_1 > 80:
+                    #if x_1 > 300 and 290 > y_2 and 185 > y_1 > 80:
+                    if x_1 > 0 and y_1 > 0:
                         img_trim = img[y_1: y_2, x_1:x_2]
 
                         img_trim_resize = cv2.resize(img_trim, (32, 32))
@@ -63,7 +66,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('sign_logging_13.avi')
+    cam = cv2.VideoCapture(2)
     cam.set(3, 800)
     cam.set(4, 448)
 
