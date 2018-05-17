@@ -48,6 +48,9 @@ class SignCam:
         self.stop_fg = False
         self.exit_fg = False
 
+        img = cv2.imread('init.jpg')
+        self.process_one_frame_sign(img)
+
         self.sign_init()
 
     # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
@@ -98,7 +101,6 @@ class SignCam:
             if self.sign[0][i] == result_sign and prob > 0.95:
                 self.sign[1][i] = self.sign[1][i] + 1
                 break
-        return self.sign
 
     def print_sign(self):  # test code 에서 사용될 출력 함수
         for i in range(7):
@@ -137,9 +139,9 @@ class SignCam:
             if cv2.waitKey(1) & 0xff == 27:
                 return
             for img in img_list:
-                result_sign, prob = self.process_one_frame_sign(img, self.is_in_mission)
+                result_sign, prob = self.process_one_frame_sign(img)
                 print("result sign: ", result_sign)
-                self.sign = self.countup_recognition(result_sign, prob)
+                self.countup_recognition(result_sign, prob)
 
             # self.print_sign()
             self.set_sign2action()
@@ -219,12 +221,9 @@ class SignCam:
         print("!!!!!!!!!!!!!!!!!!!!!!!!")
         init_fn(self.sess)
 
-    def process_one_frame_sign(self, frame, is_in_mission):
+    def process_one_frame_sign(self, frame):
         if len(frame) < 1:
             return "Nothing", 0.00
-
-        if is_in_mission:
-            pass
 
         # 프레임 시작 시간 측정
         t1 = time.time()
