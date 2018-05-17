@@ -42,6 +42,9 @@ class SignCam:
         self.cam.set(4, 448)
         self.sign2action = "Nothing"
         self.mission_number = 0
+        self.slim = tf.contrib.slim
+
+
         self.sess = tf.Session()
 
         self.thread = threading.Thread(target=self.detect_one_frame)
@@ -49,6 +52,7 @@ class SignCam:
         self.exit_fg = False
 
         img = cv2.imread('init.jpg')
+        #self.init_process_one_frame_sign(img)
         self.process_one_frame_sign(img)
 
         self.sign_init()
@@ -186,9 +190,9 @@ class SignCam:
 
     def init_process_one_frame_sign(self, frame):
         self.sess = tf.Session()
-        slim = tf.contrib.slim
+        #slim = tf.contrib.slim
 
-        checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
+
 
         image_size = inception.inception_v1.default_image_size
         # 사용되는 딥러닝 툴은 inception v1으로 가동됨
@@ -206,20 +210,28 @@ class SignCam:
 
         #processed_images = tf.expand_dims(processed_image, 0)
 
-        with slim.arg_scope(inception.inception_v1_arg_scope()):
+        t = time.time()
+        with self.slim.arg_scope(inception.inception_v1_arg_scope()):
             logits, _ = inception.inception_v1(user_processed_images, num_classes=7, is_training=False,
                                                reuse=tf.AUTO_REUSE)
+
+        print(">>>>", time.time() - t)
 
         self.probabilities = tf.nn.softmax(logits)
         # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
 
-        init_fn = slim.assign_from_checkpoint_fn(
-            os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
-            slim.get_model_variables('InceptionV1'))
+        checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
 
-        # with tf.Session() as sess:
+        self.init_fn = self.slim.assign_from_checkpoint_fn(
+            os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
+            self.slim.get_model_variables('InceptionV1'))
+
+        # with slim.arg_scope (0.5초) 와 slim.assign_from_checkpoint_fn (0.1초) 를 self.변수로 하면, 한번만 사용해도 되지 않을까
+        # checkpoint 가져오는 것을 한 번만 사용하게 만들어보기 각 프레임 당 0.1초 단축할 수 있음
+
+       # with tf.Session() as sess:
         print("!!!!!!!!!!!!!!!!!!!!!!!!")
-        init_fn(self.sess)
+        self.init_fn(self.sess)
 
     def process_one_frame_sign(self, frame):
         if len(frame) < 1:
@@ -228,6 +240,8 @@ class SignCam:
         # 프레임 시작 시간 측정
         t1 = time.time()
         self.init_process_one_frame_sign(frame)
+
+
 
         # tensorflow-gpu 사용, CUDA 9.0
         # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)

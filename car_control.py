@@ -75,9 +75,10 @@ class Control:
         self.enc = enc
         #######################################
 
-    def mission(self, mission_num, first, second):
+    def mission(self, mission_num, first, second, trigger):
         self.set_mission(mission_num)
         self.do_mission(first, second)
+        self.deceleration(trigger)
 
     def set_mission(self, mission_num):
         self.mission_num = mission_num

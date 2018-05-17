@@ -23,7 +23,7 @@ def bind(win_name, frame):
 
 
 # 영상을 불러온다
-cap = cv2.VideoCapture('./blue_2.mp4')  # video name
+cap = cv2.VideoCapture('yellow.mp4')  # video name
 ret, img = cap.read()
 cv2.namedWindow('image')
 bind('image', img)
