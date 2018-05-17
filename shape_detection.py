@@ -11,8 +11,8 @@ count = 0
 lower_yellow = np.array([0, 30, 40], np.uint8)
 upper_yellow = np.array([55, 197, 255], np.uint8)
 
-lower_blue = np.array([32, 15, 0], np.uint8)
-upper_blue = np.array([181, 166, 30], np.uint8)
+lower_blue = np.array([43, 5, 0], np.uint8)
+upper_blue = np.array([170, 90, 50], np.uint8)
 
 
 def shape_detect(img):
@@ -53,9 +53,10 @@ def shape_detect(img):
                         cv2.imshow('filtered', both)
                         nonzero_num = np.count_nonzero(both != 0)
 
-                        if nonzero_num > 200 and le > 120:
-                            cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
-                            sign.append(img_trim_resize)
+                        if nonzero_num > 200:
+                            if (le > 80 and len(cnt) > 100) or (le > 60 and len(cnt) < 100):
+                                cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
+                                sign.append(img_trim_resize)
     return sign
 
 
@@ -66,7 +67,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture(2)
+    cam = cv2.VideoCapture('sign_logging_13.avi')
     cam.set(3, 800)
     cam.set(4, 448)
 
