@@ -5,6 +5,7 @@
 import cv2
 import csv
 import time
+import numpy as np
 
 
 # 함수
@@ -13,7 +14,7 @@ import time
 # 반환: rgb
 def draw_circle(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        print(tuple(param[y][x]))
+        print(param[y][x])
         writer.writerow(tuple(param[y][x]))  # csv 파일에 작성
 
 
@@ -25,9 +26,9 @@ def bind(win_name, frame):
 cap = cv2.VideoCapture('cut.mp4')  # video name
 ret, img = cap.read()
 cv2.namedWindow('image')
-
-# 클릭 이벤트 발생한 좌표에서 rgb를 반환하여 기록
 bind('image', img)
+# 클릭 이벤트 발생한 좌표에서 rgb를 반환하여 기록
+
 
 # open csv file for writing
 now_time = time.localtime()  # 현재 시간을 파일명에 추가한다
@@ -45,6 +46,7 @@ while True:
         cv2.imshow('image', img)
         if cv2.waitKey(0) & 0xFF == ord(' '):
             ret, img = cap.read()
+            bind('image', img)
 
         # press 'q' for exit
         if cv2.waitKey(0) & 0xFF == ord('q'): break
