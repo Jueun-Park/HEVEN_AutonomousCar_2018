@@ -68,7 +68,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('C:/Users/LG/PycharmProjects/untitled6/sign_logging_13.avi')
+    cam = cv2.VideoCapture(2)
     cam.set(3, 800)
     cam.set(4, 448)
 
