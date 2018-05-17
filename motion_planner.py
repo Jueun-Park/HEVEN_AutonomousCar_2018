@@ -181,10 +181,11 @@ class MotionPlanner:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-            self.motion_parameter = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None)
+            self.motion_parameter = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None,
+                                     self.get_sign_trigger())
 
         else:
-            self.motion_parameter = (0, None, None)
+            self.motion_parameter = (0, None, None, self.get_sign_trigger())
 
     def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
 
@@ -314,7 +315,8 @@ class MotionPlanner:
                 y_target = RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion_parameter = (self.mission_num, (data_transposed[1][target - AUX_RANGE], target), None)
+                self.motion_parameter = (self.mission_num, (data_transposed[1][target - AUX_RANGE], target), None,
+                                         self.get_sign_trigger())
 
                 self.previous_data = data
                 self.previous_target = target
@@ -324,7 +326,7 @@ class MotionPlanner:
                 y_target = RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (RAD, RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion_parameter = (self.mission_num, (10, target), None)
+                self.motion_parameter = (self.mission_num, (10, target), None, self.get_sign_trigger())
 
             if color is None: return
 
@@ -333,7 +335,7 @@ class MotionPlanner:
 
     def stopline_handling(self):
         self.lanecam.stopline_loop()
-        self.motion_parameter = (7, self.lanecam.stopline_info, None)
+        self.motion_parameter = (7, self.lanecam.stopline_info, None, self.get_sign_trigger())
 
     def parkingline_handling(self):
         RAD = 300
@@ -384,13 +386,15 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                self.motion_parameter = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motion_parameter = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])),
+                                         self.get_sign_trigger())
 
             else:
-                self.motion_parameter = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])))
+                self.motion_parameter = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])),
+                                         self.get_sign_trigger())
 
         else:
-            self.motion_parameter = (1, False, None)
+            self.motion_parameter = (1, False, None, self.get_sign_trigger())
 
         self.parking_lidar.write(current_frame)
 
@@ -446,7 +450,8 @@ class MotionPlanner:
             minimum_dist = np.min(data_transposed[1])
 
         if right_lane is None: return
-        self.motion_parameter = (6, minimum_dist, (right_lane.get_value(-10), right_lane.get_derivative(-10)))
+        self.motion_parameter = (6, minimum_dist, (right_lane.get_value(-10), right_lane.get_derivative(-10)),
+                                 self.get_sign_trigger())
         self.uturn_frame.write(uturn_frame)
 
     def moving_obs_handling(self):
@@ -501,12 +506,14 @@ class MotionPlanner:
             if path is not None:
                 if collision_count > 50 and minimum_dist < 200:
                     # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
-                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), False)
+                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10))
+                                             , False, self.get_sign_trigger())
 
                 else:
-                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), True)
+                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10))
+                                             , True, self.get_sign_trigger())
             else:
-                self.motion_parameter = (3, None, False)
+                self.motion_parameter = (3, None, False, self.get_sign_trigger())
 
         self.moving_obs_frame.write(moving_obs_frame)
 
