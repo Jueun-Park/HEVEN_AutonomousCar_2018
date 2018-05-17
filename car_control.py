@@ -23,8 +23,10 @@ class Control:
         self.speed = 0
         self.steer = 0
         self.brake = 0
-        self.sign_speed = 0
-        self.sign_brake = 0
+
+        self.deceleration_speed = 0
+        self.deceleration_brake = 0
+        self.deceleration_trigger = 0
         #######################################
         self.mission_num = 0  # DEFAULT 모드
 
@@ -76,7 +78,6 @@ class Control:
     def mission(self, mission_num, first, second):
         self.set_mission(mission_num)
         self.do_mission(first, second)
-        self.sign_delay(mission_num)
 
     def set_mission(self, mission_num):
         self.mission_num = mission_num
@@ -112,7 +113,7 @@ class Control:
             self.__obs__(first[0] / 100, first[1])
 
     def write(self):
-        return self.gear, self.sign_speed, self.steer, self.sign_brake
+        return self.gear, self.deceleration_speed, self.steer, self.deceleration_brake
 
     def get_status(self):
         return self.u_sit, self.p_sit, self.change_mission
@@ -124,21 +125,16 @@ class Control:
         # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
 
-    def sign_delay(self, mission_num):
-        if mission_num != 0 and self.sign_list[mission_num] != 1:
-            if self.sign_t1 == 0:
-                self.sign_t1 = time.time()
-            self.sign_t2 = time.time()
+    def deceleration(self, trigger):
+        self.deceleration_trigger = trigger
 
-            if (self.sign_t2 - self.sign_t1) < 1:
-                self.sign_speed = 9
+        if self.deceleration_trigger == 0:
+            self.deceleration_speed = self.speed
+            self.deceleration_brake = self.brake
 
-            elif (self.sign_t2 - self.sign_t1) > 1:
-                self.sign_list[mission_num] = 1
-                self.sign_t1 = 0
-                self.sign_t2 = 0
-        else:
-            self.sign_speed = self.speed
+        elif self.deceleration_trigger == 1:
+            self.deceleration_speed = 6
+            self.deceleration_brake = 0
 
     def __default__(self, cross_track_error, linear):
         gear = 0

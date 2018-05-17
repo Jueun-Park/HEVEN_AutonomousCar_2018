@@ -19,7 +19,6 @@ from shape_detection import shape_detect
 
 import threading
 
-
 '''
 우선 구현 방법은 Tensorflow/model의 slim이라는 tensorflow가 제공하는 틀을 이용할 거임
 이 방법을 사용한 이유는 실제로 데이터를 구현하고 tensorflow로 표지판을 인식하는데까지 너무 많은 노력과 지식이 필요한데
@@ -35,30 +34,39 @@ from preprocessing import inception_preprocessing
 
 class SignCam:
     def __init__(self):
+        self.sign_trigger = 0
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)] for row in range(2)]
-        self.cam = cv2.VideoCapture(0)#r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4')
+        self.cam = cv2.VideoCapture(2)  # r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4')
         self.cam.set(3, 800)
         self.cam.set(4, 448)
         self.sign2action = "Nothing"
         self.mission_number = 0
         self.sess = tf.Session()
 
-        self.wrapper_thread = threading.Thread(target=self.wrapper)
         self.thread = threading.Thread(target=self.detect_one_frame)
+        self.stop_fg = False
+        self.exit_fg = False
 
         self.sign_init()
 
     # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
     #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
-    def wrapper(self):
-        self.thread.start()
-        self.thread.join()
+    def sign_control(self):
+        return self.sign_trigger
 
     def start(self):
-        if self.wrapper_thread.is_alive() is False:
-            self.wrapper_thread.start()
+        self.thread.start()
+
+    def restart(self):
+        self.stop_fg = False
+
+    def stop(self):
+        self.stop_fg = True
+
+    def exit(self):
+        self.exit_fg = True
 
     def sign_init(self):
         self.sign[0][0] = 'Bicycles'  # MOVING_OBS 3
@@ -84,7 +92,6 @@ class SignCam:
         self.sign[1][4] = 0
         self.sign[1][5] = 0
         self.sign[1][6] = 0
-
 
     def countup_recognition(self, result_sign, prob):
         for i in range(7):
@@ -112,22 +119,30 @@ class SignCam:
                 break
 
     def detect_one_frame(self):
-        # while (self.cam.isOpened()):
-        frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
-        # 이미지 중 표지판이 있는 곳 확인
+        while True:
+            if self.exit_fg is True: break
+            if self.stop_fg is True: time.sleep(1); continue
+            # while (self.cam.isOpened()):
+            frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
+            # 이미지 중 표지판이 있는 곳 확인
 
-        img_list = shape_detect(frame)
+            img_list = shape_detect(frame)
 
-        cv2.imshow('1', frame)
-        if cv2.waitKey(1) & 0xff == 27:
-            return
-        for img in img_list:
-            result_sign, prob = self.process_one_frame_sign(img, self.is_in_mission)
-            print("result sign: ", result_sign)
-            self.sign = self.countup_recognition(result_sign, prob)
+            if len(img_list) == 0:
+                self.sign_trigger = 0
+            else:
+                self.sign_trigger = 1
 
-        #self.print_sign()
-        self.set_sign2action()
+            cv2.imshow('1', frame)
+            if cv2.waitKey(1) & 0xff == 27:
+                return
+            for img in img_list:
+                result_sign, prob = self.process_one_frame_sign(img, self.is_in_mission)
+                print("result sign: ", result_sign)
+                self.sign = self.countup_recognition(result_sign, prob)
+
+            # self.print_sign()
+            self.set_sign2action()
 
 
 
@@ -155,7 +170,7 @@ class SignCam:
             self.sign_reinit()
 
         self.sign2action = "Nothing"
-        #print(self.mission_number)
+        # print(self.mission_number)
         return self.mission_number
 
     def is_in_this_mission(self, ndarray):
@@ -168,11 +183,10 @@ class SignCam:
             return False
 
     def init_process_one_frame_sign(self, frame):
-
+        self.sess = tf.Session()
         slim = tf.contrib.slim
 
         checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
-
 
         image_size = inception.inception_v1.default_image_size
         # 사용되는 딥러닝 툴은 inception v1으로 가동됨
@@ -183,32 +197,27 @@ class SignCam:
         # 프레임 저장 후 검사
         cv2.imwrite('test.jpg', frame)
         image_input = tf.read_file('test.jpg')
-
         image = tf.image.decode_jpeg(image_input, channels=3)
         self.user_images.append(image)
         processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
         user_processed_images.append(processed_image)
 
-        processed_images = tf.expand_dims(processed_image, 0)
+        #processed_images = tf.expand_dims(processed_image, 0)
 
         with slim.arg_scope(inception.inception_v1_arg_scope()):
             logits, _ = inception.inception_v1(user_processed_images, num_classes=7, is_training=False,
                                                reuse=tf.AUTO_REUSE)
 
         self.probabilities = tf.nn.softmax(logits)
-        #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+        # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
 
         init_fn = slim.assign_from_checkpoint_fn(
             os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
             slim.get_model_variables('InceptionV1'))
 
-
         # with tf.Session() as sess:
         print("!!!!!!!!!!!!!!!!!!!!!!!!")
         init_fn(self.sess)
-
-
-
 
     def process_one_frame_sign(self, frame, is_in_mission):
         if len(frame) < 1:
@@ -216,74 +225,37 @@ class SignCam:
 
         if is_in_mission:
             pass
+
+        # 프레임 시작 시간 측정
         t1 = time.time()
         self.init_process_one_frame_sign(frame)
-        # 프레임 시작 시간 측정
-
-        #checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
-        # 데이터의 checkpoint 디렉토리 넣어줌
-        #slim = tf.contrib.slim
-
-        #image_size = inception.inception_v1.default_image_size
-        # 사용되는 딥러닝 툴은 inception v1으로 가동됨
-
-        #user_images = []
-        #user_processed_images = []
-
-        # 프레임 저장 후 검사
-        #cv2.imwrite('test.jpg', frame)
-        #image_input = tf.read_file('test.jpg')
-
-        #image = tf.image.decode_jpeg(image_input, channels=3)
-        #user_images.append(image)
-        #processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
-        #user_processed_images.append(processed_image)
-
-        #processed_images = tf.expand_dims(processed_image, 0)
-
-        #with slim.arg_scope(inception.inception_v1_arg_scope()):
-        #    logits, _ = inception.inception_v1(user_processed_images, num_classes=7, is_training=False,
-        #                                       reuse=tf.AUTO_REUSE)
-            # Number of class: 우리 표지판 총 7개의 class를 판별
-
-        #probabilities = tf.nn.softmax(logits)
-
-        #init_fn = slim.assign_from_checkpoint_fn(
-        #    os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
-        #    slim.get_model_variables('InceptionV1'))  # Slim model중 InceptionV1을 이용함
 
         # tensorflow-gpu 사용, CUDA 9.0
-        #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-        for d in ['/gpu:2', '/gpu:3', '/gpu:4', 'gpu:5']:
-            with tf.device(d):
-                #sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-                # with tf.Session() as sess:
-                #init_fn(sess)
-                np_images, probabilities = self.sess.run([self.user_images, self.probabilities])
-            # names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
-            # 7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
-            names = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
-                     'Roadworks', 'u_turn']
+        # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+        with tf.device('/gpu:0'):
+            # sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+            #with tf.Session() as self.sess:
+            # init_fn(sess)
+            np_images, probabilities = self.sess.run([self.user_images, self.probabilities])
+        # names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
+        # 7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
+        names = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
+                 'Roadworks', 'u_turn']
 
-            probabilitie = probabilities[0, 0:]
-            sorted_inds = [i[0] for i in sorted(enumerate(-probabilitie), key=lambda x: x[1])]
+        probabilitie = probabilities[0, 0:]
+        sorted_inds = [i[0] for i in sorted(enumerate(-probabilitie), key=lambda x: x[1])]
 
-            for p in range(7):
-                index = sorted_inds[p]
+        for p in range(7):
+            index = sorted_inds[p]
 
-            # print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
+        # print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
 
-            # 검출된 표지판 사진 확인하고 싶으면 주석을 푸시면 됩니다. 근데 그 사진을 꺼야지 다음 코드가 진행이 되더라고요.
-            # plt.figure()
-            # plt.imshow(np_images[0].astype(np.uint8))
-            # plt.axis('off')
-            # plt.show()
-            t2 = time.time()
+        t2 = time.time()
 
-            print("one frame time: ", t2 - t1)
+        print("one frame time: ", t2 - t1)
 
         # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
-            return names[sorted_inds[0]], probabilitie[sorted_inds[0]]
+        return names[sorted_inds[0]], probabilitie[sorted_inds[0]]
 
 
 if __name__ == "__main__":
@@ -291,9 +263,9 @@ if __name__ == "__main__":
 
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     current_signcam = SignCam()
+    current_signcam.start()
 
     while (current_signcam.cam.isOpened()):
-        start = time.time()
-        current_signcam.detect_one_frame()
+        #current_signcam.detect_one_frame()
         mission_number = current_signcam.get_mission()
-        print(mission_number)
+        #print(mission_number)

@@ -20,10 +20,14 @@ monitor = Monitor()
 
 
 while True:
+    t = time.time()
     control.read(*platform.read())
     motion.plan_motion(control.get_status())
     control.mission(*motion.get_motion_parameter())
+    #control.deceleration(*motion.get_sign_trigger())
     platform.write(*control.write())
+
+    print('!!!')
 
     frames = motion.get_frame()
     status_temp = monitor.concatenate(monitor.immonitor(), monitor.immission(motion.mission_num, control.get_status()), mode='h')
@@ -31,7 +35,7 @@ while True:
     monitor.show('frame', *frames, windows_is=motion.windows_is)
     monitor.show('status', status)
 
-
+    print(time.time() - t)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         motion.stop()
         platform.stop()

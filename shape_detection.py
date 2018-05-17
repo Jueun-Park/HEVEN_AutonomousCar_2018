@@ -17,7 +17,6 @@ upper_blue = np.array([150, 65, 22], np.uint8)
 
 def shape_detect(img):
     sign = []
-
     if img is None:
         print("image is none")
     else:
@@ -32,7 +31,6 @@ def shape_detect(img):
             area = cv2.contourArea(cnt)
             hull = cv2.convexHull(cnt)
             hull_area = cv2.contourArea(hull)
-
             if hull_area > 0:
                 solidity = int(100 * area / hull_area)
                 if solidity > 94 and w > 42 and h > 0:
