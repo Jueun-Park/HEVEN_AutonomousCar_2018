@@ -127,21 +127,25 @@ class MotionPlanner:
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 3:
             if control_status[2] == 2:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 6:
-            if control_status[0] == 3:
+            if control_status[0] == 4:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 7:
             if control_status[2] == 2:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
                 self.mission_start_lap = 0
 
         if self.mission_num != 0:
@@ -160,9 +164,11 @@ class MotionPlanner:
         elif self.mission_num == 3:
             self.moving_obs_handling()
 
-        elif self.mission_num == 2:
+        elif self.mission_num == 2:  # 공사장: 정적 장애물 탈출 시 문제 발생 가능!
+            # 이유: 장애물 사이의 거리가 멀어서 멀리 보고, 타임아웃이 길다.
+            # 인자:
             # 부채살 반경, 부채살 사잇각, 장애물 offset 크기, 차선 offset 크기, timeout 시간(초)
-            self.static_obs_handling(400, 110, 75, 100, 4)
+            self.static_obs_handling(400, 110, 80, 100, 3)
 
         elif self.mission_num == 4:
             self.static_obs_handling(300, 110, 65, 60, 2)
@@ -425,7 +431,7 @@ class MotionPlanner:
                 points[angle][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(uturn_frame, tuple(point), 15, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(uturn_frame, tuple(point), 30, 255, -1)  # 캔버스에 점 찍기
 
         data = np.zeros((UTURN_RANGE + 1, 2), np.int)
 
@@ -452,6 +458,7 @@ class MotionPlanner:
                                                       right_lane.get_derivative(-10)), self.get_sign_trigger())
         else:
             self.motion_parameter = (6, minimum_dist, None, self.get_sign_trigger())
+        print(self.motion_parameter)
 
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
@@ -503,7 +510,7 @@ class MotionPlanner:
             minimum_dist = np.min(data_transposed[1])  # 막힌 부채살 중 가장 짧은 길이
 
             if path is not None:
-                if collision_count > 30 and minimum_dist < 200:
+                if collision_count > 20 and minimum_dist < 200:
                     # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
                     self.motion_parameter = (3, (path.get_value(-10),
                                                  path.get_derivative(-10)), False, self.get_sign_trigger())

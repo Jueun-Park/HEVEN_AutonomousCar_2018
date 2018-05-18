@@ -52,6 +52,8 @@ class Control:
         self.ct2 = 0
         self.ct3 = 0
         self.ct4 = 0
+        self.ct5 = 0
+        self.ct6 = 0
 
         self.st1 = 0
         self.st2 = 0
@@ -79,6 +81,7 @@ class Control:
         self.set_mission(mission_num)
         self.do_mission(first, second)
         self.deceleration(trigger)
+        print("deceleration trigger: ", self.deceleration_trigger)
 
     def set_mission(self, mission_num):
         self.mission_num = mission_num
@@ -103,7 +106,7 @@ class Control:
 
         elif self.mission_num == 6:
             if second is None:
-                self.__turn__(first / 100, None, None)
+                self.__turn__(first / 100, 0, 0)
             else:
                 self.__turn__(first / 100, second[0] / 100, second[1])
 
@@ -137,7 +140,7 @@ class Control:
             self.deceleration_brake = self.brake
 
         elif self.deceleration_trigger == 1:
-            self.deceleration_speed = 6
+            self.deceleration_speed = 24
             self.deceleration_brake = 0
 
     def __default__(self, cross_track_error, linear):
@@ -190,7 +193,7 @@ class Control:
         car_circle = 1
 
         if self.mission_num == 2:
-            speed = 54
+            speed = 42
             correction = 1.6
             adjust = 0.05
             obs_mode = 0
@@ -239,7 +242,7 @@ class Control:
                     theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
                     if abs(theta_obs) > 15:
-                        speed = 24
+                        speed = 12
 
             elif obs_mode == 1:
                 if obs_theta == -35:
@@ -256,13 +259,16 @@ class Control:
 
                     theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
+                    if abs(theta_obs) > 15:
+                        speed = 9
+
             elif obs_mode == 2:
                 if obs_theta == -35:
                     theta_obs = 10
-                    speed = 12
+                    speed = 9
                 elif obs_theta == -145:
                     theta_obs = -10
-                    speed = 12
+                    speed = 9
                 else:
                     car_circle = 1.387
                     cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
@@ -359,7 +365,7 @@ class Control:
 
         self.change_mission = 0
 
-        if abs(stop_line) < 1.5:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(stop_line) < 1.7:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
@@ -524,7 +530,7 @@ class Control:
         self.change_mission = 0
 
         if self.u_sit == 0:
-            if turn_distance < 3.5:
+            if turn_distance < 3.35:
                 steer = 0
                 speed = 0
                 brake = 60
@@ -600,10 +606,22 @@ class Control:
                     self.u_sit = 3
 
         elif self.u_sit == 3:
-            speed = 36
-            steer = 0
-            brake = 0
-            self.change_mission = 2
+            if self.ct5 == 0:
+                self.ct5 = self.enc
+            self.ct6 = self.enc
+
+            if (self.ct4 - self.ct3) < 100:
+                speed = 36
+                steer = 0
+                brake = 0
+
+            if (self.ct4 - self.ct3) >= 100:
+                speed = 0
+                steer = 0
+                brake = 70
+
+                if self.speed_platform == 0:
+                    self.u_sit = 4
 
         self.gear = gear
         self.speed = speed
@@ -611,8 +629,9 @@ class Control:
         self.brake = brake
 
 
-control = Control()
-control.mission(0, (0, 0, 1000000000), None)
-control.ch_mission()
-print(control.steer)
-print(control.change_mission)
+if __name__ == '__main__':
+    control = Control()
+    control.mission(0, (0, 0, 1000000000), None)
+    control.ch_mission()
+    print(control.steer)
+    print(control.change_mission)
