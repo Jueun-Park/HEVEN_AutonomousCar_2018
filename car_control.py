@@ -108,10 +108,7 @@ class Control:
                 self.__moving__(first[0] / 100, first[1], second)
 
         elif self.mission_num == 6:
-            if second is None:
-                self.__turn__(first / 100, 0, 0)
-            else:
-                self.__turn__(first / 100, second[0] / 100, second[1])
+            self.__turn__(first / 100)
 
         elif self.mission_num == 7:
             if first is None:
@@ -138,7 +135,9 @@ class Control:
     def deceleration(self, mission_num, trigger):
         self.deceleration_trigger = trigger
 
-        if mission_num != 0:
+        if mission_num == 0:
+            self.deceleration_trigger = trigger
+        else:
             self.deceleration_trigger = 0
 
         if self.deceleration_trigger == 0:
@@ -159,8 +158,8 @@ class Control:
 
         if abs(self.dt2 - self.dt1) < 5:
             speed = 36
-        else:
-            speed = 54
+        elif abs(self.dt2 - self.dt1) >= 5:
+            speed = 60
 
         self.change_mission = 0
 
@@ -563,7 +562,7 @@ class Control:
         self.steer = steer
         self.brake = brake
 
-    def __turn__(self, turn_distance, line_error, line_linear):
+    def __turn__(self, turn_distance):
         gear = 0
         speed = 36
         steer = 0
