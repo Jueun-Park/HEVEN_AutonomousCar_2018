@@ -144,8 +144,9 @@ class PlatformSerial:
         self.ser.close()
 
     def test_write_to_platform(self):
+
         print(self.steer_platform)
-        self.steer_for_write = 1970
+        self.steer_for_write = -1970
 
     def test_communication_main(self):
         read_thread = threading.Thread(target=self._read())
@@ -158,7 +159,7 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = 'COM5'
+    port = 'COM7'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
     print('CONNECTED')
