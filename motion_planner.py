@@ -92,7 +92,7 @@ class MotionPlanner:
         # 장애물 미션 화면, 주차 공간 라이다 화면, 동적장애물 화면, 유턴 화면
         self.windows_is =                               [True, True, False, False, False, False, False, False]
         if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, False, False, False]
+        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, True, False, False]
         elif self.mission_num == 2: self.windows_is =   [False, False, False, False, True, False, False, False]
         elif self.mission_num == 3: self.windows_is =   [False, False, False, False, False, False, True, False]
         elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
@@ -376,7 +376,7 @@ class MotionPlanner:
             r = 0
             obstacle_detected = False
 
-            while not obstacle_detected and r <= 300:
+            while not obstacle_detected and r <= 500:
                 temp_x = RAD + parking_line[0] + int(r * np.cos(parking_line[2]))
                 temp_y = int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))
 

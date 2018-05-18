@@ -138,10 +138,7 @@ class Control:
     def deceleration(self, mission_num, trigger):
         self.deceleration_trigger = trigger
 
-        if mission_num == 1 and self.p_sit >= 0:
-            self.deceleration_trigger = 0
-
-        elif mission_num == 6 and self.u_sit >= 0:
+        if mission_num != 0:
             self.deceleration_trigger = 0
 
         if self.deceleration_trigger == 0:
@@ -149,7 +146,7 @@ class Control:
             self.deceleration_brake = self.brake
 
         elif self.deceleration_trigger == 1:
-            self.deceleration_speed = 24
+            self.deceleration_speed = 12
             self.deceleration_brake = 0
 
     def __default__(self, cross_track_error, linear):
@@ -163,7 +160,7 @@ class Control:
         if abs(self.dt2 - self.dt1) < 5:
             speed = 36
         else:
-            speed = 72
+            speed = 54
 
         self.change_mission = 0
 
@@ -406,6 +403,7 @@ class Control:
         speed = 36
         steer = 0
         brake = 0
+        print(self.p_sit)
 
         self.change_mission = 0
 
@@ -583,33 +581,7 @@ class Control:
                     self.u_sit = 1
 
             else:
-                ########################################################################################################
-                tan_value = line_linear * (-1)
-                theta_1 = math.degrees(math.atan(tan_value))
-
-                k = 0.5
-
-                if self.speed_platform == 0:
-                    theta_2 = 0
-                else:
-                    velocity = (self.speed_platform * 100) / 3600
-                    theta_2 = math.degrees(math.atan((k * line_error) / velocity))
-
-                steer_now = (theta_1 + theta_2)
-
-                adjust = 0.3
-
-                steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
-                self.steer_past = steer_final
-
-                steer = steer_final * 71
-                if steer > 1970:
-                    steer = 1970
-                    self.steer_past = 27.746
-                elif steer < -1970:
-                    steer = -1970
-                    self.steer_past = -27.746
-                ########################################################################################################
+                steer = 0.5
                 speed = 36
                 brake = 0
                 gear = 0
