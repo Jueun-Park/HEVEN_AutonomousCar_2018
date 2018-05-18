@@ -342,16 +342,24 @@ class MotionPlanner:
         self.motion_parameter = (7, self.lanecam.stopline_info, None, self.get_sign_trigger())
 
     def parkingline_handling(self):
-        RAD = 300
-        self.lanecam.default_loop(0)
-        self.lanecam.parkingline_loop()
+        RAD = 300  # 라이다가 보는 반경
+        self.lanecam.default_loop(0)  # 차선을 얻는 0번 모드 (함수 얻기)
+        self.lanecam.parkingline_loop()  # 주차선 찾기 함수 실행
         parking_line = self.lanecam.parkingline_info
+        
+        # 양 쪽 차선을 다 본 다음에 중앙선을 넘겨준다.
+        if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
+            path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
+            path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-        right_lane = None
-        if self.lanecam.right_coefficients is not None:
-            right_coefficients = self.lanecam.right_coefficients
-            right_lane = Parabola(right_coefficients[2], right_coefficients[1], right_coefficients[0])
+            self.motion_parameter = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None,
+                                     self.get_sign_trigger())
 
+        else:
+            self.motion_parameter = (0, None, None, self.get_sign_trigger())
+
+        # 왜 1번칸에 장애물이 안 잡힐까? 더 민감하게 장애물을 받는 라이다 코드가 필요해
+        # 라이다
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
 
@@ -372,23 +380,24 @@ class MotionPlanner:
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 30, 255, -1)  # 캔버스에 점 찍기
-
+        
+        # 주차선 검출 후
         if parking_line is not None:
             r = 0
             obstacle_detected = False
 
-            while not obstacle_detected and r <= 500:
+            while not obstacle_detected and r <= 500:  # 장애물을 만날 때까지 레이저 쏜다
                 temp_x = RAD + parking_line[0] + int(r * np.cos(parking_line[2]))
                 temp_y = int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))
-
                 try:
                     if current_frame[temp_y][temp_x] != 0:
                         obstacle_detected = True
-                except:
+                except Exception as e:
+                    print("parking lidar e: ", e)
                     pass
-
                 r += 1
-
+            
+            # 모니터로 확인
             cv2.line(current_frame, (RAD + parking_line[0] + int(10 * np.cos(parking_line[2])),
                                      int(RAD - (parking_line[1] + 10 * np.sin(parking_line[2])))),
                      (RAD + parking_line[0] + int(r * np.cos(parking_line[2])),
@@ -396,16 +405,17 @@ class MotionPlanner:
 
             if not obstacle_detected:
                 if right_lane is not None:
-                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (right_lane.get_value(-10), right_lane.get_derivative(-10))),
+                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1],
+                                                       (right_lane.get_value(-10), right_lane.get_derivative(-10))),
                                              self.get_sign_trigger())
                 else:
                     self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
 
-            else:
-                #x, y, max theta
+            else:  # if obstacle detected
                 if right_lane is not None:
-                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (right_lane.get_value(-10), right_lane.get_derivative(-10))),
-                                         self.get_sign_trigger())
+                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1],
+                                                        (right_lane.get_value(-10), right_lane.get_derivative(-10))),
+                                             self.get_sign_trigger())
                 else:
                     self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
 
