@@ -342,8 +342,14 @@ class MotionPlanner:
 
     def parkingline_handling(self):
         RAD = 300
+        self.lanecam.default_loop(0)
         self.lanecam.parkingline_loop()
         parking_line = self.lanecam.parkingline_info
+
+        left_lane = None
+        if self.lanecam.left_coefficients is not None:
+            left_coefficients = self.lanecam.left_coefficients
+            left_lane = Parabola(left_coefficients[2], left_coefficients[1], left_coefficients[0])
 
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
@@ -388,12 +394,19 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                self.motion_parameter = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])),
-                                         self.get_sign_trigger())
+                if left_lane is not None:
+                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (left_lane.get_value(-10), left_lane.get_derivative(-10))),
+                                             self.get_sign_trigger())
+                else:
+                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
 
             else:
-                self.motion_parameter = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])),
+                #x, y, max theta
+                if left_lane is not None:
+                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (left_lane.get_value(-10), left_lane.get_derivative(-10))),
                                          self.get_sign_trigger())
+                else:
+                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], None), self.get_sign_trigger())
 
         else:
             self.motion_parameter = (1, False, None, self.get_sign_trigger())
@@ -431,7 +444,7 @@ class MotionPlanner:
                 points[angle][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(uturn_frame, tuple(point), 30, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(uturn_frame, tuple(point), 15, 255, -1)  # 캔버스에 점 찍기
 
         data = np.zeros((UTURN_RANGE + 1, 2), np.int)
 
