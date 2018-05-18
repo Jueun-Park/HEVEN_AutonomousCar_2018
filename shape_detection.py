@@ -19,11 +19,11 @@ lower_blue = np.array([43, 5, 0], np.uint8)
 upper_blue = np.array([170, 90, 50], np.uint8)
 
 
-# lower_yellow = np.array([0, 0, 0], np.uint8)
-# upper_yellow = np.array([255, 255, 255], np.uint8)
+#lower_yellow = np.array([0, 0, 0], np.uint8)
+#upper_yellow = np.array([255, 255, 255], np.uint8)
 #
-# lower_blue = np.array([0, 0, 0], np.uint8)
-# upper_blue = np.array([255, 255, 255], np.uint8)
+#lower_blue = np.array([0, 0, 0], np.uint8)
+#upper_blue = np.array([255, 255, 255], np.uint8)
 
 
 def shape_detect(img):
