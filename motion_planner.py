@@ -114,8 +114,6 @@ class MotionPlanner:
         #if self.keycam.get_mission() != 0:
         self.mission_num = self.keycam.get_mission()
 
-        print(self.mission_num)
-
         if self.mission_num == 0:
             self.signcam.restart()
             #self.signcam.detect_one_frame()
@@ -129,18 +127,22 @@ class MotionPlanner:
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
+                self.mission_start_lap = 0
 
         elif self.mission_num == 3:
             if control_status[2] == 2:
                 self.mission_num = 0
+                self.mission_start_lap = 0
 
         elif self.mission_num == 6:
             if control_status[0] == 3:
                 self.mission_num = 0
+                self.mission_start_lap = 0
 
         elif self.mission_num == 7:
             if control_status[2] == 2:
                 self.mission_num = 0
+                self.mission_start_lap = 0
 
         if self.mission_num != 0:
             self.signcam.stop()
@@ -160,13 +162,13 @@ class MotionPlanner:
 
         elif self.mission_num == 2:
             # 부채살 반경, 부채살 사잇각, 장애물 offset 크기, 차선 offset 크기, timeout 시간(초)
-            self.static_obs_handling(300, 110, 65, 100, 3)
+            self.static_obs_handling(400, 110, 75, 100, 4)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(300, 110, 65, 60, 1.5)
+            self.static_obs_handling(300, 110, 65, 60, 2)
 
         elif self.mission_num == 5:
-            self.static_obs_handling(300, 110, 70, 60, 1.5)
+            self.static_obs_handling(300, 110, 70, 60, 2)
 
         elif self.mission_num == 6:
             self.Uturn_handling()
@@ -501,7 +503,7 @@ class MotionPlanner:
             minimum_dist = np.min(data_transposed[1])  # 막힌 부채살 중 가장 짧은 길이
 
             if path is not None:
-                if collision_count > 50 and minimum_dist < 200:
+                if collision_count > 30 and minimum_dist < 200:
                     # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
                     self.motion_parameter = (3, (path.get_value(-10),
                                                  path.get_derivative(-10)), False, self.get_sign_trigger())
