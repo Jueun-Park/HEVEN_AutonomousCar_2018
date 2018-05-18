@@ -406,7 +406,7 @@ class MotionPlanner:
                     self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (right_lane.get_value(-10), right_lane.get_derivative(-10))),
                                          self.get_sign_trigger())
                 else:
-                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], None), self.get_sign_trigger())
+                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
 
         else:
             self.motion_parameter = (1, False, None, self.get_sign_trigger())

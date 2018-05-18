@@ -347,7 +347,7 @@ class Control:
             if moving_error is None:
                 speed = 12
             else:
-                speed = 42
+                speed = 36
             brake = 0
             if self.count > 0:
                 self.change_mission = 2

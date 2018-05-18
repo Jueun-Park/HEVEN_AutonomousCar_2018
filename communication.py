@@ -105,7 +105,7 @@ if __name__ == '__main__':
     while True:
         platform.status()
         t_stop()
-        '''
+
         if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
             t = time.time()
             while time.time() - t < 2:
@@ -115,4 +115,3 @@ if __name__ == '__main__':
             while time.time() - t < 2:
                 platform.status()
                 t_stop()
-        '''

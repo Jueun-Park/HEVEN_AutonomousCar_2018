@@ -145,81 +145,8 @@ class PlatformSerial:
 
     def test_write_to_platform(self):
 
-        if self.e1 == 0:
-            self.e1 = self.ENC1[0]
-
-        self.e2 = self.ENC1[0]
-
-        data = "%d  " % (self.e1 - self.e2)
-
-        print(data)
-
-        self.steer_for_write = 0
-        self.speed_for_write = 36
-        self.brake_for_write = 0
-
-        if self.usit == 1:
-            self.speed_for_write = 36
-            if self.ct1 == 0:
-                self.ct1 = self.ENC1[0]
-            self.ct2 = self.ENC1[0]
-
-            if (self.ct2 - self.ct1) < 100:
-                self.steer_for_write = 0
-
-                self.f.write("\nstraight  ")
-                self.f.write(data)
-
-            elif 100 <= (self.ct2 - self.ct1) < 730:  # 변경할 때 걸리는 엔코더 초과값 계산 및 보정 필요(593)
-                self.steer_for_write = -1970
-
-                self.f.write("\nturn left  ")
-                self.f.write(data)
-
-            if (self.ct2 - self.ct1) >= 730:
-                self.steer_for_write = -1970
-                self.speed_for_write = 0
-                self.brake_for_write = 60
-
-                self.f.write("\nstop  ")
-                self.f.write(data)
-
-                if self.speed_platform == 0:
-                    self.steer_for_write = 0
-                    self.usit = 2
-
-        elif self.usit == 2:
-            if self.ct3 == 0:
-                self.ct3 = self.ENC1[0]
-            self.ct4 = self.ENC1[0]
-
-            if (self.ct4 - self.ct3) < 134: # 158
-                self.speed_for_write = 36
-                self.steer_for_write = 1970
-                self.brake_for_write = 0
-
-                self.f.write("\nturn right  ")
-                self.f.write(data)
-
-            if (self.ct4 - self.ct3) >= 134: # 158
-                self.steer_for_write = 1970
-                self.brake_for_write = 60
-                self.speed_for_write = 0
-
-                self.f.write("\nstop  ")
-                self.f.write(data)
-
-                if self.speed_platform == 0:
-                    self.usit = 3
-                    self.steer_for_write = 0
-
-        elif self.usit == 3:
-            self.steer_for_write = 0
-            self.speed_for_write = 36
-            self.brake_for_write = 0
-
-            self.f.write("\nstraight  ")
-            self.f.write(data)
+        print(self.steer_platform)
+        self.steer_for_write = -1970
 
     def test_communication_main(self):
         read_thread = threading.Thread(target=self._read())
@@ -232,7 +159,7 @@ class PlatformSerial:
 
 
 if __name__ == '__main__':
-    port = 'COM4'
+    port = 'COM7'
     # e.g. /dev/ttyUSB0 on GNU/Linux or COM3 on Windows.
     platform = PlatformSerial(port)
     print('CONNECTED')
