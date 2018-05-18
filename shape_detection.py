@@ -54,7 +54,7 @@ def shape_detect(img):
                     y_1 = int(y + (h - le) / 2)
                     y_2 = int(y + (h + le) / 2)
 
-                    if Y2_UPPER > y_2 and Y1_UPPER > y_1 > Y1_LOWER:
+                    if Y2_UPPER > y_2 and Y1_UPPER > y_1 > Y1_LOWER and x_1 > 300:
                         # if x_1 > 0 and y_1 > 0:
                         img_trim = img2[y_1: y_2, x_1:x_2]
 

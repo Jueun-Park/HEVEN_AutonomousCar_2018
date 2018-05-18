@@ -48,6 +48,9 @@ class Control:
         self.t1 = 0
         self.t2 = 0
 
+        self.dt1 = 0
+        self.dt2 = 0
+
         self.ct1 = 0
         self.ct2 = 0
         self.ct3 = 0
@@ -145,8 +148,17 @@ class Control:
 
     def __default__(self, cross_track_error, linear):
         gear = 0
-        speed = 72
         brake = 0
+
+        if self.dt1 == 0:
+            self.dt1 = time.time()
+        self.dt2 = time.time()
+
+        if abs(self.dt2 - self.dt1) < 5:
+            speed = 36
+        else:
+            speed = 72
+
         self.change_mission = 0
 
         tan_value = linear * (-1)
@@ -347,7 +359,7 @@ class Control:
             if moving_error is None:
                 speed = 12
             else:
-                speed = 36
+                speed = 18
             brake = 0
             if self.count > 0:
                 self.change_mission = 2
