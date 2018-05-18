@@ -57,3 +57,4 @@ class Lidar:
 
 if __name__ == "__main__":
     current_lidar = Lidar()
+    current_lidar.data_handling_loop()

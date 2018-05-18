@@ -92,7 +92,7 @@ class MotionPlanner:
         # 장애물 미션 화면, 주차 공간 라이다 화면, 동적장애물 화면, 유턴 화면
         self.windows_is =                               [True, True, False, False, False, False, False, False]
         if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, False, False, False]
+        elif self.mission_num == 1: self.windows_is =   [True, True, True, False, False, True, False, False]
         elif self.mission_num == 2: self.windows_is =   [False, False, False, False, True, False, False, False]
         elif self.mission_num == 3: self.windows_is =   [False, False, False, False, False, False, True, False]
         elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
@@ -114,8 +114,6 @@ class MotionPlanner:
         #if self.keycam.get_mission() != 0:
         self.mission_num = self.keycam.get_mission()
 
-        print(self.mission_num)
-
         if self.mission_num == 0:
             self.signcam.restart()
             #self.signcam.detect_one_frame()
@@ -130,18 +128,26 @@ class MotionPlanner:
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
 
         elif self.mission_num == 3:
             if control_status[2] == 2:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
 
         elif self.mission_num == 6:
-            if control_status[0] == 3:
+            if control_status[0] == 4:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
 
         elif self.mission_num == 7:
             if control_status[2] == 2:
                 self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
 
         if self.mission_num != 0:
             self.signcam.stop()
@@ -159,15 +165,17 @@ class MotionPlanner:
         elif self.mission_num == 3:
             self.moving_obs_handling()
 
-        elif self.mission_num == 2:
+        elif self.mission_num == 2:  # 공사장: 정적 장애물 탈출 시 문제 발생 가능!
+            # 이유: 장애물 사이의 거리가 멀어서 멀리 보고, 타임아웃이 길다.
+            # 인자:
             # 부채살 반경, 부채살 사잇각, 장애물 offset 크기, 차선 offset 크기, timeout 시간(초)
-            self.static_obs_handling(300, 110, 65, 100, 3)
+            self.static_obs_handling(400, 110, 80, 100, 3)
 
         elif self.mission_num == 4:
-            self.static_obs_handling(300, 110, 65, 60, 1.5)
+            self.static_obs_handling(300, 110, 65, 60, 2)
 
         elif self.mission_num == 5:
-            self.static_obs_handling(300, 110, 70, 60, 1.5)
+            self.static_obs_handling(300, 110, 70, 60, 2)
 
         elif self.mission_num == 6:
             self.Uturn_handling()
@@ -189,7 +197,6 @@ class MotionPlanner:
             self.motion_parameter = (0, None, None, self.get_sign_trigger())
 
     def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
-
         self.lanecam.default_loop(1)
         left_lane_points = self.lanecam.left_current_points
         right_lane_points = self.lanecam.right_current_points
@@ -214,10 +221,10 @@ class MotionPlanner:
                 # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
                 points[theta][0] = round(x) + RAD
                 points[theta][1] = RAD - round(y)
-        t = time.time()
+
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), obs_size, 255, -1)  # 캔버스에 점 찍기
-        print(time.time() - t)
+
         data_ = np.zeros((angle + 1, 2), np.int)
 
         if current_frame is not None:
@@ -232,18 +239,18 @@ class MotionPlanner:
         else:
             self.lap_during_collision = time.time()
 
-        print("Last obstacle before: ", self.lap_during_clear - self.lap_during_collision)
         # 다음 세 가지 조건을 모두 만족하면 탈출한다:
         # 전방이 깨끗한 시간이 timeout 이상일 때
         # 장애물을 한 번이라도 만난 뒤에
         # 미션을 시작한 지 3초 이상 지난 뒤에 (표지판을 인식하고 미션을 수행하기 전 탈출하는 것을 방지)
         if self.lap_during_clear - self.lap_during_collision >= timeout and self.lap_during_collision != 0 and \
-                time.time() - self.mission_start_lap > 3:
-            print("Escape!")
+                time.time() - self.mission_start_lap > 5:
             self.lap_during_clear = 0
             self.lap_during_collision = 0
             self.mission_start_lap = 0
             self.mission_num = 0
+            self.signcam.mission_number = 0
+
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
                 if left_lane_points[i] != -1:
@@ -252,22 +259,20 @@ class MotionPlanner:
 
         if right_lane_points is not None:
             for i in range(0, len(right_lane_points)):
-               if right_lane_points[i] != -1:
-                   if lane_size != 0:
-                        cv2.circle(current_frame, (RAD + 299 -  right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
+                if right_lane_points[i] != -1:
+                    if lane_size != 0:
+                        cv2.circle(current_frame, (RAD + 299 - right_lane_points[i], RAD - 30 * i), lane_size, 100, -1)
 
         data = np.zeros((angle + 1, 2), np.int)
 
         color = None
         target = None
 
-
         if current_frame is not None:
             self.path(drv.InOut(data), drv.In(RAD), drv.In(AUX_RANGE), drv.In(current_frame), drv.In(np.int32(RAD * 2)),
                       block=(angle + 1, 1, 1))
 
             data_transposed = np.transpose(data)
-
 
             # 장애물에 부딫힌 곳까지 하얀 선 그리기
             for i in range(0, angle + 1):
@@ -333,16 +338,26 @@ class MotionPlanner:
 
         self.motion_planner_frame.write(color)
 
-
     def stopline_handling(self):
         self.lanecam.stopline_loop()
         self.motion_parameter = (7, self.lanecam.stopline_info, None, self.get_sign_trigger())
 
     def parkingline_handling(self):
-        RAD = 300
-        self.lanecam.parkingline_loop()
+        RAD = 500  # 라이다가 보는 반경
+        self.lanecam.default_loop(0)  # 차선을 얻는 0번 모드 (함수 얻기)
+        self.lanecam.parkingline_loop()  # 주차선 찾기 함수 실행
         parking_line = self.lanecam.parkingline_info
+        
+        # 양 쪽 차선을 다 본 다음에 중앙선을 넘겨준다.
+        if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
+            path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
+            path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
+        else:
+            path = Parabola(0, 0, 0)
+
+        # 왜 1번칸에 장애물이 안 잡힐까? 더 민감하게 장애물을 받는 라이다 코드가 필요해
+        # 라이다
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
 
@@ -351,7 +366,7 @@ class MotionPlanner:
         for angle in range(0, 361):
             r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
-            if 2 <= r <= RAD + 50:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+            if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                 # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
                 x = -r * np.cos(np.radians(0.5 * angle))
@@ -363,35 +378,37 @@ class MotionPlanner:
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 30, 255, -1)  # 캔버스에 점 찍기
-
+        
+        # 주차선 검출 후
         if parking_line is not None:
             r = 0
             obstacle_detected = False
 
-            while not obstacle_detected and r <= 300:
+            while not obstacle_detected and r <= 500:  # 장애물을 만날 때까지 레이저 쏜다
                 temp_x = RAD + parking_line[0] + int(r * np.cos(parking_line[2]))
                 temp_y = int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))
-
                 try:
                     if current_frame[temp_y][temp_x] != 0:
                         obstacle_detected = True
-
-                except:
+                except Exception as e:
+                    print("parking lidar e: ", e)
                     pass
-
                 r += 1
-
+            
+            # 모니터로 확인
             cv2.line(current_frame, (RAD + parking_line[0] + int(10 * np.cos(parking_line[2])),
                                      int(RAD - (parking_line[1] + 10 * np.sin(parking_line[2])))),
                      (RAD + parking_line[0] + int(r * np.cos(parking_line[2])),
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                self.motion_parameter = (1, True, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])),
+                self.motion_parameter = (1, True,
+                                         (path.get_value(-10), path.get_derivative(-10), parking_line[0], parking_line[1]),
                                          self.get_sign_trigger())
 
-            else:
-                self.motion_parameter = (1, False, (parking_line[0], parking_line[1], np.rad2deg(parking_line[3])),
+            else:  # if obstacle detected
+                self.motion_parameter = (1, False,
+                                         (path.get_value(-10), path.get_derivative(-10), parking_line[0], parking_line[1]),
                                          self.get_sign_trigger())
 
         else:
@@ -450,10 +467,14 @@ class MotionPlanner:
 
             minimum_dist = np.min(data_transposed[1])
 
-        if right_lane is None: return
-        self.motion_parameter = (6, minimum_dist, (right_lane.get_value(-10), right_lane.get_derivative(-10)),
-                                 self.get_sign_trigger())
-        self.uturn_frame.write(uturn_frame)
+        self.uturn_frame.write(uturn_frame)  # 유턴 프레임을 모니터에 송출
+
+        if right_lane is not None:
+            self.motion_parameter = (6, minimum_dist,(right_lane.get_value(-10),
+                                                      right_lane.get_derivative(-10)), self.get_sign_trigger())
+        else:
+            self.motion_parameter = (6, minimum_dist, None, self.get_sign_trigger())
+        print(self.motion_parameter)
 
     def moving_obs_handling(self):
         self.lanecam.default_loop(0)
@@ -505,14 +526,14 @@ class MotionPlanner:
             minimum_dist = np.min(data_transposed[1])  # 막힌 부채살 중 가장 짧은 길이
 
             if path is not None:
-                if collision_count > 50 and minimum_dist < 200:
+                if collision_count > 20 and minimum_dist < 200:
                     # 미션 번호, (이차곡선의 함수값, 미분값, 곡률), 가도 되는지 안 되는지
-                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10))
-                                             , False, self.get_sign_trigger())
+                    self.motion_parameter = (3, (path.get_value(-10),
+                                                 path.get_derivative(-10)), False, self.get_sign_trigger())
 
                 else:
-                    self.motion_parameter = (3, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10))
-                                             , True, self.get_sign_trigger())
+                    self.motion_parameter = (3, (path.get_value(-10),
+                                                 path.get_derivative(-10)), True, self.get_sign_trigger())
             else:
                 self.motion_parameter = (3, None, False, self.get_sign_trigger())
 

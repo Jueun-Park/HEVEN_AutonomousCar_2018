@@ -4,16 +4,16 @@ import sys
 
 t1 = time.time()
 #Evaluate 할 이미지 디렉토리
-image_path = 'C:/Users/Jonkim/Desktop/slim/user_images/1.png'
+image_path = 'C:/Users/Administrator/Documents/HEVEN_AutonomousCar_2018/test.jpg'
 
 # Read in the image_data
 image_data = tf.gfile.FastGFile(image_path, 'rb').read()
 
 #Smart car Label 삽입
-label_lines = [line.rstrip() for line in tf.gfile.GFile("C:/Users/Jonkim/Desktop/tmp/smartcar/labels.txt")]
+label_lines = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot','Roadworks', 'u_turn']
 
 # freezing pb file 디렉토리 (이거도 push 했음 확인바람)
-with tf.gfile.FastGFile("C:/Users/Jonkim/Desktop/slim/minimal_graph.proto", 'rb') as f:
+with tf.gfile.FastGFile("C:/Users/Administrator/Desktop/HEVEN_AutonomousCar_2018/deep_learning/minimal_graph.proto", 'rb') as f:
     #with tf.device('/gpu:0'):
     graph_def = tf.GraphDef()
     graph_def.ParseFromString(f.read())

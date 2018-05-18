@@ -1,18 +1,11 @@
+# 표지판 classifier
 # 2018-05-10 현지웅
-# 현재 표지판 상황.
-# 영상 데이터를 받아서 매 프레임마다 shape detect 후의 사진을 받아서 학습한 CNN 모델로 어느 표지판인지 인식하고 그에 대한 확률을 보여주고 가장 높은 확률을 return 하여, count를 할 수 있게 해놓음.
-#
-# 하지만 문제점
-# 1. 표지판이 아닌 것을 shape deect 후 넘겨주는 경우가 빈번.
-# -> 그런데 학습한 모델이 그런 경우를 95%이상의 확률로 어느 표지판이라고 인식하는 경우가 있음.
-# 2. 한 프레임별로 하지 말고 띄엄띄엄해야할 것 같은데 아직 어떻게 하는지 몰라서 못하는 중.
 
 from matplotlib import pyplot as plt
 import sys
 import numpy as np
 import os
 import tensorflow as tf
-
 import cv2
 import time
 from shape_detection import shape_detect
@@ -24,12 +17,14 @@ import threading
 이 방법을 사용한 이유는 실제로 데이터를 구현하고 tensorflow로 표지판을 인식하는데까지 너무 많은 노력과 지식이 필요한데
 그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
 '''
-sys.path.insert(0, './slim')
+
+
+# sys.path.insert(0, './slim')
 # 이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
 # 따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
 
-from nets import inception
-from preprocessing import inception_preprocessing
+# from nets import inception
+# from preprocessing import inception_preprocessing
 
 
 class SignCam:
@@ -37,23 +32,16 @@ class SignCam:
         self.sign_trigger = 0
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)] for row in range(2)]
-        self.cam = cv2.VideoCapture(2)  # r'C:\Users\Administrator\PycharmProjects\Lane_logging\cut.mp4')
+        self.cam = cv2.VideoCapture(2)  # r'C:/Users/Administrator/PycharmProjects/Lane_logging/cut.mp4') #2
         self.cam.set(3, 800)
         self.cam.set(4, 448)
         self.sign2action = "Nothing"
         self.mission_number = 0
-        self.slim = tf.contrib.slim
-
-
-        self.sess = tf.Session()
+        self.done = 0
 
         self.thread = threading.Thread(target=self.detect_one_frame)
         self.stop_fg = False
         self.exit_fg = False
-
-        img = cv2.imread('init.jpg')
-        #self.init_process_one_frame_sign(img)
-        self.process_one_frame_sign(img)
 
         self.sign_init()
 
@@ -102,7 +90,7 @@ class SignCam:
 
     def countup_recognition(self, result_sign, prob):
         for i in range(7):
-            if self.sign[0][i] == result_sign and prob > 0.95:
+            if self.sign[0][i] == result_sign and (prob > 0.95):  # 확률 95퍼 이상, 조정 시 값만 바꿔주세요.
                 self.sign[1][i] = self.sign[1][i] + 1
                 break
 
@@ -111,9 +99,10 @@ class SignCam:
             print("print_sign: ", self.sign[0][i], self.sign[1][i])
 
     def set_sign2action(self):
-        # 만약 한 표지판의 인식 횟수가 1회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기
+        # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기 (3번도 다양하게 바꿀 수 있음)
         for i in range(7):
-            if self.sign[1][i] >= 1:
+            print("count =", i, self.sign[1][i])
+            if self.sign[1][i] >= 1:  # 횟수 트리거
                 self.sign2action = self.sign[0][i]
                 self.sign[1][0] = 0
                 self.sign[1][1] = 0
@@ -128,29 +117,27 @@ class SignCam:
         while True:
             if self.exit_fg is True: break
             if self.stop_fg is True: time.sleep(1); continue
-            # while (self.cam.isOpened()):
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
-            # 이미지 중 표지판이 있는 곳 확인
 
-            img_list = shape_detect(frame)
+            img_list = shape_detect(frame)  # 이미지 중 표지판이 있는 곳 확인
 
+            # 제어에 넘겨주는 연산 여부 (속도를 줄이는 트리거)
             if len(img_list) == 0:
                 self.sign_trigger = 0
             else:
                 self.sign_trigger = 1
 
             cv2.imshow('1', frame)
+
             if cv2.waitKey(1) & 0xff == 27:
                 return
-            for img in img_list:
-                result_sign, prob = self.process_one_frame_sign(img)
+
+            for img in img_list:  # 표지판이 있는 곳의 이미지에 대하여
+                result_sign, prob = self.process_one_frame_sign(img)  # 그 이미지가 어떤 표지판인지 확인한다
                 print("result sign: ", result_sign)
-                self.countup_recognition(result_sign, prob)
+                self.countup_recognition(result_sign, prob)  # 확률이 높으면 그 표지판을 한 번 인식했다고 기록
 
-            # self.print_sign()
             self.set_sign2action()
-
-
 
     def get_mission(self):
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
@@ -188,87 +175,54 @@ class SignCam:
         except Exception as e:
             return False
 
-    def init_process_one_frame_sign(self, frame):
-        self.sess = tf.Session()
-        #slim = tf.contrib.slim
-
-
-
-        image_size = inception.inception_v1.default_image_size
-        # 사용되는 딥러닝 툴은 inception v1으로 가동됨
-
-        self.user_images = []
-        user_processed_images = []
-
-        # 프레임 저장 후 검사
-        cv2.imwrite('test.jpg', frame)
-        image_input = tf.read_file('test.jpg')
-        image = tf.image.decode_jpeg(image_input, channels=3)
-        self.user_images.append(image)
-        processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
-        user_processed_images.append(processed_image)
-
-        #processed_images = tf.expand_dims(processed_image, 0)
-
-        t = time.time()
-        with self.slim.arg_scope(inception.inception_v1_arg_scope()):
-            logits, _ = inception.inception_v1(user_processed_images, num_classes=7, is_training=False,
-                                               reuse=tf.AUTO_REUSE)
-
-        print(">>>>", time.time() - t)
-
-        self.probabilities = tf.nn.softmax(logits)
-        # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-
-        checkpoints_dir = 'C:/Users/Administrator/Desktop/tmp/train_inception_v1_smartcar_logs'
-
-        self.init_fn = self.slim.assign_from_checkpoint_fn(
-            os.path.join(checkpoints_dir, 'model.ckpt-11542'),  # Checkpoint 디렉토리에서 실제로 사용되는 최신 데이터
-            self.slim.get_model_variables('InceptionV1'))
-
-        # with slim.arg_scope (0.5초) 와 slim.assign_from_checkpoint_fn (0.1초) 를 self.변수로 하면, 한번만 사용해도 되지 않을까
-        # checkpoint 가져오는 것을 한 번만 사용하게 만들어보기 각 프레임 당 0.1초 단축할 수 있음
-
-       # with tf.Session() as sess:
-        print("!!!!!!!!!!!!!!!!!!!!!!!!")
-        self.init_fn(self.sess)
-
     def process_one_frame_sign(self, frame):
         if len(frame) < 1:
             return "Nothing", 0.00
 
         # 프레임 시작 시간 측정
         t1 = time.time()
-        self.init_process_one_frame_sign(frame)
 
+        cv2.imwrite('test.jpg', frame)
 
+        image_data = tf.gfile.FastGFile('test.jpg', 'rb').read()
 
-        # tensorflow-gpu 사용, CUDA 9.0
-        # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-        with tf.device('/gpu:0'):
-            # sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-            #with tf.Session() as self.sess:
-            # init_fn(sess)
-            np_images, probabilities = self.sess.run([self.user_images, self.probabilities])
-        # names = os.listdir("C:/Users/Administrator/Desktop/dataset/smartcar/smartcar_photos")
-        # 7개 class의 이름을 불러오는 작업, smartcar_photos안에 총 7개의 표지판 이름으로 된 폴더가 있는데 그 이름들을 인식함
-        names = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
-                 'Roadworks', 'u_turn']
+        # label_lines = [line.rstrip() for line in tf.gfile.GFile('')]
+        label_lines = ['Bicycles', 'Crosswalk_PedestrainCrossing', 'Double_bend', 'Narrow_Carriageway', 'Parking_Lot',
+                       'Roadworks', 'u_turn']
 
-        probabilitie = probabilities[0, 0:]
-        sorted_inds = [i[0] for i in sorted(enumerate(-probabilitie), key=lambda x: x[1])]
+        if self.done == 0:
+            with tf.gfile.FastGFile(
+                    "C:/Users/Administrator/Desktop/HEVEN_AutonomousCar_2018/deep_learning/minimal_graph.proto",
+                    'rb') as f:
+                # with tf.device('/gpu:0'):
+                graph_def = tf.GraphDef()
+                graph_def.ParseFromString(f.read())
+                _ = tf.import_graph_def(graph_def, name='')
+            self.done = self.done + 1
 
-        for p in range(7):
-            index = sorted_inds[p]
+        # config=tf.ConfigProto(log_device_placement=True)
 
-        # print('Probability %0.2f%% => [%s]' % (probabilitie[index], names[index]))
+        with tf.Session() as sess:
+            # Feed the image_data as input to the graph and get first prediction
+            # Feed data tensor 이름 각각 입력 (softmax_tensor가 y_eval, predictions가 x 데이터인듯)
+            softmax_tensor = sess.graph.get_tensor_by_name('InceptionV1/Logits/Predictions/Softmax:0')
+            predictions = sess.run(softmax_tensor, {'input_image:0': image_data})
+            # Sort to show labels of first prediction in order of confidence
+            top_k = predictions[0].argsort()[-len(predictions[0]):][::-1]
+            # print(top_k)
+
+            for node_id in top_k:
+                human_string = label_lines[node_id]
+                score = predictions[0][node_id]
+                print()
+                print('%s (score = %.5f)' % (human_string, score))
 
         t2 = time.time()
 
         print("one frame time: ", t2 - t1)
 
         # 가장 높은 확률인 표지판 이름과 확률을 return해줌으로서 count를 할 수 있도록 함.
-        return names[sorted_inds[0]], probabilitie[sorted_inds[0]]
+        return label_lines[top_k[0]], predictions[0][top_k[0]]
 
 
 if __name__ == "__main__":
@@ -279,6 +233,6 @@ if __name__ == "__main__":
     current_signcam.start()
 
     while (current_signcam.cam.isOpened()):
-        #current_signcam.detect_one_frame()
+        # current_signcam.detect_one_frame()
         mission_number = current_signcam.get_mission()
-        #print(mission_number)
+        # print(mission_number)
