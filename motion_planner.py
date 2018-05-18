@@ -346,10 +346,10 @@ class MotionPlanner:
         self.lanecam.parkingline_loop()
         parking_line = self.lanecam.parkingline_info
 
-        left_lane = None
-        if self.lanecam.left_coefficients is not None:
-            left_coefficients = self.lanecam.left_coefficients
-            left_lane = Parabola(left_coefficients[2], left_coefficients[1], left_coefficients[0])
+        right_lane = None
+        if self.lanecam.right_coefficients is not None:
+            right_coefficients = self.lanecam.right_coefficients
+            right_lane = Parabola(right_coefficients[2], right_coefficients[1], right_coefficients[0])
 
         lidar_raw_data = self.lidar.data_list
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
@@ -394,16 +394,16 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                if left_lane is not None:
-                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (left_lane.get_value(-10), left_lane.get_derivative(-10))),
+                if right_lane is not None:
+                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (right_lane.get_value(-10), right_lane.get_derivative(-10))),
                                              self.get_sign_trigger())
                 else:
                     self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
 
             else:
                 #x, y, max theta
-                if left_lane is not None:
-                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (left_lane.get_value(-10), left_lane.get_derivative(-10))),
+                if right_lane is not None:
+                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (right_lane.get_value(-10), right_lane.get_derivative(-10))),
                                          self.get_sign_trigger())
                 else:
                     self.motion_parameter = (1, False, (parking_line[0], parking_line[1], None), self.get_sign_trigger())
