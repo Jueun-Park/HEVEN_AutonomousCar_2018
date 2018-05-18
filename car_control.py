@@ -83,7 +83,7 @@ class Control:
     def mission(self, mission_num, first, second, trigger):
         self.set_mission(mission_num)
         self.do_mission(first, second)
-        self.deceleration(trigger)
+        self.deceleration(mission_num, trigger)
         print("deceleration trigger: ", self.deceleration_trigger)
 
     def set_mission(self, mission_num):
@@ -135,8 +135,14 @@ class Control:
         # parking, uturn, moving_obs, cross는 2을 반환
         return self.change_mission
 
-    def deceleration(self, trigger):
+    def deceleration(self, mission_num, trigger):
         self.deceleration_trigger = trigger
+
+        if mission_num == 1 and self.p_sit >= 0:
+            self.deceleration_trigger = 0
+
+        elif mission_num == 6 and self.u_sit >= 0:
+            self.deceleration_trigger = 0
 
         if self.deceleration_trigger == 0:
             self.deceleration_speed = self.speed
