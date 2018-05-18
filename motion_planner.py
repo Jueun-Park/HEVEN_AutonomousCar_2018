@@ -412,7 +412,7 @@ class MotionPlanner:
                                          self.get_sign_trigger())
 
         else:
-            self.motion_parameter = (1, False, None, self.get_sign_trigger())
+            self.motion_parameter = (1, False, (0, 0, 0, 0), self.get_sign_trigger())
 
         self.parking_lidar.write(current_frame)
 

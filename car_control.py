@@ -99,7 +99,7 @@ class Control:
             if second is None:
                 self.__parking__(first, None, 0, 0)
             else:
-                self.__parking__(first, second[1], second[2][0] / 100, second[2][1])
+                self.__parking__(first, second[3], second[0] / 100, second[1])
 
         elif self.mission_num == 3:
             if first is None:
