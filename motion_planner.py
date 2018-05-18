@@ -120,6 +120,7 @@ class MotionPlanner:
             self.signcam.restart()
             #self.signcam.detect_one_frame()
             self.mission_num = self.signcam.get_mission()
+
             self.keycam.mission_num = self.mission_num
             #self.mission_num = self.keycam.get_mission()
 
