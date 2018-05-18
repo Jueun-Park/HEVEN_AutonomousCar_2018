@@ -28,6 +28,7 @@ upper_blue = np.array([255, 255, 255], np.uint8)
 
 def shape_detect(img):
     sign = []
+
     if img is None:
         print("image is none")
     else:
@@ -39,6 +40,7 @@ def shape_detect(img):
         gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 52, 104, apertureSize=3)
         image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
         for cnt in contours:
             (x, y, w, h) = cv2.boundingRect(cnt)
             le = max(w, h) + 10

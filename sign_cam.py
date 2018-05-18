@@ -117,12 +117,11 @@ class SignCam:
         while True:
             if self.exit_fg is True: break
             if self.stop_fg is True: time.sleep(1); continue
-            # while (self.cam.isOpened()):
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
-            # 이미지 중 표지판이 있는 곳 확인
 
-            img_list = shape_detect(frame)
+            img_list = shape_detect(frame)  # 이미지 중 표지판이 있는 곳 확인
 
+            # 제어에 넘겨주는 연산 여부 (속도를 줄이는 트리거)
             if len(img_list) == 0:
                 self.sign_trigger = 0
             else:
@@ -132,12 +131,12 @@ class SignCam:
 
             if cv2.waitKey(1) & 0xff == 27:
                 return
-            for img in img_list:
-                result_sign, prob = self.process_one_frame_sign(img)
-                print("result sign: ", result_sign)
-                self.countup_recognition(result_sign, prob)
 
-            # self.print_sign()
+            for img in img_list:  # 표지판이 있는 곳의 이미지에 대하여
+                result_sign, prob = self.process_one_frame_sign(img)  # 그 이미지가 어떤 표지판인지 확인한다
+                print("result sign: ", result_sign)
+                self.countup_recognition(result_sign, prob)  # 확률이 높으면 그 표지판을 한 번 인식했다고 기록
+
             self.set_sign2action()
 
     def get_mission(self):

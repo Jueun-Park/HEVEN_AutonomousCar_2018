@@ -248,6 +248,7 @@ class MotionPlanner:
             self.lap_during_collision = 0
             self.mission_start_lap = 0
             self.mission_num = 0
+            self.signcam.mission_number = 0
 
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
