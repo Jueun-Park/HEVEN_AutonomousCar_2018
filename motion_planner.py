@@ -92,7 +92,7 @@ class MotionPlanner:
         # 장애물 미션 화면, 주차 공간 라이다 화면, 동적장애물 화면, 유턴 화면
         self.windows_is =                               [True, True, False, False, False, False, False, False]
         if self.mission_num == 0: self.windows_is =     [True, True, False, False, False, False, False, False]
-        elif self.mission_num == 1: self.windows_is =   [False, False, True, False, False, True, False, False]
+        elif self.mission_num == 1: self.windows_is =   [True, True, True, False, False, True, False, False]
         elif self.mission_num == 2: self.windows_is =   [False, False, False, False, True, False, False, False]
         elif self.mission_num == 3: self.windows_is =   [False, False, False, False, False, False, True, False]
         elif self.mission_num == 4: self.windows_is =   [False, False, False, False, True, False, False, False]
@@ -342,7 +342,7 @@ class MotionPlanner:
         self.motion_parameter = (7, self.lanecam.stopline_info, None, self.get_sign_trigger())
 
     def parkingline_handling(self):
-        RAD = 300  # 라이다가 보는 반경
+        RAD = 500  # 라이다가 보는 반경
         self.lanecam.default_loop(0)  # 차선을 얻는 0번 모드 (함수 얻기)
         self.lanecam.parkingline_loop()  # 주차선 찾기 함수 실행
         parking_line = self.lanecam.parkingline_info
@@ -352,11 +352,8 @@ class MotionPlanner:
             path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-            self.motion_parameter = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None,
-                                     self.get_sign_trigger())
-
         else:
-            self.motion_parameter = (0, None, None, self.get_sign_trigger())
+            path = Parabola(0, 0, 0)
 
         # 왜 1번칸에 장애물이 안 잡힐까? 더 민감하게 장애물을 받는 라이다 코드가 필요해
         # 라이다
@@ -368,7 +365,7 @@ class MotionPlanner:
         for angle in range(0, 361):
             r = lidar_raw_data[angle] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
-            if 2 <= r <= RAD + 50:  # 라이다 바로 앞 1cm 의 노이즈는 무시
+            if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                 # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
                 x = -r * np.cos(np.radians(0.5 * angle))
@@ -404,20 +401,14 @@ class MotionPlanner:
                       int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))), 100, 3)
 
             if not obstacle_detected:
-                if right_lane is not None:
-                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1],
-                                                       (right_lane.get_value(-10), right_lane.get_derivative(-10))),
-                                             self.get_sign_trigger())
-                else:
-                    self.motion_parameter = (1, True, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
+                self.motion_parameter = (1, True,
+                                         (path.get_value(-10), path.get_derivative(-10), parking_line[0], parking_line[1]),
+                                         self.get_sign_trigger())
 
             else:  # if obstacle detected
-                if right_lane is not None:
-                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1],
-                                                        (right_lane.get_value(-10), right_lane.get_derivative(-10))),
-                                             self.get_sign_trigger())
-                else:
-                    self.motion_parameter = (1, False, (parking_line[0], parking_line[1], (0, 0)), self.get_sign_trigger())
+                self.motion_parameter = (1, False,
+                                         (path.get_value(-10), path.get_derivative(-10), parking_line[0], parking_line[1]),
+                                         self.get_sign_trigger())
 
         else:
             self.motion_parameter = (1, False, None, self.get_sign_trigger())
