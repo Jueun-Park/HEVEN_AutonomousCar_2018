@@ -12,18 +12,18 @@ Y1_LOWER = 80
 
 count = 0
 
-lower_yellow = np.array([0, 30, 40], np.uint8)
-upper_yellow = np.array([55, 197, 255], np.uint8)
-
-lower_blue = np.array([43, 5, 0], np.uint8)
-upper_blue = np.array([170, 90, 50], np.uint8)
-
-
-#lower_yellow = np.array([0, 0, 0], np.uint8)
-#upper_yellow = np.array([255, 255, 255], np.uint8)
+# lower_yellow = np.array([0, 30, 40], np.uint8)
+# upper_yellow = np.array([55, 197, 255], np.uint8)
 #
-#lower_blue = np.array([0, 0, 0], np.uint8)
-#upper_blue = np.array([255, 255, 255], np.uint8)
+# lower_blue = np.array([43, 5, 0], np.uint8)
+# upper_blue = np.array([170, 90, 50], np.uint8)
+
+
+lower_yellow = np.array([0, 0, 0], np.uint8)
+upper_yellow = np.array([255, 255, 255], np.uint8)
+
+lower_blue = np.array([0, 0, 0], np.uint8)
+upper_blue = np.array([255, 255, 255], np.uint8)
 
 
 def shape_detect(img):
@@ -32,9 +32,9 @@ def shape_detect(img):
         print("image is none")
     else:
         img2 = img
-        cv2.line(img, (0, Y2_UPPER), (799, Y2_UPPER), (0, 0, 255), 2)
-        cv2.line(img, (0, Y1_UPPER), (799, Y1_UPPER), (0, 255, 0), 2)
-        cv2.line(img, (0, Y1_LOWER), (799, Y1_LOWER), (255, 0, 0), 2)
+        #cv2.line(img, (0, Y2_UPPER), (799, Y2_UPPER), (0, 0, 255), 2)
+        #cv2.line(img, (0, Y1_UPPER), (799, Y1_UPPER), (0, 255, 0), 2)
+        #cv2.line(img, (0, Y1_LOWER), (799, Y1_LOWER), (255, 0, 0), 2)
         img5 = cv2.GaussianBlur(img, (5, 5), 0)
         gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 52, 104, apertureSize=3)
@@ -54,7 +54,7 @@ def shape_detect(img):
                     y_1 = int(y + (h - le) / 2)
                     y_2 = int(y + (h + le) / 2)
 
-                    if Y2_UPPER > y_2 and Y1_UPPER > y_1 > Y1_LOWER and x_1 > 300:
+                    if Y2_UPPER > y_2 and Y1_UPPER > y_1 > Y1_LOWER:
                         # if x_1 > 0 and y_1 > 0:
                         img_trim = img2[y_1: y_2, x_1:x_2]
 
