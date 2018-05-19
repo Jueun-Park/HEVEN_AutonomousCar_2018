@@ -149,6 +149,24 @@ class MotionPlanner:
                 self.keycam.mission_num = 0
                 self.mission_start_lap = 0
 
+        elif self.mission_num == 2:
+            if control_status[2] == 2:
+                self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
+
+        elif self.mission_num == 4:
+            if control_status[2] == 2:
+                self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
+
+        elif self.mission_num == 5:
+            if control_status[2] == 2:
+                self.mission_num = 0
+                self.keycam.mission_num = 0
+                self.mission_start_lap = 0
+
         if self.mission_num != 0:
             self.signcam.stop()
 
