@@ -99,7 +99,7 @@ class SignCam:
             print("print_sign: ", self.sign[0][i], self.sign[1][i])
 
     def set_sign2action(self):
-        # 만약 한 표지판의 인식 횟수가 3회 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기 (3번도 다양하게 바꿀 수 있음)
+        # 만약 한 표지판의 인식 횟수가 일정 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기 (3번도 다양하게 바꿀 수 있음)
         for i in range(7):
             print("count =", i, self.sign[1][i])
             if self.sign[1][i] >= 1:  # 횟수 트리거
@@ -115,8 +115,10 @@ class SignCam:
 
     def detect_one_frame(self):
         while True:
+
             if self.exit_fg is True: break
             if self.stop_fg is True: time.sleep(1); continue
+            time.sleep(0.1)
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
 
             img_list = shape_detect(frame)  # 이미지 중 표지판이 있는 곳 확인
@@ -163,7 +165,7 @@ class SignCam:
             self.sign_reinit()
 
         self.sign2action = "Nothing"
-        # print(self.mission_number)
+        print(">>>>", self.mission_number)
         return self.mission_number
 
     def is_in_this_mission(self, ndarray):

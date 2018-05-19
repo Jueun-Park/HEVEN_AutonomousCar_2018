@@ -250,6 +250,7 @@ class MotionPlanner:
             self.mission_start_lap = 0
             self.mission_num = 0
             self.signcam.mission_number = 0
+            self.keycam.mission_num = 0
 
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
