@@ -21,6 +21,10 @@ monitor = Monitor()
 while True:
     control.read(*platform.read())
     motion.plan_motion(control.get_status())
+    print("mission num: ", motion.mission_num)
+    print("sign mission num: ", motion.signcam.mission_number)
+    print("key mission num: ", motion.keycam.mission_num)
+    print()
     control.mission(*motion.get_motion_parameter())
     platform.write(*control.write())
 

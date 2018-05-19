@@ -118,6 +118,7 @@ class SignCam:
 
             if self.exit_fg is True: break
             if self.stop_fg is True: time.sleep(1); continue
+            ############################################################
             time.sleep(0.1)
             frame_okay, frame = self.cam.read()  # 한 프레임을 가져오자.
 
@@ -134,12 +135,13 @@ class SignCam:
             if cv2.waitKey(1) & 0xff == 27:
                 return
 
-            for img in img_list:  # 표지판이 있는 곳의 이미지에 대하여
-                result_sign, prob = self.process_one_frame_sign(img)  # 그 이미지가 어떤 표지판인지 확인한다
+  # 표지판이 있는 곳의 이미지에 대하여
+            if len(img_list) > 0:
+                result_sign, prob = self.process_one_frame_sign(img_list[0])  # 그 이미지가 어떤 표지판인지 확인한다
                 print("result sign: ", result_sign)
                 self.countup_recognition(result_sign, prob)  # 확률이 높으면 그 표지판을 한 번 인식했다고 기록
-
-            self.set_sign2action()
+                self.set_sign2action()
+                img_list.clear()
 
     def get_mission(self):
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,

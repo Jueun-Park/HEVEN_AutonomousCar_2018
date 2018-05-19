@@ -239,8 +239,6 @@ class Control:
             correction = 0.0
             adjust = 0.0
 
-        self.change_mission = 1
-
         cal_theta = math.radians(abs(obs_theta - 90))
         cos_theta = math.cos(cal_theta)
         sin_theta = math.sin(cal_theta)
@@ -254,9 +252,9 @@ class Control:
                     self.o_t01 = time.time()
                 self.o_t02 = time.time()
 
-                if (self.o_t02 - self.o_t01) < 27:
+                if abs(self.o_t02 - self.o_t01) < 27:
                     self.change_mission = 1
-                elif (self.o_t02 - self.o_t01) >= 27:
+                elif abs(self.o_t02 - self.o_t01) >= 27:
                     self.change_mission = 2
 
                 if obs_theta == -35:
@@ -281,9 +279,9 @@ class Control:
                     self.o_t11 = time.time()
                 self.o_t12 = time.time()
 
-                if (self.o_t12 - self.o_t11) < 35:
+                if abs(self.o_t12 - self.o_t11) < 36:
                     self.change_mission = 1
-                elif (self.o_t12 - self.o_t11) >= 35:
+                elif abs(self.o_t12 - self.o_t11) >= 36:
                     self.change_mission = 2
 
                 if obs_theta == -35:
@@ -325,9 +323,9 @@ class Control:
                     self.o_t21 = time.time()
                 self.o_t22 = time.time()
 
-                if (self.o_t22 - self.o_t21) < 27:
+                if abs(self.o_t22 - self.o_t21) < 27:
                     self.change_mission = 1
-                elif (self.o_t22 - self.o_t21) >= 27:
+                elif abs(self.o_t22 - self.o_t21) >= 27:
                     self.change_mission = 2
 
                 if obs_theta == -35:
