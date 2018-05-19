@@ -38,6 +38,15 @@ class Control:
         self.sign_list = [0,0,0,0,0,0,0,0]
         self.sign_t1 = 0
         self.sign_t2 = 0
+
+        self.o_t01 = 0
+        self.o_t02 = 0
+
+        self.o_t11 = 0
+        self.o_t12 = 0
+
+        self.o_t21 = 0
+        self.o_t22 = 0
         #######################################
         self.steer_past = 0
 
@@ -145,7 +154,7 @@ class Control:
             self.deceleration_brake = self.brake
 
         elif self.deceleration_trigger == 1:
-            self.deceleration_speed = 12
+            self.deceleration_speed = 6
             self.deceleration_brake = 0
 
     def __default__(self, cross_track_error, linear):
@@ -213,7 +222,7 @@ class Control:
             obs_mode = 0
 
         elif self.mission_num == 4:  # 실험값 보정하기
-            speed = 18
+            speed = 24
             correction = 1.3
             adjust = 0.10
             obs_mode = 1
@@ -241,6 +250,15 @@ class Control:
 
         else:
             if obs_mode == 0:
+                if self.o_t01 == 0:
+                    self.o_t01 = time.time()
+                self.o_t02 = time.time()
+
+                if (self.o_t02 - self.o_t01) < 27:
+                    self.change_mission = 1
+                elif (self.o_t02 - self.o_t01) >= 27:
+                    self.change_mission = 2
+
                 if obs_theta == -35:
                     theta_obs = 27
                 elif obs_theta == -145:
@@ -259,6 +277,15 @@ class Control:
                         speed = 12
 
             elif obs_mode == 1:
+                if self.o_t11 == 0:
+                    self.o_t11 = time.time()
+                self.o_t12 = time.time()
+
+                if (self.o_t12 - self.o_t11) < 35:
+                    self.change_mission = 1
+                elif (self.o_t12 - self.o_t11) >= 35:
+                    self.change_mission = 2
+
                 if obs_theta == -35:
                     theta_obs = 27
                 elif obs_theta == -145:
@@ -274,9 +301,35 @@ class Control:
                     theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
                     if abs(theta_obs) > 15:
-                        speed = 9
+                        speed = 12
+
+                #if obs_theta == -35:
+                #    theta_obs = 27
+                #elif obs_theta == -145:
+                #    theta_obs = -27
+                #else:
+                #    car_circle = 1.387
+                #    cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+                #    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 2
+
+                #    son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
+                #    mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
+
+                #    theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
+
+                #    if abs(theta_obs) > 15:
+                #        speed = 9
 
             elif obs_mode == 2:
+                if self.o_t21 == 0:
+                    self.o_t21 = time.time()
+                self.o_t22 = time.time()
+
+                if (self.o_t22 - self.o_t21) < 27:
+                    self.change_mission = 1
+                elif (self.o_t22 - self.o_t21) >= 27:
+                    self.change_mission = 2
+
                 if obs_theta == -35:
                     theta_obs = 10
                     speed = 9
