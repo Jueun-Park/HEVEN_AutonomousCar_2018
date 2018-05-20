@@ -9,27 +9,31 @@
 # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
+# =================Module===================
 import pycuda.driver as drv
 import numpy as np
 from pycuda.compiler import SourceModule
 import cv2
+import time
+# ==========================================
 from parabola import Parabola
 from lidar import Lidar
 from lane_cam import LaneCam
-import time
 import video_stream
 from sign_cam import SignCam
 from key_cam import KeyCam
+# ==========================================
+
 
 class MotionPlanner:
     def __init__(self):
         self.lidar = Lidar()  # lidar_instance
 
-        self.lanecam = LaneCam()  # lane_cam_instance
-        self.signcam = SignCam()  # sign_cam_instance
-        self.keycam = KeyCam()
+        self.lane_cam = LaneCam()  # lane_cam_instance
+        self.sign_cam = SignCam()  # sign_cam_instance
+        self.key_cam = KeyCam()
 
-        self.signcam.start()
+        self.sign_cam.start()
 
         self.mission_num = 0
 
@@ -45,7 +49,7 @@ class MotionPlanner:
         self.motion_planner_frame = video_stream.VideoStream()
         self.parking_lidar = video_stream.VideoStream()
         self.moving_obs_frame = video_stream.VideoStream()
-        self.uturn_frame = video_stream.VideoStream()
+        self.u_turn_frame = video_stream.VideoStream()
         self.windows_is = []
 
         # pycuda alloc
@@ -77,15 +81,14 @@ class MotionPlanner:
 
         self.path = mod.get_function("detect")
         # pycuda alloc end
-
         time.sleep(2)
 
     def get_sign_trigger(self):
-        self.sign_delay = self.signcam.sign_control()
+        self.sign_delay = self.sign_cam.sign_control()
         return self.sign_delay
 
     def get_frame(self):
-        lanecam_getFrame = self.lanecam.getFrame()
+        lanecam_getFrame = self.lane_cam.getFrame()
         # monitor 에서 사용 여부
         # window_is:
         # 차선인식 raw 화면, 차선인식 결과 화면, 주차공간 인식 화면, 정지선 인식 화면,
@@ -101,7 +104,7 @@ class MotionPlanner:
         elif self.mission_num == 7: self.windows_is =   [False, False, False, True, False, False, False, False]
 
         return lanecam_getFrame + (self.motion_planner_frame.read(),
-                                          self.parking_lidar.read(), self.moving_obs_frame.read(), self.uturn_frame.read())
+                                          self.parking_lidar.read(), self.moving_obs_frame.read(), self.u_turn_frame.read())
 
     def get_motion_parameter(self):
         return self.motion_parameter  # motion parameter
@@ -112,14 +115,14 @@ class MotionPlanner:
         #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
         #if self.keycam.get_mission() != 0:
-        self.mission_num = self.keycam.get_mission()
+        self.mission_num = self.key_cam.get_mission()
 
         if self.mission_num == 0:
-            self.signcam.restart()
+            self.sign_cam.restart()
             #self.signcam.detect_one_frame()
-            self.mission_num = self.signcam.get_mission()
+            self.mission_num = self.sign_cam.get_mission()
 
-            self.keycam.mission_num = self.mission_num
+            self.key_cam.mission_num = self.mission_num
             #self.mission_num = self.keycam.get_mission()
 
             if self.mission_num != 0:
@@ -128,48 +131,48 @@ class MotionPlanner:
         if self.mission_num == 1:
             if control_status[1] == 6:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 3:
             if control_status[2] == 2:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 6:
             if control_status[0] == 4:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 7:
             if control_status[2] == 2:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 2:
             if control_status[2] == 2:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 4:
             if control_status[2] == 2:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
         elif self.mission_num == 5:
             if control_status[2] == 2:
                 self.mission_num = 0
-                self.keycam.mission_num = 0
+                self.key_cam.mission_num = 0
                 self.mission_start_lap = 0
 
 
         if self.mission_num != 0:
-            self.signcam.stop()
+            self.sign_cam.stop()
 
         # --------------------------------------- 미션 수행 ----------------------------------------
         # modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,  'MOVING_OBS': 3,
@@ -178,8 +181,8 @@ class MotionPlanner:
             self.lane_handling()
 
         elif self.mission_num == 1:
-            self.signcam.stop()
-            self.parkingline_handling()
+            self.sign_cam.stop()
+            self.parking_line_handling()
 
         elif self.mission_num == 3:
             self.moving_obs_handling()
@@ -197,16 +200,16 @@ class MotionPlanner:
             self.static_obs_handling(300, 110, 70, 60, 2)
 
         elif self.mission_num == 6:
-            self.Uturn_handling()
+            self.u_turn_handling()
 
         elif self.mission_num == 7:
-            self.stopline_handling()
+            self.stop_line_handling()
 
     def lane_handling(self):
-        self.lanecam.default_loop(0)
+        self.lane_cam.default_loop(0)
 
-        if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
-            path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
+        if self.lane_cam.left_coefficients is not None and self.lane_cam.right_coefficients is not None:
+            path_coefficients = (self.lane_cam.left_coefficients + self.lane_cam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
             self.motion_parameter = (0, (path.get_value(-10), path.get_derivative(-10), path.get_curvature(-10)), None,
@@ -216,9 +219,9 @@ class MotionPlanner:
             self.motion_parameter = (0, None, None, self.get_sign_trigger())
 
     def static_obs_handling(self, radius, angle, obs_size, lane_size, timeout):
-        self.lanecam.default_loop(1)
-        left_lane_points = self.lanecam.left_current_points
-        right_lane_points = self.lanecam.right_current_points
+        self.lane_cam.default_loop(1)
+        left_lane_points = self.lane_cam.left_current_points
+        right_lane_points = self.lane_cam.right_current_points
 
         RAD = np.int32(radius)
         AUX_RANGE = np.int32((180 - angle) / 2)
@@ -268,8 +271,8 @@ class MotionPlanner:
             self.lap_during_collision = 0
             self.mission_start_lap = 0
             self.mission_num = 0
-            self.signcam.mission_number = 0
-            self.keycam.mission_num = 0
+            self.sign_cam.mission_number = 0
+            self.key_cam.mission_num = 0
 
         if left_lane_points is not None:
             for i in range(0, len(left_lane_points)):
@@ -358,19 +361,19 @@ class MotionPlanner:
 
         self.motion_planner_frame.write(color)
 
-    def stopline_handling(self):
-        self.lanecam.stopline_loop()
-        self.motion_parameter = (7, self.lanecam.stopline_info, None, self.get_sign_trigger())
+    def stop_line_handling(self):
+        self.lane_cam.stopline_loop()
+        self.motion_parameter = (7, self.lane_cam.stopline_info, None, self.get_sign_trigger())
 
-    def parkingline_handling(self):
+    def parking_line_handling(self):
         RAD = 500  # 라이다가 보는 반경
-        self.lanecam.default_loop(0)  # 차선을 얻는 0번 모드 (함수 얻기)
-        self.lanecam.parkingline_loop()  # 주차선 찾기 함수 실행
-        parking_line = self.lanecam.parkingline_info
+        self.lane_cam.default_loop(0)  # 차선을 얻는 0번 모드 (함수 얻기)
+        self.lane_cam.parkingline_loop()  # 주차선 찾기 함수 실행
+        parking_line = self.lane_cam.parkingline_info
         
         # 양 쪽 차선을 다 본 다음에 중앙선을 넘겨준다.
-        if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
-            path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
+        if self.lane_cam.left_coefficients is not None and self.lane_cam.right_coefficients is not None:
+            path_coefficients = (self.lane_cam.left_coefficients + self.lane_cam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
         else:
@@ -437,12 +440,12 @@ class MotionPlanner:
 
         self.parking_lidar.write(current_frame)
 
-    def Uturn_handling(self):
-        self.lanecam.default_loop(0)
+    def u_turn_handling(self):
+        self.lane_cam.default_loop(0)
 
         right_lane = None
-        if self.lanecam.right_coefficients is not None:
-            right_coefficients = self.lanecam.right_coefficients
+        if self.lane_cam.right_coefficients is not None:
+            right_coefficients = self.lane_cam.right_coefficients
             right_lane = Parabola(right_coefficients[2], right_coefficients[1], right_coefficients[0])
 
         UTURN_RANGE = 20
@@ -488,7 +491,7 @@ class MotionPlanner:
 
             minimum_dist = np.min(data_transposed[1])
 
-        self.uturn_frame.write(uturn_frame)  # 유턴 프레임을 모니터에 송출
+        self.u_turn_frame.write(uturn_frame)  # 유턴 프레임을 모니터에 송출
 
         if right_lane is not None:
             self.motion_parameter = (6, minimum_dist,(right_lane.get_value(-10),
@@ -498,12 +501,12 @@ class MotionPlanner:
         print(self.motion_parameter)
 
     def moving_obs_handling(self):
-        self.lanecam.default_loop(0)
+        self.lane_cam.default_loop(0)
         path = None
 
         # 차선 보고 가다가 앞에 막히면
-        if self.lanecam.left_coefficients is not None and self.lanecam.right_coefficients is not None:
-            path_coefficients = (self.lanecam.left_coefficients + self.lanecam.right_coefficients) / 2
+        if self.lane_cam.left_coefficients is not None and self.lane_cam.right_coefficients is not None:
+            path_coefficients = (self.lane_cam.left_coefficients + self.lane_cam.right_coefficients) / 2
             path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
         MOVING_OBS_RANGE = 60
@@ -563,8 +566,8 @@ class MotionPlanner:
     def stop(self):
         self.stop_fg = True
         self.lidar.stop()
-        self.lanecam.stop()
-        self.signcam.exit()
+        self.lane_cam.stop()
+        self.sign_cam.exit()
 
         # pycuda dealloc
         global context

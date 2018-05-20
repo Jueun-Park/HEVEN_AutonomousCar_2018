@@ -3,12 +3,10 @@
 # input: LiDAR
 # output: theta 에 따른 장애물 거리 (to motion_planner)
 
-import math
 import socket
 import threading
 import time
-import numpy as np
-import cv2
+
 
 modes = {'DEFAULT': 0, 'PARKING': 1, 'STATIC_OBS': 2,
          'MOVING_OBS': 3, 'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}

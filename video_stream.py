@@ -1,4 +1,4 @@
-# 캠 영상 백그라운드에서 실시간으로 받게 해 주는 api
+# 캠 영상을 백그라운드에서 실시간으로 받게 해 주는 API
 # 김진웅
 
 
@@ -31,11 +31,11 @@ class VideoWriteStream(VideoStream):
         self.filesrc = filesrc
         self.fps = fps
 
-    def initWrite(self, frame):
-        isColor = False
-        if frame.ndim == 3: isColor = True
+    def init_write(self, frame):
+        is_color = False
+        if frame.ndim == 3: is_color = True
         self.out = cv2.VideoWriter(self.filesrc, cv2.VideoWriter_fourcc(*'DIVX'), self.fps, (len(frame[0]), len(frame)),
-                                   isColor)
+                                   is_color)
         self.initWrite = (lambda x: None)
 
     def write(self, frame):

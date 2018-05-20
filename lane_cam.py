@@ -1,5 +1,5 @@
 # 차선 인식
-# 김홍빈
+# 김홍빈 예하진
 # input: 캠 이미지 (from video_stream)
 # output: 차선 근사 이차함수의 계수 세 개, 정지선 정보, 주차 공간 정보 (to motion_planner)
 
@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import random
 import time
+# ==========================================
 import video_stream
 
 

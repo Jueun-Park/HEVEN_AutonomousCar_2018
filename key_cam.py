@@ -3,19 +3,18 @@
 # input: 키보드 숫자 인풋
 # output: 현재 수행중인 미션 번호
 
-import threading
 import keyboard
 
 
 class KeyCam:
     def __init__(self):
         self.mission_num = 0
-        keyboard.on_press(self.keylook)
+        keyboard.on_press(self.key_look)
 
     def get_mission(self):
         return self.mission_num
 
-    def keylook(self, e):
+    def key_look(self, e):
         c = e.name
         if c == '0': self.mission_num = 0
         elif c == '1': self.mission_num = 1
@@ -26,8 +25,9 @@ class KeyCam:
         elif c == '6': self.mission_num = 6
         elif c == '7': self.mission_num = 7
 
+
 if __name__ == "__main__":
     k = KeyCam()
-    keyboard.hook(k.keylook)
+    keyboard.hook(k.key_look)
     while True:
         print(k.get_mission())

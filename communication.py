@@ -4,9 +4,12 @@
 # output: (to car_control)
 
 
-from serial_packet import SerialPacket
 import serial
 import threading
+import time
+# ==========================================
+from serial_packet import SerialPacket
+
 
 class PlatformSerial:
     def __init__(self, platform_port):
@@ -63,17 +66,14 @@ class PlatformSerial:
         speed = self.read_packet.speed / 10
         steer = self.read_packet.steer / 71
         brake = self.read_packet.brake / 200
-        #print('[READ]')
-        #print(self.read_packet.get_attr(mode='a'))
-        #print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
-        #print()
+        # print('[READ]')
+        # print(self.read_packet.get_attr(mode='a'))
+        # print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
+        # print()
         return gear, speed, steer, brake
 
     def stop(self):
         self.stop_fg = True
-
-
-import time
 
 
 def t_move():

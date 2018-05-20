@@ -1,30 +1,14 @@
 # 표지판 classifier
-# 2018-05-10 현지웅
+# 현지웅, 김성우
 
-from matplotlib import pyplot as plt
-import sys
+
 import numpy as np
-import os
 import tensorflow as tf
 import cv2
 import time
-from shape_detection import shape_detect
-
 import threading
-
-'''
-우선 구현 방법은 Tensorflow/model의 slim이라는 tensorflow가 제공하는 틀을 이용할 거임
-이 방법을 사용한 이유는 실제로 데이터를 구현하고 tensorflow로 표지판을 인식하는데까지 너무 많은 노력과 지식이 필요한데
-그것을 충당할 수 있는 시간이 없어서 tensorflow에서 제공하는 모듈을 사용하기로 함
-'''
-
-
-# sys.path.insert(0, './slim')
-# 이 부분이 중요! 아래에 nets와 preprocessing은 tensorflow/model안에 slim이라는 폴더 안에 있는 폴더로써 slim파일을 불러와야 작동이 됨
-# 따라서 만약 Tensorflow/model파일이 없으면 https://github.com/tensorflow/models/ 여기에 들어가서 다운받은후에 slim 디렉토리를 위에 넣어줌
-
-# from nets import inception
-# from preprocessing import inception_preprocessing
+# ==========================================
+from shape_detection import shape_detect
 
 
 class SignCam:
@@ -32,7 +16,11 @@ class SignCam:
         self.sign_trigger = 0
         self.is_in_mission = False
         self.sign = [[0 for col in range(7)] for row in range(2)]
-        self.cam = cv2.VideoCapture(2)  # r'C:/Users/Administrator/PycharmProjects/Lane_logging/cut.mp4') #2
+
+        # [for test] './TestVideos/sign_cut.mp4'
+        # [for real time data] 2
+        self.cam = cv2.VideoCapture('./TestVideos/sign_cut.mp4')
+
         self.cam.set(3, 800)
         self.cam.set(4, 448)
         self.sign2action = "Nothing"
@@ -101,7 +89,7 @@ class SignCam:
     def set_sign2action(self):
         # 만약 한 표지판의 인식 횟수가 일정 이상이 되면, 그 sign에 대한 action을 준비하고, 횟수 모두 초기화하기 (3번도 다양하게 바꿀 수 있음)
         for i in range(7):
-            print("count =", i, self.sign[1][i])
+            print("count:", i, self.sign[1][i])
             if self.sign[1][i] >= 1:  # 횟수 트리거
                 self.sign2action = self.sign[0][i]
                 self.sign[1][0] = 0
@@ -135,10 +123,10 @@ class SignCam:
             if cv2.waitKey(1) & 0xff == 27:
                 return
 
-  # 표지판이 있는 곳의 이미지에 대하여
+            # 표지판이 있는 곳의 이미지에 대하여
             if len(img_list) > 0:
                 result_sign, prob = self.process_one_frame_sign(img_list[0])  # 그 이미지가 어떤 표지판인지 확인한다
-                print("result sign: ", result_sign)
+                print(">>>>result sign:", result_sign, "/ score:", prob)
                 self.countup_recognition(result_sign, prob)  # 확률이 높으면 그 표지판을 한 번 인식했다고 기록
                 self.set_sign2action()
                 img_list.clear()
@@ -167,7 +155,7 @@ class SignCam:
             self.sign_reinit()
 
         self.sign2action = "Nothing"
-        print(">>>>", self.mission_number)
+        print("mission_number>>>> ", self.mission_number)
         return self.mission_number
 
     def is_in_this_mission(self, ndarray):
@@ -196,8 +184,7 @@ class SignCam:
 
         if self.done == 0:
             with tf.gfile.FastGFile(
-                    "C:/Users/Administrator/Desktop/HEVEN_AutonomousCar_2018/deep_learning/minimal_graph.proto",
-                    'rb') as f:
+                    "./deep_learning/minimal_graph.proto", 'rb') as f:
                 # with tf.device('/gpu:0'):
                 graph_def = tf.GraphDef()
                 graph_def.ParseFromString(f.read())
@@ -215,10 +202,10 @@ class SignCam:
             top_k = predictions[0].argsort()[-len(predictions[0]):][::-1]
             # print(top_k)
 
+            print()
             for node_id in top_k:
                 human_string = label_lines[node_id]
                 score = predictions[0][node_id]
-                print()
                 print('%s (score = %.5f)' % (human_string, score))
 
         t2 = time.time()
@@ -235,8 +222,3 @@ if __name__ == "__main__":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     current_signcam = SignCam()
     current_signcam.start()
-
-    while (current_signcam.cam.isOpened()):
-        # current_signcam.detect_one_frame()
-        mission_number = current_signcam.get_mission()
-        # print(mission_number)

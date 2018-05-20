@@ -8,25 +8,25 @@ import struct
 
 
 class SerialPacket(object):
-    START_BYTES = [0x53, 0x54, 0x58];
+    START_BYTES = [0x53, 0x54, 0x58]
     END_BYTES = [0x0D, 0x0A]
-    AORM_MANUAL = 0x00;
-    AORM_AUTO = 0x01;
+    AORM_MANUAL = 0x00
+    AORM_AUTO = 0x01
     AORM_DEFAULT = AORM_AUTO
-    ESTOP_OFF = 0x00;
-    ESTOP_ON = 0x01;
+    ESTOP_OFF = 0x00
+    ESTOP_ON = 0x01
     ESTOP_DEFAULT = ESTOP_OFF
-    GEAR_FORWARD = 0x00;
-    GEAR_NEUTRAL = 0x01;
-    GEAR_BACKWARD = 0x02;
+    GEAR_FORWARD = 0x00
+    GEAR_NEUTRAL = 0x01
+    GEAR_BACKWARD = 0x02
     GEAR_DEFAULT = GEAR_FORWARD
     SPEED_MIN = 0
-    STEER_MAXLEFT = -2000;
-    STEER_STRAIGHT = 0;
+    STEER_MAXLEFT = -2000
+    STEER_STRAIGHT = 0
     STEER_MAXRIGHT = 2000
-    BRAKE_NOBRAKE = 1;
-    BRAKE_FULLBRAKE = 33;
-    BRAKE_DEFAULT = BRAKE_NOBRAKE;
+    BRAKE_NOBRAKE = 1
+    BRAKE_FULLBRAKE = 33
+    BRAKE_DEFAULT = BRAKE_NOBRAKE
     BRAKE_MAXBRAKE = 200
 
     def __init__(self, data=None, start_bytes=START_BYTES,
@@ -72,9 +72,12 @@ class SerialPacket(object):
         self.end_bytes = SerialPacket.END_BYTES
 
     def get_attr(self, mode=None):
-        if mode == None: return self.gear, self.speed, self.steer, self.brake
-        if mode == 'a': return self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive
-        if mode == 'ra':  return self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes
+        if mode is None:
+            return self.gear, self.speed, self.steer, self.brake
+        if mode == 'a':
+            return self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive
+        if mode == 'ra':
+            return self.start_bytes, self.aorm, self.estop, self.gear, self.speed, self.steer, self.brake, self.enc, self.alive, self.end_bytes
         return 'wrong mode'
 
     def read_bytes(self, b):
@@ -115,11 +118,9 @@ class SerialPacket(object):
         return True
 
 
-'''
 if __name__ == '__main__':
     a = SerialPacket(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0A"))
     a.read_bytes(bytearray.fromhex("53545800 00000000 00000100 00000000 0D0A"))
     a.default()
     print(a.start_bytes, a.end_bytes)
     print(str(a.write_bytes()))
-'''

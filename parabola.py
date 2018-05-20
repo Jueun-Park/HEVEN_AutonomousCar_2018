@@ -1,6 +1,7 @@
 # motion_planner 를 위한 Parabola API
 # 김홍빈
 
+
 class Parabola:
     # y = a0 + a1 * x + a2 * x^2
     def __init__(self, a0, a1, a2):

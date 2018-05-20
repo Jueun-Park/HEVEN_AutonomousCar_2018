@@ -3,6 +3,7 @@
 # input: 캠 이미지
 # output: 표지판 후보 이미지
 
+
 import cv2
 import numpy as np
 
@@ -11,6 +12,8 @@ Y1_UPPER = 185
 Y1_LOWER = 80
 
 count = 0
+
+# 표지판 색깔 필터
 
 # lower_yellow = np.array([0, 30, 40], np.uint8)
 # upper_yellow = np.array([55, 197, 255], np.uint8)
@@ -33,9 +36,9 @@ def shape_detect(img):
         print("image is none")
     else:
         img2 = img
-        #cv2.line(img, (0, Y2_UPPER), (799, Y2_UPPER), (0, 0, 255), 2)
-        #cv2.line(img, (0, Y1_UPPER), (799, Y1_UPPER), (0, 255, 0), 2)
-        #cv2.line(img, (0, Y1_LOWER), (799, Y1_LOWER), (255, 0, 0), 2)
+        # cv2.line(img, (0, Y2_UPPER), (799, Y2_UPPER), (0, 0, 255), 2)
+        # cv2.line(img, (0, Y1_UPPER), (799, Y1_UPPER), (0, 255, 0), 2)
+        # cv2.line(img, (0, Y1_LOWER), (799, Y1_LOWER), (255, 0, 0), 2)
         img5 = cv2.GaussianBlur(img, (5, 5), 0)
         gray = cv2.cvtColor(img5, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 52, 104, apertureSize=3)
@@ -84,7 +87,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture('C:/Users/Administrator/Documents/GOMCam/parking.mp4')
+    cam = cv2.VideoCapture('C:/Users/Administrator/Documents/GOMCam/parking.mp4')  # test video
     cam.set(3, 800)
     cam.set(4, 448)
 
