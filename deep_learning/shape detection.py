@@ -1,7 +1,7 @@
 import cv2
 import time
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('C:/Users/Administrator/Documents/GOMCam/parking.mp4')
 cap.set(3, 800)
 cap.set(4, 448)
 
@@ -35,7 +35,7 @@ if cap.read():
 
                 if hull_area > 0:
                     solidity = int (100*(area) / hull_area)
-                    if solidity>94 and w>42 and h>42:
+                    if solidity>0 and w>42 and h>42:
                         x_1 = int (x+(w-le)/2)
                         x_2 = int (x+(w+le)/2)
                         y_1 = int (y+(h-le)/2)

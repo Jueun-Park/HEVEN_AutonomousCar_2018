@@ -50,13 +50,13 @@ def shape_detect(img):
             hull_area = cv2.contourArea(hull)
             if hull_area > 0:
                 solidity = int(100 * area / hull_area)
-                if solidity > 94 and w > 42 and h > 42:
+                if solidity > 0 and w > 42 and h > 42:
                     x_1 = int(x + (w - le) / 2)
                     x_2 = int(x + (w + le) / 2)
                     y_1 = int(y + (h - le) / 2)
                     y_2 = int(y + (h + le) / 2)
 
-                    if Y2_UPPER > y_2 and Y1_UPPER > y_1 > Y1_LOWER:
+                    if x_1 > 0 and Y2_UPPER > y_2 and Y1_UPPER > y_1 > Y1_LOWER:
                         # if x_1 > 0 and y_1 > 0:
                         img_trim = img2[y_1: y_2, x_1:x_2]
 
@@ -72,6 +72,8 @@ def shape_detect(img):
                             if (le > 60 and len(cnt) > 120) or (le > 60 and 60 < len(cnt) < 120) or len(cnt) < 60:
                                 cv2.rectangle(img, (x_1, y_1), (x_2, y_2), (255, 0, 0), 4)
                                 sign.append(img_trim_resize)
+                                name = "./images/" + str(solidity) + "_" + str(y_1) + "_" + str(y_2) + "_.png"
+                                cv2.imwrite(name, img_trim)
     return sign
 
 
@@ -82,7 +84,7 @@ def main():
 
 if __name__ == "__main__":
     # open cam
-    cam = cv2.VideoCapture(2)
+    cam = cv2.VideoCapture('C:/Users/Administrator/Documents/GOMCam/parking.mp4')
     cam.set(3, 800)
     cam.set(4, 448)
 

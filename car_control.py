@@ -105,10 +105,7 @@ class Control:
             self.__default__(first[0] / 100, first[1])
 
         elif self.mission_num == 1:
-            if second is None:
-                self.__parking__(first, None, 0, 0)
-            else:
-                self.__parking__(first, second[3], second[0] / 100, second[1])
+            self.__parking__(first, second[3], second[0] / 100, second[1])
 
         elif self.mission_num == 3:
             if first is None:
@@ -154,7 +151,7 @@ class Control:
             self.deceleration_brake = self.brake
 
         elif self.deceleration_trigger == 1:
-            self.deceleration_speed = 6
+            self.deceleration_speed = 24
             self.deceleration_brake = 0
 
     def __default__(self, cross_track_error, linear):

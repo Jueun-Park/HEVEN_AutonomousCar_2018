@@ -404,7 +404,7 @@ class MotionPlanner:
             r = 0
             obstacle_detected = False
 
-            while not obstacle_detected and r <= 500:  # 장애물을 만날 때까지 레이저 쏜다
+            while not obstacle_detected and r <= 200:  # 장애물을 만날 때까지 레이저 쏜다
                 temp_x = RAD + parking_line[0] + int(r * np.cos(parking_line[2]))
                 temp_y = int(RAD - (parking_line[1] + r * np.sin(parking_line[2])))
                 try:
@@ -432,7 +432,8 @@ class MotionPlanner:
                                          self.get_sign_trigger())
 
         else:
-            self.motion_parameter = (1, False, (0, 0, 0, 0), self.get_sign_trigger())
+            self.motion_parameter = (1, False, (path.get_value(-10), path.get_derivative(-10), 0, 0), self.get_sign_trigger())
+        print(self.motion_parameter)
 
         self.parking_lidar.write(current_frame)
 
