@@ -4,7 +4,7 @@
 # output: (to car_control)
 
 
-from serialpacket import SerialPacket
+from serial_packet import SerialPacket
 import serial
 import threading
 

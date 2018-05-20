@@ -58,7 +58,7 @@ class Monitor:
     # platform status #
     @classmethod
     def imstatus(cls, gear, speed, steer, brake):
-        from serialpacket import SerialPacket
+        from serial_packet import SerialPacket
         f = np.zeros((240, 400, 3), dtype=np.uint8)
 
         gear_str = ''
