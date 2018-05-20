@@ -1,7 +1,7 @@
 # 2018 국제대학생창작자동차대회 자율주행차 부문 성균관대학교 HEVEN 팀
 # interpreted by python 3.6
 
-#######################Module#####################q
+#######################Module#####################
 from communication import PlatformSerial
 from motion_planner import MotionPlanner
 from car_control import Control
