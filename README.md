@@ -9,6 +9,8 @@
 
 
 ## 자율주행 프로그램 구조
+```./src/program_name.py```
+
 |Category|Role|Program Name|Developer|
 |:--------|:--------|:--------|:-----------:|
 |**Perception**|LiDAR Mapper|```lidar.py```|김홍빈|
