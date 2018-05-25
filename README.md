@@ -10,7 +10,7 @@
 
 ## 자율주행 프로그램 구조
 ```./src/program_name.py```
-
+### 프로그램 역할
 |Category|Role|Program Name|Developer|
 |:--------|:--------|:--------|:-----------:|
 |**Perception**|LiDAR Mapper|```lidar.py```|김홍빈|
@@ -24,6 +24,31 @@
 * Project Design & Management: 박주은
 
 코드에 대한 자세한 설명은 팀원들이 집필한 위키를 참고하세요. [HEVEN_AutonomousCar_2018 wiki](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/wiki)
+### 계층 구조
+```
+main.py
+├ communication.py
+│ └ serial_packet.py
+│ 
+├ motion_planner.py
+│ ├ lidar.py
+│ │ 
+│ ├ lane_cam.py
+│ │ └ video_stream.py
+│ │
+│ ├ parabola.py
+│ │ 
+│ ├ video_stream.py
+│ │
+│ ├ sign_cam.py
+│ │ └ shape_detection.py
+│ │
+│ └ key_cam.py
+│ 
+├ car_control.py
+│ 
+└ monitor.py
+```
 ## 팀원 (2018년)
 ### 소프트웨어 및 알고리즘 개발 부문 (10)
 * 김성우: 시스템경영공학과/컴퓨터공학과
