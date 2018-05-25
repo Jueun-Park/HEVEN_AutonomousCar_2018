@@ -22,8 +22,6 @@
 |**Communication**|Communication with Platform|```serial_packet.py```<br>```communication.py```|김진웅|
 |**Process**|Main Process Management|```main.py```|김진웅 유성룡|
 * Project Design & Management: 박주은
-
-코드에 대한 자세한 설명은 팀원들이 집필한 위키를 참고하세요. [HEVEN_AutonomousCar_2018 wiki](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/wiki)
 ### 계층 구조
 ```
 main.py
@@ -49,6 +47,8 @@ main.py
 │ 
 └ monitor.py
 ```
+코드에 대한 자세한 설명은 팀원들이 집필한 위키를 참고하세요. [HEVEN_AutonomousCar_2018 wiki](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/wiki)
+
 ## 팀원 (2018년)
 ### 소프트웨어 및 알고리즘 개발 부문 (10)
 * 김성우: 시스템경영공학과/컴퓨터공학과
@@ -65,32 +65,6 @@ main.py
 * 강희수: 스포츠과학과/기계공학부
 * 김민수: 기계공학부
 * 이중구: 기계공학부/전자전기공학부
-
-## 알고리즘
-### Perception
-1. Vision 데이터 처리
-	1. 차선 인식
-	2. 표지판 인식
-  
-2. LiDAR 데이터 처리
-	1. 장애물 인식
-### Planning
-3. 경로 설정
-	1. 장애물과 차선 회피 경로 설정
-	2. 미션 별 경로 계획
-### Control
-4. 제어
-	1. 조향 제어
-	2. 속도 제어
-### Communication
-5. 통신
-	1. 전달할 통신 패킷 생성 및 플랫폼 전달
-	2. 받은 통신 패킷 해석
-### Operation
-6. 연산 속도 상승
-	1. CUDA for python
-	2. 메인 프로세스 관리 및 주행 중 모니터링
-
 
 # 대회 결과
 ![자율차부문 최종결과](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/blob/master/img_for_md/2018%EB%85%84%EA%B5%AD%EC%A0%9C%EB%8C%80%ED%95%99%EC%83%9D%EC%B0%BD%EC%9E%91%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B2%BD%EC%A7%84%EB%8C%80%ED%9A%8C-%EC%9E%90%EC%9C%A8%EC%B0%A8%EB%B6%80%EB%AC%B8%EC%B5%9C%EC%A2%85%EA%B2%B0%EA%B3%BC.JPG)
