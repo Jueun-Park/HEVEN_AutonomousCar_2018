@@ -68,6 +68,15 @@
 ![자율차부문 최종결과](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/blob/master/img_for_md/2018%EB%85%84%EA%B5%AD%EC%A0%9C%EB%8C%80%ED%95%99%EC%83%9D%EC%B0%BD%EC%9E%91%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B2%BD%EC%A7%84%EB%8C%80%ED%9A%8C-%EC%9E%90%EC%9C%A8%EC%B0%A8%EB%B6%80%EB%AC%B8%EC%B5%9C%EC%A2%85%EA%B2%B0%EA%B3%BC.JPG)
 
 [표. 2018년 국제 대학생 창작자동차 경진대회 - 자율차부문 최종결과]
+
+![자율차부문 본선 주행 결과](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/blob/master/img_for_md/2018%EB%85%84%EA%B5%AD%EC%A0%9C%EB%8C%80%ED%95%99%EC%83%9D%EC%B0%BD%EC%9E%91%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B2%BD%EC%A7%84%EB%8C%80%ED%9A%8C-%EC%9E%90%EC%9C%A8%EC%B0%A8%EB%B6%80%EB%AC%B8%EB%B3%B8%EC%84%A0%EC%A3%BC%ED%96%89%EA%B2%B0%EA%B3%BC.JPG)
+
+[표. 2018년 국제 대학생 창작자동차 경진대회 - 자율차부문 본선 주행 결과]
+
+![자율차부문 예선 주행 결과](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/blob/master/img_for_md/2018%EB%85%84%EA%B5%AD%EC%A0%9C%EB%8C%80%ED%95%99%EC%83%9D%EC%B0%BD%EC%9E%91%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B2%BD%EC%A7%84%EB%8C%80%ED%9A%8C-%EC%9E%90%EC%9C%A8%EC%B0%A8%EB%B6%80%EB%AC%B8%EC%98%88%EC%84%A0%EC%A3%BC%ED%96%89%EA%B2%B0%EA%B3%BC.JPG)
+
+[표. 2018년 국제 대학생 창작자동차 경진대회 - 자율차부문 예선 주행 결과]
+
 ***
 ![경진대회 시상 내역](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/blob/master/img_for_md/2018%EB%85%84%EA%B5%AD%EC%A0%9C%EB%8C%80%ED%95%99%EC%83%9D%EC%B0%BD%EC%9E%91%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B2%BD%EC%A7%84%EB%8C%80%ED%9A%8C%EA%B2%B0%EA%B3%BC.jpg)
 
