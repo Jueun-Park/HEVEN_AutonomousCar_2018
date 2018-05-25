@@ -184,7 +184,7 @@ class SignCam:
 
         if self.done == 0:
             with tf.gfile.FastGFile(
-                    "./deep_learning/minimal_graph.proto", 'rb') as f:
+                    "./DeepLearning/minimal_graph.proto", 'rb') as f:
                 # with tf.device('/gpu:0'):
                 graph_def = tf.GraphDef()
                 graph_def.ParseFromString(f.read())
