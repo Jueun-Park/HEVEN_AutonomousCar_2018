@@ -47,7 +47,7 @@ main.py
 │ 
 └ monitor.py
 ```
-코드에 대한 자세한 설명은 팀원들이 집필한 위키를 참고하세요. [HEVEN_AutonomousCar_2018 wiki](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/wiki)
+개발 과정에 대한 자세한 설명은 팀원들이 집필한 위키를 참고하세요. [HEVEN_AutonomousCar_2018 wiki](https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/wiki)
 
 ## 팀원 (2018년)
 ### 소프트웨어 및 알고리즘 개발 부문 (10)
