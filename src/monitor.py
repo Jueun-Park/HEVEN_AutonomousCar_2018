@@ -59,7 +59,7 @@ class Monitor:
     # platform status #
     @classmethod
     def imstatus(cls, gear, speed, steer, brake):
-        from serial_packet import SerialPacket
+        from src.serial_packet import SerialPacket
         f = np.zeros((240, 400, 3), dtype=np.uint8)
 
         gear_str = ''
@@ -183,8 +183,7 @@ class Monitor:
 
 
 if __name__ == '__main__':
-    import time
-    import video_stream
+    from src import video_stream
 
     # import communication
     # platform = communication.PlatformSerial('COM3')

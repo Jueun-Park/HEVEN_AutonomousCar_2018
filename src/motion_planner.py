@@ -10,18 +10,20 @@
 #           'S_CURVE': 4, 'NARROW': 5, 'U_TURN': 6, 'CROSS_WALK': 7}
 
 # =================Module===================
-import pycuda.driver as drv
-import numpy as np
-from pycuda.compiler import SourceModule
-import cv2
 import time
+import cv2
+import numpy as np
+import pycuda.driver as drv
+from pycuda.compiler import SourceModule
+
 # ==========================================
-from parabola import Parabola
-from lidar import Lidar
-from lane_cam import LaneCam
-import video_stream
-from sign_cam import SignCam
-from key_cam import KeyCam
+from src.parabola import Parabola
+from src.sign_cam import SignCam
+from src.lane_cam import LaneCam
+from src.lidar import Lidar
+from src.key_cam import KeyCam
+from src.video_stream import VideoStream as video_stream
+
 # ==========================================
 
 
@@ -579,7 +581,7 @@ class MotionPlanner:
 
 
 if __name__ == "__main__":
-    from monitor import Monitor
+    from src.monitor import Monitor
     motion_plan = MotionPlanner()
     monitor = Monitor()
 

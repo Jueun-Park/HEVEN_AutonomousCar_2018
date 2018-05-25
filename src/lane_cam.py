@@ -4,12 +4,12 @@
 # output: 차선 근사 이차함수의 계수 세 개, 정지선 정보, 주차 공간 정보 (to motion_planner)
 
 
-import cv2
-import numpy as np
 import random
 import time
+import cv2
+import numpy as np
 # ==========================================
-import video_stream
+from src.video_stream import VideoStream as video_stream
 
 
 class LaneCam:
@@ -562,7 +562,7 @@ class LaneCam:
 
 
 if __name__ == "__main__":
-    from monitor import Monitor
+    from src.monitor import Monitor
 
     monitor = Monitor()
     lane_cam = LaneCam()

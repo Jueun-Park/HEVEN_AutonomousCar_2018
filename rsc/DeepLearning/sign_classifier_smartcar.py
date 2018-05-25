@@ -7,15 +7,16 @@
 # -> 그런데 학습한 모델이 그런 경우를 95%이상의 확률로 어느 표지판이라고 인식하는 경우가 있음.
 # 2. 한 프레임별로 하지 말고 띄엄띄엄해야할 것 같은데 아직 어떻게 하는지 몰라서 못하는 중.
 
-from matplotlib import pyplot as plt
-import sys
-import numpy as np
 import os
-import tensorflow as tf
+import sys
+import time
 
 import cv2
-import time
-from shape_detection import shape_detect
+import numpy as np
+import tensorflow as tf
+from matplotlib import pyplot as plt
+
+from src.shape_detection import shape_detect
 
 '''
 우선 구현 방법은 Tensorflow/model의 slim이라는 tensorflow가 제공하는 틀을 이용할 거임

@@ -1,0 +1,15 @@
+CUDA
+cuDNN
+opencv
+tensorflow
+
+pycuda
+math
+time
+numpy
+pyserial
+random
+socket
+threading
+struct
+keyboard

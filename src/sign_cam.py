@@ -2,13 +2,14 @@
 # 현지웅, 김성우
 
 
+import threading
+import time
+import cv2
 import numpy as np
 import tensorflow as tf
-import cv2
-import time
-import threading
+
 # ==========================================
-from shape_detection import shape_detect
+from src.shape_detection import shape_detect
 
 
 class SignCam:
@@ -19,7 +20,7 @@ class SignCam:
 
         # [for test] './TestVideos/sign_cut.mp4'
         # [for real time data] 2
-        self.cam = cv2.VideoCapture('./TestVideos/sign_cut.mp4')
+        self.cam = cv2.VideoCapture(2)
 
         self.cam.set(3, 800)
         self.cam.set(4, 448)
@@ -184,7 +185,7 @@ class SignCam:
 
         if self.done == 0:
             with tf.gfile.FastGFile(
-                    "./DeepLearning/minimal_graph.proto", 'rb') as f:
+                    "../rsc/DeepLearning/minimal_graph.proto", 'rb') as f:
                 # with tf.device('/gpu:0'):
                 graph_def = tf.GraphDef()
                 graph_def.ParseFromString(f.read())
