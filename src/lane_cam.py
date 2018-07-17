@@ -9,7 +9,8 @@ import time
 import cv2
 import numpy as np
 # ==========================================
-from src.video_stream import VideoStream as video_stream
+from src.video_stream import VideoStream
+from src.video_stream import WebCamVideoStream
 
 
 class LaneCam:
@@ -49,15 +50,15 @@ class LaneCam:
 
     def __init__(self):
         # 웹캠 2대 열기 # 양쪽 웹캠의 해상도를 800x448로 설정
-        self.video_left = video_stream.WebCamVideoStream(1, 800, 448)
-        self.video_right = video_stream.WebCamVideoStream(0, 800, 448)
+        self.video_left = WebCamVideoStream(1, 800, 448)
+        self.video_right = WebCamVideoStream(0, 800, 448)
         self.video_left.start()
         self.video_right.start()
 
-        self.lane_cam_raw_frame = video_stream.VideoStream()
-        self.lane_cam_frame = video_stream.VideoStream()
-        self.parkingline_frame = video_stream.VideoStream()
-        self.stopline_frame = video_stream.VideoStream()
+        self.lane_cam_raw_frame = VideoStream()
+        self.lane_cam_frame = VideoStream()
+        self.parkingline_frame = VideoStream()
+        self.stopline_frame = VideoStream()
         self.windows_is = []
 
         # 현재 읽어온 프레임이 실시간으로 업데이트됌
@@ -567,7 +568,7 @@ if __name__ == "__main__":
     monitor = Monitor()
     lane_cam = LaneCam()
     while True:
-        lane_cam.stopline_loop()
+        lane_cam.default_loop(0)
         monitor.show('1', *lane_cam.getFrame())
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     lane_cam.stop()
