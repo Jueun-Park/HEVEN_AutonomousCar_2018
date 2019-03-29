@@ -7,6 +7,8 @@
 
 [장려상 수상] [본선 주행 생중계 녹화 영상(1시간 25분 20초부터)](https://tv.naver.com/v/3246704) ```생중계 영상 끊김이 그대로 녹화되어 영상이 조금씩 끊깁니다.```
 
+[대회 후기 글](https://jueun-park.github.io/2018-07-08/postscript-autonomous-car)
+
 [국제 대학생 창작자동차 경진대회(International Student Car Competition) 공식 홈페이지](http://kasa.kr/cev/)
 
 
